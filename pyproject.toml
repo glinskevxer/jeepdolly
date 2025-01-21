@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jeepdolly"
+version = "0.1.0"
+description = "Oversize and overweight highway permit records for a state permit office"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+authors = [{ name = "glinskevxer" }]
+dependencies = ["click==8.1.8"]
+
+[project.scripts]
+jeepdolly = "jeepdolly.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jeepdolly"]
+
+[tool.ruff]
+line-length = 96
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "B", "C4", "UP", "SIM", "RET", "ARG", "N",
+  "PT", "A", "BLE", "C90", "DTZ", "ISC", "PIE", "RSE", "RUF", "TID",
+]
+ignore = ["ISC001"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 9
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG001"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+disallow_any_explicit = false
+mypy_path = "src"
+packages = ["jeepdolly"]
+
+# The suite is checked, but a test function is not made to declare `-> None`
+# 2400 times over. Bodies are still type checked, which is where the value is.
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["jeepdolly"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
