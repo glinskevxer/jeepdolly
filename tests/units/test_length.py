@@ -3,6 +3,7 @@ import pytest
 from jeepdolly.errors import BadValueError
 from jeepdolly.units.length import (
     MAX_INCHES,
+    NO_LENGTH,
     feet,
     feet_inches,
     format_length,
@@ -123,3 +124,7 @@ def test_format_round_trips_through_parse():
 
 def test_to_feet_is_a_float():
     assert to_feet(feet_inches(13, 6)) == pytest.approx(13.5)
+
+
+def test_no_length_is_zero():
+    assert int(NO_LENGTH) == 0

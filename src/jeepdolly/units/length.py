@@ -33,6 +33,10 @@ Inches = NewType("Inches", int)
 #: single dimension, and a number above it is a typo rather than a load.
 MAX_INCHES = 1800
 
+#: Zero inches, named so a dataclass default can point at it instead of
+#: calling the constructor, which the linter reads as a shared mutable.
+NO_LENGTH = Inches(0)
+
 _PATTERN = re.compile(
     r"""^\s*
     (?:(?P<feet>\d+)\s*(?:'|ft|feet|f)\s*)?
