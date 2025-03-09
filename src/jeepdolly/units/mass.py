@@ -37,6 +37,10 @@ POUNDS_PER_TON = 2000
 #: and not a policy limit.
 MAX_POUNDS = 2_500_000
 
+#: Zero pounds, named so a dataclass default can point at it instead of
+#: calling the constructor, which the linter reads as a shared mutable.
+NO_WEIGHT = Pounds(0)
+
 _PATTERN = re.compile(
     r"""^\s*
     (?P<number>\d[\d,]*(?:\.\d+)?)

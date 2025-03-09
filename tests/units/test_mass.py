@@ -3,6 +3,7 @@ import pytest
 from jeepdolly.errors import BadValueError
 from jeepdolly.units.mass import (
     MAX_POUNDS,
+    NO_WEIGHT,
     POUNDS_PER_TON,
     format_weight,
     parse_weight,
@@ -135,3 +136,7 @@ def test_tons_over_one_pound_past_an_exact_ton():
 
 def test_pounds_per_ton_is_the_short_ton():
     assert POUNDS_PER_TON == 2000
+
+
+def test_no_weight_is_zero():
+    assert int(NO_WEIGHT) == 0
