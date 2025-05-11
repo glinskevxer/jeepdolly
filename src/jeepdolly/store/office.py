@@ -24,6 +24,7 @@ from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.loads import LoadStore
 from jeepdolly.store.migrations import LATEST, migrate, version
 from jeepdolly.store.rigs import RigStore
+from jeepdolly.store.roadway import RoadwayStore
 from jeepdolly.store.sqlite import MEMORY, opened, writing
 
 __all__ = ["Office", "create", "opened_new_office", "opened_office"]
@@ -37,6 +38,7 @@ class Office:
         self.carriers = CarrierStore(connection)
         self.rigs = RigStore(connection)
         self.loads = LoadStore(connection)
+        self.roadway = RoadwayStore(connection)
 
     @property
     def version(self) -> int:

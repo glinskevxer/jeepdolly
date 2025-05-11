@@ -125,6 +125,49 @@ MIGRATIONS: tuple[Migration, ...] = (
             """,
         ),
     ),
+    Migration(
+        number=4,
+        name="the road map",
+        statements=(
+            """
+            CREATE TABLE node (
+                code    TEXT PRIMARY KEY,
+                name    TEXT NOT NULL,
+                county  TEXT NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE segment (
+                code          TEXT PRIMARY KEY,
+                start_node    TEXT NOT NULL REFERENCES node (code),
+                end_node      TEXT NOT NULL REFERENCES node (code),
+                route         TEXT NOT NULL,
+                distance      INTEGER NOT NULL CHECK (distance > 0),
+                road_class    TEXT NOT NULL
+                              CHECK (road_class IN ('interstate', 'state', 'local')),
+                one_way       INTEGER NOT NULL DEFAULT 0 CHECK (one_way IN (0, 1)),
+                posted_gross  INTEGER CHECK (posted_gross IS NULL OR posted_gross > 0),
+                CHECK (start_node <> end_node)
+            )
+            """,
+            """
+            CREATE TABLE structure (
+                reference     TEXT PRIMARY KEY,
+                segment_code  TEXT NOT NULL REFERENCES segment (code) ON DELETE CASCADE,
+                name          TEXT NOT NULL,
+                kind          TEXT NOT NULL
+                              CHECK (kind IN ('bridge', 'culvert', 'overhead', 'tunnel')),
+                milepost      INTEGER NOT NULL CHECK (milepost >= 0),
+                clearance     INTEGER CHECK (clearance IS NULL OR clearance > 0),
+                rating        INTEGER CHECK (rating IS NULL OR rating > 0),
+                CHECK (clearance IS NULL OR rating IS NULL)
+            )
+            """,
+            "CREATE INDEX segment_by_start ON segment (start_node)",
+            "CREATE INDEX segment_by_end ON segment (end_node)",
+            "CREATE INDEX structure_by_segment ON structure (segment_code, milepost)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

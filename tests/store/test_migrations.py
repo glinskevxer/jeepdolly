@@ -167,3 +167,31 @@ def test_a_file_on_disk_survives_being_reopened(tmp_path):
     with opened(path) as connection:
         assert version(connection) == LATEST
         assert migrate(connection) == []
+
+
+def test_the_road_map_tables_are_there(office):
+    for name in ("node", "segment", "structure"):
+        assert name in table_names(office)
+
+
+def test_a_structure_may_not_carry_both_numbers(office):
+    office.execute("INSERT INTO node VALUES ('A', 'a', 'c')")
+    office.execute("INSERT INTO node VALUES ('B', 'b', 'c')")
+    office.execute(
+        "INSERT INTO segment (code, start_node, end_node, route, distance, road_class)"
+        " VALUES ('S', 'A', 'B', 'US-12', 100, 'state')"
+    )
+    with pytest.raises(Exception, match="CHECK"):
+        office.execute(
+            "INSERT INTO structure (reference, segment_code, name, kind, milepost,"
+            " clearance, rating) VALUES ('STR-1', 'S', 'x', 'bridge', 10, 100, 100)"
+        )
+
+
+def test_a_segment_may_not_start_and_end_at_one_node(office):
+    office.execute("INSERT INTO node VALUES ('A', 'a', 'c')")
+    with pytest.raises(Exception, match="CHECK"):
+        office.execute(
+            "INSERT INTO segment (code, start_node, end_node, route, distance, road_class)"
+            " VALUES ('S', 'A', 'A', 'US-12', 100, 'state')"
+        )
