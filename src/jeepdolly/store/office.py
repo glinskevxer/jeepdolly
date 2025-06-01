@@ -20,6 +20,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from jeepdolly.errors import ConflictError, NotFoundError
+from jeepdolly.store.applications import ApplicationStore
 from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.loads import LoadStore
 from jeepdolly.store.migrations import LATEST, migrate, version
@@ -39,6 +40,7 @@ class Office:
         self.rigs = RigStore(connection)
         self.loads = LoadStore(connection)
         self.roadway = RoadwayStore(connection)
+        self.applications = ApplicationStore(connection)
 
     @property
     def version(self) -> int:

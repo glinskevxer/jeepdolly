@@ -168,6 +168,34 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX structure_by_segment ON structure (segment_code, milepost)",
         ),
     ),
+    Migration(
+        number=5,
+        name="applications",
+        statements=(
+            """
+            CREATE TABLE application (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                carrier_code  TEXT NOT NULL REFERENCES carrier (code),
+                rig_reference TEXT NOT NULL REFERENCES rig (reference),
+                load_id       INTEGER NOT NULL REFERENCES load_item (id),
+                kind          TEXT NOT NULL
+                              CHECK (kind IN ('trip', 'annual', 'superload')),
+                first_day     TEXT NOT NULL,
+                last_day      TEXT NOT NULL,
+                filed_on      TEXT NOT NULL,
+                origin        TEXT REFERENCES node (code),
+                destination   TEXT REFERENCES node (code),
+                CHECK (last_day >= first_day),
+                CHECK (
+                    (kind = 'annual' AND origin IS NULL AND destination IS NULL)
+                    OR (kind <> 'annual' AND origin IS NOT NULL AND destination IS NOT NULL)
+                )
+            )
+            """,
+            "CREATE INDEX application_by_carrier ON application (carrier_code, filed_on)",
+            "CREATE INDEX application_by_day ON application (first_day, last_day)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
