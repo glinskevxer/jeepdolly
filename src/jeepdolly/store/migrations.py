@@ -196,6 +196,67 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX application_by_day ON application (first_day, last_day)",
         ),
     ),
+    Migration(
+        number=6,
+        name="permits and their working",
+        statements=(
+            """
+            CREATE TABLE permit (
+                number          TEXT PRIMARY KEY,
+                application_id  INTEGER NOT NULL REFERENCES application (id),
+                outcome         TEXT NOT NULL
+                                CHECK (outcome IN ('issue', 'refer', 'refuse')),
+                decided_on      TEXT NOT NULL,
+                issued_on       TEXT NOT NULL,
+                first_day       TEXT NOT NULL,
+                last_day        TEXT NOT NULL,
+                state           TEXT NOT NULL
+                                CHECK (state IN ('active', 'void', 'superseded')),
+                reason          TEXT NOT NULL DEFAULT '',
+                replaced_by     TEXT REFERENCES permit (number),
+                distance        INTEGER CHECK (distance IS NULL OR distance >= 0),
+                CHECK (last_day >= first_day),
+                CHECK (state <> 'void' OR reason <> ''),
+                CHECK (state = 'superseded' OR replaced_by IS NULL)
+            )
+            """,
+            """
+            CREATE TABLE permit_finding (
+                permit_number  TEXT NOT NULL REFERENCES permit (number) ON DELETE CASCADE,
+                position       INTEGER NOT NULL,
+                rule           TEXT NOT NULL,
+                subject        TEXT NOT NULL,
+                severity       TEXT NOT NULL
+                               CHECK (severity IN ('note', 'permit', 'refuse')),
+                detail         TEXT NOT NULL,
+                excess         INTEGER NOT NULL DEFAULT 0 CHECK (excess >= 0),
+                PRIMARY KEY (permit_number, position)
+            )
+            """,
+            """
+            CREATE TABLE permit_fee_line (
+                permit_number  TEXT NOT NULL REFERENCES permit (number) ON DELETE CASCADE,
+                position       INTEGER NOT NULL,
+                code           TEXT NOT NULL,
+                detail         TEXT NOT NULL,
+                amount         INTEGER NOT NULL,
+                PRIMARY KEY (permit_number, position),
+                UNIQUE (permit_number, code)
+            )
+            """,
+            """
+            CREATE TABLE permit_escort (
+                permit_number  TEXT NOT NULL REFERENCES permit (number) ON DELETE CASCADE,
+                position       INTEGER NOT NULL,
+                role           TEXT NOT NULL,
+                reasons        TEXT NOT NULL,
+                PRIMARY KEY (permit_number, position)
+            )
+            """,
+            "CREATE INDEX permit_by_application ON permit (application_id)",
+            "CREATE INDEX permit_by_day ON permit (first_day, last_day)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
