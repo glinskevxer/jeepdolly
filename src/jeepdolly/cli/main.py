@@ -9,6 +9,7 @@ import click
 from jeepdolly import __version__
 from jeepdolly.cli.carrier import carrier
 from jeepdolly.cli.context import DEFAULT_FILE, Session, reporting
+from jeepdolly.cli.permit import permit
 from jeepdolly.cli.road import road
 from jeepdolly.store.migrations import LATEST
 from jeepdolly.store.office import create, opened_office
@@ -57,7 +58,10 @@ def status(session: Session) -> None:
         click.echo(f"junctions {nodes}")
         click.echo(f"segments {segments}")
         click.echo(f"structures {structures}")
+        click.echo(f"applications {office.applications.count()}")
+        click.echo(f"permits {office.permits.count()}")
 
 
 main.add_command(carrier)
 main.add_command(road)
+main.add_command(permit)
