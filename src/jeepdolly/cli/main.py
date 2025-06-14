@@ -10,6 +10,7 @@ from jeepdolly import __version__
 from jeepdolly.cli.carrier import carrier
 from jeepdolly.cli.context import DEFAULT_FILE, Session, reporting
 from jeepdolly.cli.permit import permit
+from jeepdolly.cli.rig import rig
 from jeepdolly.cli.road import road
 from jeepdolly.store.migrations import LATEST
 from jeepdolly.store.office import create, opened_office
@@ -64,4 +65,5 @@ def status(session: Session) -> None:
 
 main.add_command(carrier)
 main.add_command(road)
+main.add_command(rig)
 main.add_command(permit)
