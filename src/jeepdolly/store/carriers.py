@@ -14,11 +14,13 @@ office actually gets.
 from __future__ import annotations
 
 import sqlite3
+from typing import ClassVar
 
-from jeepdolly.errors import ConflictError, NotFoundError
+from jeepdolly.errors import ConflictError
 from jeepdolly.ids.reference import Code, code
 from jeepdolly.party.carrier import Carrier
-from jeepdolly.store.sqlite import maybe_one, one, rows, scalar
+from jeepdolly.store.repo import Repository
+from jeepdolly.store.sqlite import maybe_one, one
 
 __all__ = ["CarrierStore", "carrier_from_row"]
 
@@ -34,37 +36,44 @@ def carrier_from_row(row: sqlite3.Row) -> Carrier:
     )
 
 
-class CarrierStore:
+class CarrierStore(Repository[Carrier]):
     """Every carrier the office has on file."""
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
-        self.connection = connection
+    table: ClassVar[str] = "carrier"
+    key_column: ClassVar[str] = "code"
+    kind: ClassVar[str] = "carrier"
+    order_by: ClassVar[str] = "code"
+    columns: ClassVar[tuple[str, ...]] = ("code", "name", "usdot", "home_state", "active")
 
-    def add(self, carrier: Carrier) -> Carrier:
-        """Write a carrier that is not there yet."""
-        if self.find(carrier.code) is not None:
-            raise ConflictError("carrier", carrier.code)
+    def normalise(self, key: str) -> str:
+        return str(code(str(key)))
+
+    def from_row(self, row: sqlite3.Row) -> Carrier:
+        return carrier_from_row(row)
+
+    def to_row(self, item: Carrier) -> tuple[object, ...]:
+        return (
+            str(item.code),
+            item.name,
+            item.usdot,
+            item.home_state,
+            int(item.active),
+        )
+
+    def key_of(self, item: Carrier) -> str:
+        return str(item.code)
+
+    def before_add(self, item: Carrier) -> None:
+        """A USDOT number belongs to one carrier."""
         clash = maybe_one(
-            self.connection, "SELECT code FROM carrier WHERE usdot = ?", (carrier.usdot,)
+            self.connection, "SELECT code FROM carrier WHERE usdot = ?", (item.usdot,)
         )
         if clash is not None:
-            raise ConflictError("usdot", carrier.usdot)
-        self.connection.execute(
-            "INSERT INTO carrier (code, name, usdot, home_state, active)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (
-                str(carrier.code),
-                carrier.name,
-                carrier.usdot,
-                carrier.home_state,
-                int(carrier.active),
-            ),
-        )
-        return carrier
+            raise ConflictError("usdot", item.usdot)
 
     def save(self, carrier: Carrier) -> Carrier:
         """Overwrite a carrier that is already there."""
-        self.get(carrier.code)
+        self.get(str(carrier.code))
         clash = maybe_one(
             self.connection,
             "SELECT code FROM carrier WHERE usdot = ? AND code <> ?",
@@ -84,23 +93,6 @@ class CarrierStore:
         )
         return carrier
 
-    def get(self, key: str) -> Carrier:
-        """One carrier by code, raising if it is not there."""
-        wanted = code(str(key))
-        row = one(
-            self.connection,
-            "SELECT * FROM carrier WHERE code = ?",
-            (str(wanted),),
-            kind="carrier",
-        )
-        return carrier_from_row(row)
-
-    def find(self, key: str) -> Carrier | None:
-        """One carrier by code, or ``None``."""
-        wanted = code(str(key))
-        row = maybe_one(self.connection, "SELECT * FROM carrier WHERE code = ?", (str(wanted),))
-        return None if row is None else carrier_from_row(row)
-
     def by_usdot(self, usdot: int) -> Carrier:
         """One carrier by its federal number."""
         row = one(
@@ -111,51 +103,11 @@ class CarrierStore:
         )
         return carrier_from_row(row)
 
-    def all(self) -> list[Carrier]:
-        """Every carrier, in code order."""
-        return [
-            carrier_from_row(row)
-            for row in rows(self.connection, "SELECT * FROM carrier ORDER BY code")
-        ]
-
     def active(self) -> list[Carrier]:
         """Every carrier that may still be issued a permit."""
-        return [
-            carrier_from_row(row)
-            for row in rows(
-                self.connection, "SELECT * FROM carrier WHERE active = 1 ORDER BY code"
-            )
-        ]
+        return self.select("active = 1")
 
     def search(self, text: str) -> list[Carrier]:
         """Every carrier whose name or code contains this text."""
         needle = f"%{text.strip().lower()}%"
-        return [
-            carrier_from_row(row)
-            for row in rows(
-                self.connection,
-                "SELECT * FROM carrier WHERE lower(name) LIKE ? OR lower(code) LIKE ?"
-                " ORDER BY code",
-                (needle, needle),
-            )
-        ]
-
-    def remove(self, key: str) -> None:
-        """Delete a carrier, raising if it is not there."""
-        self.get(key)
-        self.connection.execute("DELETE FROM carrier WHERE code = ?", (str(code(str(key))),))
-
-    def count(self) -> int:
-        """How many carriers are on file."""
-        return int(scalar(self.connection, "SELECT count(*) FROM carrier") or 0)
-
-    def __len__(self) -> int:
-        return self.count()
-
-    def __contains__(self, key: object) -> bool:
-        if not isinstance(key, str):
-            return False
-        try:
-            return self.find(key) is not None
-        except NotFoundError:  # pragma: no cover
-            return False
+        return self.select("lower(name) LIKE ? OR lower(code) LIKE ?", (needle, needle))

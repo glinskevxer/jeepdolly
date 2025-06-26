@@ -13,19 +13,29 @@ job and the result is passed down, never called inside a loop.
 from __future__ import annotations
 
 import sqlite3
+from typing import ClassVar
 
-from jeepdolly.errors import ConflictError, NotFoundError
+from jeepdolly.errors import NotFoundError
 from jeepdolly.ids.reference import STRUCTURE, Code, Serial, code, serial
 from jeepdolly.roadway.network import Network, build
 from jeepdolly.roadway.node import Node
 from jeepdolly.roadway.segment import RoadClass, Segment
 from jeepdolly.roadway.structure import Structure, StructureKind
-from jeepdolly.store.sqlite import maybe_one, one, rows, scalar
+from jeepdolly.store.repo import Repository
+from jeepdolly.store.sqlite import rows, scalar
 from jeepdolly.units.distance import hundredths
 from jeepdolly.units.length import inches
 from jeepdolly.units.mass import pounds
 
-__all__ = ["RoadwayStore", "node_from_row", "segment_from_row", "structure_from_row"]
+__all__ = [
+    "NodeStore",
+    "RoadwayStore",
+    "SegmentStore",
+    "StructureStore",
+    "node_from_row",
+    "segment_from_row",
+    "structure_from_row",
+]
 
 
 def node_from_row(row: sqlite3.Row) -> Node:
@@ -63,92 +73,161 @@ def structure_from_row(row: sqlite3.Row) -> Structure:
     )
 
 
+class NodeStore(Repository[Node]):
+    """The junctions on the map."""
+
+    table: ClassVar[str] = "node"
+    key_column: ClassVar[str] = "code"
+    kind: ClassVar[str] = "node"
+    order_by: ClassVar[str] = "code"
+    columns: ClassVar[tuple[str, ...]] = ("code", "name", "county")
+
+    def normalise(self, key: str) -> str:
+        return str(code(str(key)))
+
+    def from_row(self, row: sqlite3.Row) -> Node:
+        return node_from_row(row)
+
+    def to_row(self, item: Node) -> tuple[object, ...]:
+        return (str(item.code), item.name, item.county)
+
+    def key_of(self, item: Node) -> str:
+        return str(item.code)
+
+
+class SegmentStore(Repository[Segment]):
+    """The stretches between the junctions."""
+
+    table: ClassVar[str] = "segment"
+    key_column: ClassVar[str] = "code"
+    kind: ClassVar[str] = "segment"
+    order_by: ClassVar[str] = "code"
+    columns: ClassVar[tuple[str, ...]] = (
+        "code",
+        "start_node",
+        "end_node",
+        "route",
+        "distance",
+        "road_class",
+        "one_way",
+        "posted_gross",
+    )
+
+    def normalise(self, key: str) -> str:
+        return str(code(str(key)))
+
+    def from_row(self, row: sqlite3.Row) -> Segment:
+        return segment_from_row(row)
+
+    def to_row(self, item: Segment) -> tuple[object, ...]:
+        return (
+            str(item.code),
+            str(item.start),
+            str(item.end),
+            item.route,
+            int(item.distance),
+            str(item.road_class),
+            int(item.one_way),
+            None if item.posted_gross is None else int(item.posted_gross),
+        )
+
+    def key_of(self, item: Segment) -> str:
+        return str(item.code)
+
+    def before_add(self, item: Segment) -> None:
+        """Both ends have to be junctions the map already knows."""
+        for end in (item.start, item.end):
+            if NodeStore(self.connection).find(str(end)) is None:
+                raise NotFoundError("node", str(end))
+
+
+class StructureStore(Repository[Structure]):
+    """The bridges and overheads built on the stretches."""
+
+    table: ClassVar[str] = "structure"
+    key_column: ClassVar[str] = "reference"
+    kind: ClassVar[str] = "structure"
+    order_by: ClassVar[str] = "reference"
+    columns: ClassVar[tuple[str, ...]] = (
+        "reference",
+        "segment_code",
+        "name",
+        "kind",
+        "milepost",
+        "clearance",
+        "rating",
+    )
+
+    def normalise(self, key: str) -> str:
+        return str(serial(str(key)))
+
+    def from_row(self, row: sqlite3.Row) -> Structure:
+        return structure_from_row(row)
+
+    def to_row(self, item: Structure) -> tuple[object, ...]:
+        return (
+            str(item.reference),
+            str(item.segment),
+            item.name,
+            str(item.kind),
+            int(item.milepost),
+            None if item.clearance is None else int(item.clearance),
+            None if item.rating is None else int(item.rating),
+        )
+
+    def key_of(self, item: Structure) -> str:
+        return str(item.reference)
+
+    def before_add(self, item: Structure) -> None:
+        """The stretch it sits on has to be on the map."""
+        if SegmentStore(self.connection).find(str(item.segment)) is None:
+            raise NotFoundError("segment", str(item.segment))
+
+
 class RoadwayStore:
-    """The junctions, stretches and structures the office has mapped."""
+    """The junctions, stretches and structures the office has mapped.
+
+    Three repositories behind one handle, because a clerk thinks about the map
+    and not about the three tables it happens to live in.
+    """
 
     def __init__(self, connection: sqlite3.Connection) -> None:
         self.connection = connection
+        self.nodes_repo = NodeStore(connection)
+        self.segments_repo = SegmentStore(connection)
+        self.structures_repo = StructureStore(connection)
 
     def add_node(self, node: Node) -> Node:
         """Put a junction on the map."""
-        if self.find_node(str(node.code)) is not None:
-            raise ConflictError("node", node.code)
-        self.connection.execute(
-            "INSERT INTO node (code, name, county) VALUES (?, ?, ?)",
-            (str(node.code), node.name, node.county),
-        )
-        return node
+        return self.nodes_repo.add(node)
 
     def find_node(self, key: str) -> Node | None:
         """One junction by code, or ``None``."""
-        row = maybe_one(
-            self.connection, "SELECT * FROM node WHERE code = ?", (str(code(str(key))),)
-        )
-        return None if row is None else node_from_row(row)
+        return self.nodes_repo.find(key)
 
     def get_node(self, key: str) -> Node:
         """One junction by code, raising if it is not there."""
-        row = one(
-            self.connection,
-            "SELECT * FROM node WHERE code = ?",
-            (str(code(str(key))),),
-            kind="node",
-        )
-        return node_from_row(row)
+        return self.nodes_repo.get(key)
 
     def nodes(self) -> list[Node]:
         """Every junction, in code order."""
-        return [
-            node_from_row(row)
-            for row in rows(self.connection, "SELECT * FROM node ORDER BY code")
-        ]
+        return self.nodes_repo.all()
 
     def add_segment(self, segment: Segment) -> Segment:
         """Put a stretch on the map."""
-        if self.find_segment(str(segment.code)) is not None:
-            raise ConflictError("segment", segment.code)
-        for end in (segment.start, segment.end):
-            if self.find_node(str(end)) is None:
-                raise NotFoundError("node", str(end))
-        self.connection.execute(
-            "INSERT INTO segment (code, start_node, end_node, route, distance,"
-            " road_class, one_way, posted_gross) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                str(segment.code),
-                str(segment.start),
-                str(segment.end),
-                segment.route,
-                int(segment.distance),
-                str(segment.road_class),
-                int(segment.one_way),
-                None if segment.posted_gross is None else int(segment.posted_gross),
-            ),
-        )
-        return segment
+        return self.segments_repo.add(segment)
 
     def find_segment(self, key: str) -> Segment | None:
         """One stretch by code, or ``None``."""
-        row = maybe_one(
-            self.connection, "SELECT * FROM segment WHERE code = ?", (str(code(str(key))),)
-        )
-        return None if row is None else segment_from_row(row)
+        return self.segments_repo.find(key)
 
     def get_segment(self, key: str) -> Segment:
         """One stretch by code, raising if it is not there."""
-        row = one(
-            self.connection,
-            "SELECT * FROM segment WHERE code = ?",
-            (str(code(str(key))),),
-            kind="segment",
-        )
-        return segment_from_row(row)
+        return self.segments_repo.get(key)
 
     def segments(self) -> list[Segment]:
         """Every stretch, in code order."""
-        return [
-            segment_from_row(row)
-            for row in rows(self.connection, "SELECT * FROM segment ORDER BY code")
-        ]
+        return self.segments_repo.all()
 
     def next_structure(self) -> Serial:
         """The reference the next structure will be filed under."""
@@ -159,50 +238,19 @@ class RoadwayStore:
 
     def add_structure(self, structure: Structure) -> Structure:
         """Put something in the way on a stretch."""
-        if self.find_structure(str(structure.reference)) is not None:
-            raise ConflictError("structure", structure.reference)
-        if self.find_segment(str(structure.segment)) is None:
-            raise NotFoundError("segment", str(structure.segment))
-        self.connection.execute(
-            "INSERT INTO structure (reference, segment_code, name, kind, milepost,"
-            " clearance, rating) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                str(structure.reference),
-                str(structure.segment),
-                structure.name,
-                str(structure.kind),
-                int(structure.milepost),
-                None if structure.clearance is None else int(structure.clearance),
-                None if structure.rating is None else int(structure.rating),
-            ),
-        )
-        return structure
+        return self.structures_repo.add(structure)
 
     def find_structure(self, key: str) -> Structure | None:
         """One structure by reference, or ``None``."""
-        row = maybe_one(
-            self.connection,
-            "SELECT * FROM structure WHERE reference = ?",
-            (str(serial(str(key))),),
-        )
-        return None if row is None else structure_from_row(row)
+        return self.structures_repo.find(key)
 
     def get_structure(self, key: str) -> Structure:
         """One structure by reference, raising if it is not there."""
-        row = one(
-            self.connection,
-            "SELECT * FROM structure WHERE reference = ?",
-            (str(serial(str(key))),),
-            kind="structure",
-        )
-        return structure_from_row(row)
+        return self.structures_repo.get(key)
 
     def structures(self) -> list[Structure]:
         """Every structure, in reference order."""
-        return [
-            structure_from_row(row)
-            for row in rows(self.connection, "SELECT * FROM structure ORDER BY reference")
-        ]
+        return self.structures_repo.all()
 
     def structures_on(self, key: str) -> list[Structure]:
         """Everything in the way on one stretch, by milepost."""
@@ -217,8 +265,7 @@ class RoadwayStore:
 
     def remove_segment(self, key: str) -> None:
         """Take a stretch off the map, and everything on it."""
-        self.get_segment(key)
-        self.connection.execute("DELETE FROM segment WHERE code = ?", (str(code(str(key))),))
+        self.segments_repo.remove(key)
 
     def network(self) -> Network:
         """Read the whole map and check it on the way out."""
@@ -227,7 +274,7 @@ class RoadwayStore:
     def counts(self) -> tuple[int, int, int]:
         """How many junctions, stretches and structures are on file."""
         return (
-            int(scalar(self.connection, "SELECT count(*) FROM node") or 0),
-            int(scalar(self.connection, "SELECT count(*) FROM segment") or 0),
-            int(scalar(self.connection, "SELECT count(*) FROM structure") or 0),
+            self.nodes_repo.count(),
+            self.segments_repo.count(),
+            self.structures_repo.count(),
         )
