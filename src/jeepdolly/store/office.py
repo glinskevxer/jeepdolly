@@ -20,6 +20,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from jeepdolly.errors import ConflictError, NotFoundError
+from jeepdolly.store.accounts import AccountStore
 from jeepdolly.store.applications import ApplicationStore
 from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.loads import LoadStore
@@ -43,6 +44,7 @@ class Office:
         self.roadway = RoadwayStore(connection)
         self.applications = ApplicationStore(connection)
         self.permits = PermitStore(connection)
+        self.accounts = AccountStore(connection)
 
     @property
     def version(self) -> int:

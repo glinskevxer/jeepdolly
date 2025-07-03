@@ -257,6 +257,35 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX permit_by_day ON permit (first_day, last_day)",
         ),
     ),
+    Migration(
+        number=7,
+        name="carrier accounts",
+        statements=(
+            """
+            CREATE TABLE account_entry (
+                carrier_code  TEXT NOT NULL REFERENCES carrier (code),
+                sequence      INTEGER NOT NULL,
+                day           TEXT NOT NULL,
+                kind          TEXT NOT NULL
+                              CHECK (kind IN ('deposit', 'charge', 'refund', 'adjustment')),
+                amount        INTEGER NOT NULL,
+                reference     TEXT NOT NULL DEFAULT '',
+                note          TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (carrier_code, sequence),
+                CHECK (kind = 'adjustment' OR amount > 0),
+                CHECK (kind <> 'adjustment' OR (amount <> 0 AND note <> '')),
+                CHECK (kind <> 'charge' OR reference <> '')
+            )
+            """,
+            """
+            CREATE TABLE account_terms (
+                carrier_code  TEXT PRIMARY KEY REFERENCES carrier (code),
+                floor         INTEGER NOT NULL CHECK (floor <= 0)
+            )
+            """,
+            "CREATE INDEX account_by_day ON account_entry (carrier_code, day)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
