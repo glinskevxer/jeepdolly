@@ -7,9 +7,11 @@ from pathlib import Path
 import click
 
 from jeepdolly import __version__
+from jeepdolly.cli.account import account
 from jeepdolly.cli.carrier import carrier
 from jeepdolly.cli.context import DEFAULT_FILE, Session, reporting
 from jeepdolly.cli.permit import permit
+from jeepdolly.cli.report import report
 from jeepdolly.cli.rig import rig
 from jeepdolly.cli.road import road
 from jeepdolly.store.migrations import LATEST
@@ -67,3 +69,5 @@ main.add_command(carrier)
 main.add_command(road)
 main.add_command(rig)
 main.add_command(permit)
+main.add_command(account)
+main.add_command(report)
