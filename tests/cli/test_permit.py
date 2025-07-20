@@ -1,63 +1,6 @@
 from collections.abc import Callable
 
-import pytest
 from click.testing import Result
-
-
-@pytest.fixture
-def stocked(run: Callable[..., Result]) -> Callable[..., Result]:
-    """An office file with a carrier, a rig and the corridor map on it."""
-    run(
-        "carrier",
-        "add",
-        "--code",
-        "VANCE",
-        "--name",
-        "Vance Heavy Haul",
-        "--usdot",
-        "1184062",
-        "--state",
-        "MT",
-    )
-    for key in ("JCT-A", "JCT-B", "JCT-C", "JCT-D"):
-        run("road", "node", "--code", key, "--name", key.lower(), "--county", "Missoula")
-    for key, start, end, route, length in (
-        ("SEG-AB", "JCT-A", "JCT-B", "US-12", "12.00"),
-        ("SEG-BC", "JCT-B", "JCT-C", "US-12", "8.50"),
-        ("SEG-BD", "JCT-B", "JCT-D", "SR-200", "31.00"),
-    ):
-        run(
-            "road",
-            "segment",
-            "--code",
-            key,
-            "--start",
-            start,
-            "--end",
-            end,
-            "--route",
-            route,
-            "--miles",
-            length,
-        )
-    run(
-        "road",
-        "segment",
-        "--code",
-        "SEG-CD",
-        "--start",
-        "JCT-C",
-        "--end",
-        "JCT-D",
-        "--route",
-        "US-12",
-        "--miles",
-        "6.00",
-        "--posted",
-        "48,000",
-    )
-    run("rig", "build", "--carrier", "VANCE", "--name", "3S2")
-    return run
 
 
 def apply_one(run: Callable[..., Result], **over: str) -> Result:
