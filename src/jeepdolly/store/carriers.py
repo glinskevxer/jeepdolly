@@ -46,12 +46,15 @@ class CarrierStore(Repository[Carrier]):
     columns: ClassVar[tuple[str, ...]] = ("code", "name", "usdot", "home_state", "active")
 
     def normalise(self, key: str) -> str:
+        """Put a typed key into the form this table stores."""
         return str(code(str(key)))
 
     def from_row(self, row: sqlite3.Row) -> Carrier:
+        """Build the record this store owns out of one row."""
         return carrier_from_row(row)
 
     def to_row(self, item: Carrier) -> tuple[object, ...]:
+        """Flatten the record into the values the columns name."""
         return (
             str(item.code),
             item.name,
@@ -61,6 +64,7 @@ class CarrierStore(Repository[Carrier]):
         )
 
     def key_of(self, item: Carrier) -> str:
+        """The key this record will be stored under."""
         return str(item.code)
 
     def before_add(self, item: Carrier) -> None:

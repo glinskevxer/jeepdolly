@@ -179,7 +179,7 @@ def extend(session: Session, number: str, last: str) -> None:
 @click.option("--on", default="", help="Only permits good on this day.")
 @click.pass_obj
 def listing(session: Session, carrier: str, on: str) -> None:
-    """List permits."""
+    """List permits, filtered by carrier or by day."""
     with office_of(session) as office:
         if carrier:
             found = office.permits.for_carrier(carrier)

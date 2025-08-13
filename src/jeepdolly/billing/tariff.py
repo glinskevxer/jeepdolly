@@ -23,7 +23,14 @@ from jeepdolly.units.distance import Miles, whole_miles
 from jeepdolly.units.mass import Pounds, tons_over
 from jeepdolly.units.money import Money, at_rate, cents, format_money, total
 
-__all__ = ["SCHEDULE", "Band", "FeeLine", "Tariff", "band_charge"]
+__all__ = [
+    "SCHEDULE",
+    "Band",
+    "FeeLine",
+    "Tariff",
+    "band_charge",
+    "check_bands",
+]
 
 
 @dataclass(frozen=True, slots=True, order=True)

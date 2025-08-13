@@ -45,6 +45,7 @@ class Repository(Generic[T]):
     columns: ClassVar[tuple[str, ...]]
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection every query runs on."""
         self.connection = connection
 
     def normalise(self, key: str) -> str:

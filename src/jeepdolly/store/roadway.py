@@ -83,15 +83,19 @@ class NodeStore(Repository[Node]):
     columns: ClassVar[tuple[str, ...]] = ("code", "name", "county")
 
     def normalise(self, key: str) -> str:
+        """Put a typed key into the form this table stores."""
         return str(code(str(key)))
 
     def from_row(self, row: sqlite3.Row) -> Node:
+        """Build the record this store owns out of one row."""
         return node_from_row(row)
 
     def to_row(self, item: Node) -> tuple[object, ...]:
+        """Flatten the record into the values the columns name."""
         return (str(item.code), item.name, item.county)
 
     def key_of(self, item: Node) -> str:
+        """The key this record will be stored under."""
         return str(item.code)
 
 
@@ -114,12 +118,15 @@ class SegmentStore(Repository[Segment]):
     )
 
     def normalise(self, key: str) -> str:
+        """Put a typed key into the form this table stores."""
         return str(code(str(key)))
 
     def from_row(self, row: sqlite3.Row) -> Segment:
+        """Build the record this store owns out of one row."""
         return segment_from_row(row)
 
     def to_row(self, item: Segment) -> tuple[object, ...]:
+        """Flatten the record into the values the columns name."""
         return (
             str(item.code),
             str(item.start),
@@ -132,6 +139,7 @@ class SegmentStore(Repository[Segment]):
         )
 
     def key_of(self, item: Segment) -> str:
+        """The key this record will be stored under."""
         return str(item.code)
 
     def before_add(self, item: Segment) -> None:
@@ -159,12 +167,15 @@ class StructureStore(Repository[Structure]):
     )
 
     def normalise(self, key: str) -> str:
+        """Put a typed key into the form this table stores."""
         return str(serial(str(key)))
 
     def from_row(self, row: sqlite3.Row) -> Structure:
+        """Build the record this store owns out of one row."""
         return structure_from_row(row)
 
     def to_row(self, item: Structure) -> tuple[object, ...]:
+        """Flatten the record into the values the columns name."""
         return (
             str(item.reference),
             str(item.segment),
@@ -176,6 +187,7 @@ class StructureStore(Repository[Structure]):
         )
 
     def key_of(self, item: Structure) -> str:
+        """The key this record will be stored under."""
         return str(item.reference)
 
     def before_add(self, item: Structure) -> None:
@@ -192,6 +204,7 @@ class RoadwayStore:
     """
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection and the three repositories on it."""
         self.connection = connection
         self.nodes_repo = NodeStore(connection)
         self.segments_repo = SegmentStore(connection)

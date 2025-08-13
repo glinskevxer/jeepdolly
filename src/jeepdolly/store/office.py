@@ -37,6 +37,7 @@ class Office:
     """An open permit office file."""
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Open every store this office holds against one connection."""
         self.connection = connection
         self.carriers = CarrierStore(connection)
         self.rigs = RigStore(connection)

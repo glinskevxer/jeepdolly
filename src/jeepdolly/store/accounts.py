@@ -42,6 +42,7 @@ class AccountStore:
     """Every carrier's entries and terms."""
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection this store reads and writes."""
         self.connection = connection
 
     def _known(self, carrier: str) -> Code:

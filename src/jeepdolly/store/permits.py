@@ -30,7 +30,10 @@ from jeepdolly.units.distance import hundredths
 from jeepdolly.units.mass import pounds
 from jeepdolly.units.money import cents
 
-__all__ = ["PermitStore"]
+__all__ = [
+    "REASON_SEPARATOR",
+    "PermitStore",
+]
 
 #: Reasons are joined with this inside one escort row.
 REASON_SEPARATOR = " | "
@@ -40,6 +43,7 @@ class PermitStore:
     """Every permit the office has issued."""
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection and the application store beside it."""
         self.connection = connection
         self.applications = ApplicationStore(connection)
 

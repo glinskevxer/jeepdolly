@@ -30,6 +30,7 @@ class BadValueError(JeepdollyError):
     """
 
     def __init__(self, what: str, given: object, why: str = "") -> None:
+        """Name the thing, what was given, and why it is not usable."""
         self.what = what
         self.given = given
         self.why = why
@@ -41,6 +42,7 @@ class NotFoundError(JeepdollyError):
     """A record was asked for by key and is not there."""
 
     def __init__(self, kind: str, key: object) -> None:
+        """Name the kind of record and the key that found nothing."""
         self.kind = kind
         self.key = key
         super().__init__(f"no {kind} with key {key!r}")
@@ -50,6 +52,7 @@ class ConflictError(JeepdollyError):
     """A write would collide with a record that is already there."""
 
     def __init__(self, kind: str, key: object) -> None:
+        """Name the kind of record and the key that is already taken."""
         self.kind = kind
         self.key = key
         super().__init__(f"{kind} {key!r} already exists")
@@ -63,6 +66,7 @@ class NotAllowedError(JeepdollyError):
     """
 
     def __init__(self, what: str, state: str, wanted: str) -> None:
+        """Name the record, the state it is in, and what was refused."""
         self.what = what
         self.state = state
         self.wanted = wanted

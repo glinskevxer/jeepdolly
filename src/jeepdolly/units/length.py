@@ -18,6 +18,7 @@ from jeepdolly.errors import BadValueError
 
 __all__ = [
     "MAX_INCHES",
+    "NO_LENGTH",
     "Inches",
     "feet",
     "feet_inches",

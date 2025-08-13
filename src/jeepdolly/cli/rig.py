@@ -98,7 +98,7 @@ def show(session: Session, reference: str) -> None:
 @click.option("--carrier", default="", help="Only this carrier's rigs.")
 @click.pass_obj
 def listing(session: Session, carrier: str) -> None:
-    """List rigs."""
+    """List rigs, filtered by carrier."""
     with office_of(session) as office:
         found = office.rigs.for_carrier(carrier) if carrier else office.rigs.all()
     if not found:

@@ -55,6 +55,7 @@ class LoadStore:
     """Every load the office has described."""
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection this store reads and writes."""
         self.connection = connection
 
     def add(self, load: Load) -> int:

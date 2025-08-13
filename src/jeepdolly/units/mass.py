@@ -17,6 +17,7 @@ from jeepdolly.errors import BadValueError
 
 __all__ = [
     "MAX_POUNDS",
+    "NO_WEIGHT",
     "POUNDS_PER_TON",
     "Pounds",
     "format_weight",

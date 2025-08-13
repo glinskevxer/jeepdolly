@@ -56,6 +56,7 @@ class FiledApplication:
     __slots__ = ("application", "key", "load_id")
 
     def __init__(self, key: int, application: Application, load_id: int) -> None:
+        """Hold one application with the keys the office filed it under."""
         self.key = key
         self.application = application
         self.load_id = load_id
@@ -82,6 +83,7 @@ class ApplicationStore:
     )
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection and the load store beside it."""
         self.connection = connection
         self.loads = LoadStore(connection)
 

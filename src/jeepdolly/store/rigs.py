@@ -59,6 +59,7 @@ class RigStore:
     """Every rig the office has recorded."""
 
     def __init__(self, connection: sqlite3.Connection) -> None:
+        """Hold the open connection this store reads and writes."""
         self.connection = connection
 
     def next_reference(self) -> Serial:
