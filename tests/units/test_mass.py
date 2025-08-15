@@ -18,7 +18,7 @@ def test_pounds_keeps_the_number():
     assert int(pounds(80000)) == 80000
 
 
-def test_pounds_allows_zero():
+def test_pounds_allows_a_weight_of_zero():
     assert int(pounds(0)) == 0
 
 
@@ -26,7 +26,7 @@ def test_pounds_allows_the_ceiling():
     assert int(pounds(MAX_POUNDS)) == MAX_POUNDS
 
 
-def test_pounds_refuses_negative():
+def test_pounds_refuses_a_negative_weight():
     with pytest.raises(BadValueError):
         pounds(-1)
 
@@ -59,7 +59,7 @@ def test_tons_rounds_to_the_nearest_pound():
     assert int(tons(0.00075)) == 2
 
 
-def test_tons_refuses_text():
+def test_tons_refuses_text_instead_of_a_number():
     with pytest.raises(BadValueError):
         tons("40")  # type: ignore[arg-type]
 
@@ -110,7 +110,7 @@ def test_format_weight_of_zero():
     assert format_weight(pounds(0)) == "0 lb"
 
 
-def test_to_tons_divides():
+def test_to_tons_divides_by_two_thousand():
     assert to_tons(pounds(81000)) == pytest.approx(40.5)
 
 

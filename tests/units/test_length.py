@@ -17,7 +17,7 @@ def test_inches_keeps_the_number():
     assert int(inches(162)) == 162
 
 
-def test_inches_allows_zero():
+def test_inches_allows_a_length_of_zero():
     assert int(inches(0)) == 0
 
 
@@ -25,7 +25,7 @@ def test_inches_allows_the_ceiling():
     assert int(inches(MAX_INCHES)) == MAX_INCHES
 
 
-def test_inches_refuses_negative():
+def test_inches_refuses_a_negative_length():
     with pytest.raises(BadValueError):
         inches(-1)
 

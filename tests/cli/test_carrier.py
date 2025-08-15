@@ -25,7 +25,7 @@ def test_add_puts_a_carrier_on_file(run):
     assert "VANCE" in result.output
 
 
-def test_add_is_kept(run):
+def test_an_added_carrier_is_kept_on_file(run):
     add_vance(run)
     assert "carriers 1" in run("status").output
 

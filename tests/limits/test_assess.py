@@ -154,7 +154,7 @@ def test_an_empty_assessment_is_clean_and_unblocked():
     assert empty.severity is Severity.NOTE
 
 
-def test_assessment_is_frozen():
+def test_an_assessment_cannot_be_written_to():
     with pytest.raises(AttributeError):
         Assessment(findings=()).findings = ()  # type: ignore[misc]
 

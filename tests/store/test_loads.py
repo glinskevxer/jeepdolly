@@ -36,7 +36,7 @@ def test_add_hands_back_a_key(store):
     assert store.add(a_load()) == 1
 
 
-def test_keys_climb(store):
+def test_load_keys_climb_by_one(store):
     store.add(a_load())
     assert store.add(a_load()) == 2
 
@@ -77,7 +77,7 @@ def test_find_returns_the_load(store):
     assert store.find(key) == a_load()
 
 
-def test_save_overwrites(store):
+def test_save_overwrites_what_was_there(store):
     key = store.add(a_load())
     store.save(key, a_load(description="generator stator"))
     assert store.get(key).description == "generator stator"
@@ -111,7 +111,7 @@ def test_nondivisible_leaves_out_the_divisible(store):
     assert [x.description for x in store.nondivisible()] == ["step-up transformer"]
 
 
-def test_remove_deletes(store):
+def test_remove_takes_the_record_off_file(store):
     key = store.add(a_load())
     store.remove(key)
     assert store.find(key) is None

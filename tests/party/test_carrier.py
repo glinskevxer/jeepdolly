@@ -167,6 +167,6 @@ def test_carriers_with_the_same_parts_are_equal():
     assert a_carrier() == a_carrier()
 
 
-def test_carrier_is_frozen():
+def test_a_carrier_cannot_be_written_to():
     with pytest.raises(AttributeError):
         a_carrier().name = "Other"  # type: ignore[misc]

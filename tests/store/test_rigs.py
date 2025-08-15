@@ -52,7 +52,7 @@ def test_add_files_under_the_next_reference(store):
     assert filed.reference == "R-00001"
 
 
-def test_references_climb(store):
+def test_rig_references_climb_by_one(store):
     store.add("VANCE", a_config(), DAY)
     assert store.add("VANCE", a_config(), DAY).reference == "R-00002"
 

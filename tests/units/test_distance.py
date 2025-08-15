@@ -21,7 +21,7 @@ def test_hundredths_keeps_the_number():
     assert int(hundredths(1234)) == 1234
 
 
-def test_hundredths_allows_zero():
+def test_hundredths_allows_a_distance_of_zero():
     assert int(hundredths(0)) == 0
 
 
@@ -34,7 +34,7 @@ def test_hundredths_refuses_above_the_ceiling():
         hundredths(MAX_HUNDREDTHS + 1)
 
 
-def test_hundredths_refuses_negative():
+def test_hundredths_refuses_a_negative_distance():
     with pytest.raises(BadValueError):
         hundredths(-1)
 
@@ -75,12 +75,12 @@ def test_miles_refuses_a_bool():
         miles(True)
 
 
-def test_miles_refuses_words():
+def test_miles_refuses_a_word_instead_of_a_number():
     with pytest.raises(BadValueError):
         miles("far")
 
 
-def test_miles_refuses_infinity():
+def test_miles_refuses_an_infinite_figure():
     with pytest.raises(BadValueError):
         miles(float("inf"))
 
@@ -149,7 +149,7 @@ def test_whole_miles_of_zero_is_zero():
     assert whole_miles(NO_DISTANCE) == 0
 
 
-def test_add_distance_sums():
+def test_add_distance_sums_its_arguments():
     assert int(add_distance(hundredths(100), hundredths(234))) == 334
 
 

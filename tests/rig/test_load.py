@@ -131,7 +131,7 @@ def test_load_defaults_to_divisible():
     assert load.divisible
 
 
-def test_load_is_frozen():
+def test_a_load_cannot_be_written_to():
     with pytest.raises(AttributeError):
         a_load().width = feet(8)  # type: ignore[misc]
 

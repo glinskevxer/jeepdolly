@@ -13,7 +13,7 @@ from jeepdolly.ids.reference import (
 )
 
 
-def test_code_upper_cases():
+def test_code_upper_cases_what_it_is_given():
     assert code("vance") == "VANCE"
 
 
@@ -33,7 +33,7 @@ def test_code_takes_underscores_as_dashes():
     assert code("vance_haul") == "VANCE-HAUL"
 
 
-def test_code_keeps_digits():
+def test_code_keeps_the_digits_it_is_given():
     assert code("rig12") == "RIG12"
 
 
@@ -59,12 +59,12 @@ def test_code_takes_sixteen_characters():
     assert code("A" * 16) == "A" * 16
 
 
-def test_code_refuses_punctuation():
+def test_code_refuses_a_punctuation_mark():
     with pytest.raises(BadValueError):
         code("vance!")
 
 
-def test_code_refuses_empty():
+def test_code_refuses_an_empty_string():
     with pytest.raises(BadValueError):
         code("")
 
@@ -74,7 +74,7 @@ def test_code_refuses_a_number():
         code(12)  # type: ignore[arg-type]
 
 
-def test_code_is_idempotent():
+def test_code_of_its_own_output_is_the_same():
     once = code("vance heavy haul")
     assert code(once) == once
 
@@ -127,11 +127,11 @@ def test_serial_kind_refuses_a_wide_width():
         SerialKind("P", 10)
 
 
-def test_serial_upper_cases():
+def test_serial_upper_cases_what_it_is_given():
     assert serial("p-000123") == "P-000123"
 
 
-def test_serial_trims():
+def test_serial_trims_the_space_around_it():
     assert serial("  P-000123 ") == "P-000123"
 
 

@@ -101,7 +101,7 @@ def test_writing_hands_back_the_office():
         assert inner is office
 
 
-def test_commit_writes_out(tmp_path):
+def test_commit_writes_the_record_out(tmp_path):
     path = tmp_path / "office.sqlite3"
     create(path)
     with opened_office(path) as office:
@@ -111,7 +111,7 @@ def test_commit_writes_out(tmp_path):
         assert "VANCE" in office.carriers
 
 
-def test_rollback_throws_away(tmp_path):
+def test_rollback_throws_the_record_away(tmp_path):
     path = tmp_path / "office.sqlite3"
     create(path)
     with opened_office(path) as office:

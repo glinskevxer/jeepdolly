@@ -41,7 +41,7 @@ def test_banner_widens_for_a_long_title():
     assert len(lines[1]) == len(lines[0])
 
 
-def test_banner_collapses_whitespace():
+def test_banner_collapses_whitespace_in_the_title():
     assert banner("a   b", width=4)[0] == "a b"
 
 

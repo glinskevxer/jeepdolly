@@ -34,7 +34,7 @@ def test_migrate_reaches_the_latest_version(office):
     assert version(office) == LATEST
 
 
-def test_migrate_is_idempotent(office):
+def test_migrating_twice_changes_nothing(office):
     assert migrate(office) == []
 
 
@@ -69,11 +69,11 @@ def test_the_load_table_is_there(office):
     assert "load_item" in table_names(office)
 
 
-def test_the_carrier_columns(office):
+def test_the_carrier_table_has_five_columns(office):
     assert column_names(office, "carrier") == ["code", "name", "usdot", "home_state", "active"]
 
 
-def test_the_axle_columns(office):
+def test_the_axle_table_has_eight_columns(office):
     assert column_names(office, "rig_axle") == [
         "rig_reference",
         "position",

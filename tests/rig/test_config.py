@@ -172,7 +172,7 @@ def test_run_orders_by_its_first_axle():
     assert sorted([b, a])[0] is a
 
 
-def test_configuration_is_frozen(five_axle):
+def test_a_configuration_cannot_be_written_to(five_axle):
     with pytest.raises(AttributeError):
         five_axle.axles = ()
 

@@ -145,7 +145,7 @@ def test_a_legal_load_gets_neither_size_line():
     assert not made.has("HEIGHT")
 
 
-def test_escorts_are_billed():
+def test_the_escorts_are_billed_by_the_head():
     made = price(an_application(), pounds(0), miles("42.00"), escorts=2)
     assert int(made.line("ESCORT").amount) == 2 * 1500
 

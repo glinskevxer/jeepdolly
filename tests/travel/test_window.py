@@ -88,7 +88,7 @@ def test_subtract_a_hole_that_covers_everything_leaves_nothing():
     assert subtract(Window(360, 1080), (Window(0, 1439),)) == ()
 
 
-def test_subtract_two_holes():
+def test_subtract_cuts_two_holes_out():
     got = subtract(Window(0, 1439), (Window(300, 400), Window(600, 700)))
     assert got == (Window(0, 300), Window(400, 600), Window(700, 1439))
 

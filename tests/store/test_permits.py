@@ -96,7 +96,7 @@ def test_the_first_number_is_one(store):
     assert store.next_number() == "P-000001"
 
 
-def test_numbers_climb(store):
+def test_permit_numbers_climb_by_one(store):
     write_one(store)
     assert store.next_number() == "P-000002"
 

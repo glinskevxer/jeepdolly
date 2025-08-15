@@ -103,7 +103,7 @@ def test_the_first_structure_reference_is_one(store):
     assert store.next_structure() == "STR-00001"
 
 
-def test_structure_references_climb(store):
+def test_structure_references_climb_by_one(store):
     store.add_structure(
         Structure(
             reference=store.next_structure(),

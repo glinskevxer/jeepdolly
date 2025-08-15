@@ -65,6 +65,6 @@ def test_nodes_with_the_same_parts_are_equal():
     assert a_node() == a_node()
 
 
-def test_node_is_frozen():
+def test_a_node_cannot_be_written_to():
     with pytest.raises(AttributeError):
         a_node().name = "Other"  # type: ignore[misc]

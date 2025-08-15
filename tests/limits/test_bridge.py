@@ -87,7 +87,7 @@ def test_formula_matches_the_published_table(span, axles, want):
     assert int(formula_weight(feet(span), axles)) == want
 
 
-def test_formula_rounds_the_span_up_before_it_works():
+def test_the_formula_rounds_the_span_up_first():
     assert formula_weight(inches(4 * 12 + 1), 2) == formula_weight(feet(5), 2)
 
 

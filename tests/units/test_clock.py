@@ -89,7 +89,7 @@ def test_parse_clock_refuses_a_number():
         parse_clock(730)  # type: ignore[arg-type]
 
 
-def test_format_clock_pads():
+def test_format_clock_pads_the_hour():
     assert format_clock(450) == "07:30"
 
 
@@ -114,7 +114,7 @@ def test_window_does_not_cover_before_the_start():
     assert not Window(360, 1080).covers(359)
 
 
-def test_window_length():
+def test_a_window_counts_its_own_minutes():
     assert Window(360, 1080).minutes == 720
 
 
@@ -135,7 +135,7 @@ def test_wrapping_window_covers_both_sides_of_midnight():
     assert not w.covers(1259)
 
 
-def test_wrapping_window_length():
+def test_a_wrapping_window_counts_its_minutes():
     assert Window(1260, 360).minutes == 540
 
 
@@ -214,7 +214,7 @@ def test_day_span_iterates_every_day():
     assert [d.day for d in span] == [1, 2, 3, 4]
 
 
-def test_day_span_overlap():
+def test_day_spans_overlap_when_they_share_a_day():
     a = DaySpan(dt.date(2025, 3, 1), dt.date(2025, 3, 10))
     b = DaySpan(dt.date(2025, 3, 10), dt.date(2025, 3, 20))
     c = DaySpan(dt.date(2025, 3, 11), dt.date(2025, 3, 20))

@@ -205,14 +205,14 @@ def test_a_superload_is_referred_and_not_issued(desk):
         desk.issue(filed.key, DECIDED)
 
 
-def test_voiding_is_kept(desk):
+def test_voiding_is_kept_in_the_file(desk):
     filed = desk.file(an_application())
     permit = desk.issue(filed.key, DECIDED)
     desk.void(str(permit.number), "carrier cancelled", DECIDED)
     assert not desk.office.permits.get(str(permit.number)).live
 
 
-def test_extending_is_kept(desk):
+def test_extending_is_kept_in_the_file(desk):
     filed = desk.file(an_application())
     permit = desk.issue(filed.key, DECIDED)
     desk.extend(str(permit.number), dt.date(2025, 6, 22))

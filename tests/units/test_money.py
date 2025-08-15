@@ -19,7 +19,7 @@ def test_cents_keeps_the_number():
     assert int(cents(12500)) == 12500
 
 
-def test_cents_allows_negative():
+def test_cents_allows_a_negative_amount():
     assert int(cents(-4000)) == -4000
 
 
@@ -33,7 +33,7 @@ def test_cents_refuses_a_bool():
         cents(True)
 
 
-def test_zero_is_zero():
+def test_the_zero_amount_is_no_cents():
     assert int(ZERO) == 0
 
 
@@ -62,12 +62,12 @@ def test_dollars_refuses_a_bool():
         dollars(True)
 
 
-def test_dollars_refuses_words():
+def test_dollars_refuses_a_word_for_an_amount():
     with pytest.raises(BadValueError):
         dollars("free")
 
 
-def test_dollars_refuses_infinity():
+def test_dollars_refuses_an_infinite_amount():
     with pytest.raises(BadValueError):
         dollars(float("inf"))
 
@@ -140,7 +140,7 @@ def test_total_of_an_empty_iterable_is_zero():
     assert int(total([])) == 0
 
 
-def test_at_rate_multiplies():
+def test_at_rate_multiplies_rate_by_quantity():
     assert int(at_rate(cents(6), 37)) == 222
 
 

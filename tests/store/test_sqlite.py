@@ -102,11 +102,11 @@ def test_writing_rolls_back_on_an_error(tmp_path):
         assert scalar(connection, "SELECT count(*) FROM thing") == 0
 
 
-def test_rows_returns_everything(book):
+def test_rows_returns_every_matching_row(book):
     assert len(rows(book, "SELECT * FROM thing")) == 2
 
 
-def test_rows_takes_parameters(book):
+def test_rows_takes_a_parameter_tuple(book):
     assert len(rows(book, "SELECT * FROM thing WHERE code = ?", ("A",))) == 1
 
 

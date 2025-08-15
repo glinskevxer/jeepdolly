@@ -80,7 +80,7 @@ def test_between_finds_nothing_where_there_is_no_link(small_map):
     assert small_map.between("JCT-A", "JCT-D") == ()
 
 
-def test_between_works_backwards_on_a_two_way(small_map):
+def test_between_reads_a_two_way_backwards(small_map):
     assert [s.code for s in small_map.between("JCT-B", "JCT-A")] == ["SEG-AB"]
 
 

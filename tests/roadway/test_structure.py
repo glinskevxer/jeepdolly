@@ -83,7 +83,7 @@ def test_a_tunnel_is_an_overhead():
     assert made.limits_height
 
 
-def test_a_culvert_carries():
+def test_a_culvert_carries_the_rig_over():
     assert StructureKind.CULVERT in CARRYING_KINDS
 
 

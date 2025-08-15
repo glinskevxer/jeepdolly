@@ -149,7 +149,7 @@ def test_largest_remainder_refuses_when_nobody_can_take_the_leftover():
         largest_remainder(3, [Fraction(1, 2), Fraction(1, 2)], eligible=[False, False])
 
 
-def test_splits_are_reproducible():
+def test_the_same_split_twice_gives_one_answer():
     first = divide_by_weight(1234, [17, 13, 11, 7])
     for _ in range(5):
         assert divide_by_weight(1234, [17, 13, 11, 7]) == first

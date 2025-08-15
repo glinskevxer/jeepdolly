@@ -35,7 +35,7 @@ def test_the_first_sequence_is_one(store):
     assert store.next_sequence("VANCE") == 1
 
 
-def test_sequences_climb(store):
+def test_account_sequences_climb_by_one(store):
     store.deposit("VANCE", DAY, cents(100000))
     assert store.next_sequence("VANCE") == 2
 

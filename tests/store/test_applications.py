@@ -202,7 +202,7 @@ def test_filed_applications_compare_on_key_and_application(store):
     assert first != "not an application"
 
 
-def test_filed_applications_hash(store):
+def test_two_equal_filed_applications_hash_alike(store):
     first = store.add(an_application())
     assert len({first, store.get(first.key)}) == 1
 

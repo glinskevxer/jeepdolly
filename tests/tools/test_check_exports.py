@@ -12,7 +12,7 @@ def test_the_package_has_no_problems():
     assert problems() == []
 
 
-def test_main_passes():
+def test_main_passes_over_the_package():
     assert main() == 0
 
 

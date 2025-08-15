@@ -60,7 +60,7 @@ def test_note_refuses_an_excess():
         a_finding(severity=Severity.NOTE)
 
 
-def test_refuse_is_blocking():
+def test_a_refusal_severity_blocks_the_permit():
     assert a_finding(severity=Severity.REFUSE, excess=pounds(0)).blocking
 
 
@@ -135,6 +135,6 @@ def test_findings_with_the_same_parts_are_equal():
     assert a_finding() == a_finding()
 
 
-def test_finding_is_frozen():
+def test_a_finding_cannot_be_written_to():
     with pytest.raises(AttributeError):
         a_finding().rule = "other"  # type: ignore[misc]

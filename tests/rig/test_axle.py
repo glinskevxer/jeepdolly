@@ -116,11 +116,11 @@ def test_axles_with_the_same_parts_are_equal():
     assert an_axle() == an_axle()
 
 
-def test_axles_hash():
+def test_two_equal_axles_hash_the_same():
     assert len({an_axle(), an_axle()}) == 1
 
 
-def test_axle_is_frozen():
+def test_an_axle_cannot_be_written_to():
     axle = an_axle()
     with pytest.raises(AttributeError):
         axle.tires = 8  # type: ignore[misc]

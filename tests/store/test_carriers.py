@@ -72,7 +72,7 @@ def test_add_refuses_a_usdot_that_is_taken(store):
         store.add(a_carrier(code="OTHER", name="Other Haul"))
 
 
-def test_save_overwrites(store):
+def test_save_overwrites_what_was_there(store):
     store.add(a_carrier())
     store.save(a_carrier(name="Vance Transport"))
     assert store.get("VANCE").name == "Vance Transport"
@@ -96,7 +96,7 @@ def test_save_keeps_its_own_usdot(store):
     assert store.get("VANCE").usdot == 1184062
 
 
-def test_save_can_retire(store):
+def test_save_writes_back_a_retired_carrier(store):
     store.add(a_carrier())
     store.save(a_carrier().retired())
     assert not store.get("VANCE").active
@@ -135,7 +135,7 @@ def test_search_matches_the_code(store):
     assert [c.code for c in store.search("van")] == ["VANCE"]
 
 
-def test_search_is_case_insensitive(store):
+def test_search_ignores_the_case_it_is_given(store):
     store.add(a_carrier())
     assert store.search("VANCE HEAVY")
 
@@ -145,7 +145,7 @@ def test_search_finds_nothing_when_nothing_matches(store):
     assert store.search("zzz") == []
 
 
-def test_remove_deletes(store):
+def test_remove_takes_the_record_off_file(store):
     store.add(a_carrier())
     store.remove("VANCE")
     assert store.find("VANCE") is None
