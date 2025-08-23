@@ -1,0 +1,136 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  lint:
+    name: lint and self checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install
+        run: |
+          python -m pip install -c constraints.txt ruff mypy pytest click
+          python -m pip install -e . -c constraints.txt
+      - name: ruff
+        run: python -m ruff check .
+      - name: ruff format
+        run: python -m ruff format --check .
+      - name: mypy
+        run: python -m mypy src tests
+      - name: self checks
+        run: |
+          status=0
+          for check in src/jeepdolly/tools/check_*.py; do
+            echo "--- $check"
+            python "$check" || status=1
+          done
+          exit $status
+
+  tests:
+    name: tests on ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: install
+        run: |
+          python -m pip install -c constraints.txt pytest pytest-cov
+          python -m pip install -e . -c constraints.txt
+      - name: pytest
+        run: python -m pytest -q
+
+  coverage:
+    name: coverage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install
+        run: |
+          python -m pip install -c constraints.txt pytest coverage
+          python -m pip install -e . -c constraints.txt
+      - name: run the suite under coverage
+        run: python -m coverage run --branch --source=src/jeepdolly -m pytest -q
+      - name: gate
+        run: python src/jeepdolly/tools/coverage_gate.py --floor 96 --file-floor 85 --worst 5
+
+  installed:
+    name: installed package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: build a wheel
+        run: |
+          python -m pip install -c constraints.txt hatchling
+          python -m pip wheel . --no-deps -w dist -c constraints.txt
+      - name: install it somewhere clean
+        run: |
+          python -m venv /tmp/clean
+          /tmp/clean/bin/python -m pip install -c constraints.txt dist/jeepdolly-*.whl
+      - name: the console script runs
+        run: |
+          /tmp/clean/bin/jeepdolly --version
+          /tmp/clean/bin/jeepdolly --help
+
+  package:
+    name: package metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: build from a clean export
+        run: |
+          python -m pip install -c constraints.txt hatchling
+          mkdir -p /tmp/export
+          git archive HEAD | tar -x -C /tmp/export
+          cd /tmp/export
+          python -m pip wheel . --no-deps -w /tmp/dist -c constraints.txt
+      - name: the wheel holds the package and nothing else
+        run: |
+          python - <<'PY'
+          import pathlib, zipfile
+          wheel = next(pathlib.Path("/tmp/dist").glob("jeepdolly-*.whl"))
+          names = zipfile.ZipFile(wheel).namelist()
+          assert any(n.startswith("jeepdolly/") for n in names), names[:10]
+          assert not any(n.startswith("tests/") for n in names), "tests are in the wheel"
+          assert not any(n.startswith("src/") for n in names), "src layout leaked in"
+          print(f"{wheel.name}: {len(names)} entries")
+          PY
+
+  walk:
+    name: a season at the counter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install the package
+        run: python -m pip install . -c constraints.txt
+      - name: walk
+        run: bash scripts/walk.sh
