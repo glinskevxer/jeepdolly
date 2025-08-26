@@ -14,7 +14,18 @@ __all__ = [
     "JeepdollyError",
     "NotAllowedError",
     "NotFoundError",
+    "article",
 ]
+
+
+def article(word: str) -> str:
+    """The indefinite article a word takes.
+
+    Vowel sounds only, by first letter. Nothing in this package's vocabulary is
+    one of the awkward ones, and a table of exceptions for a message nobody
+    parses is not worth carrying.
+    """
+    return "an" if word[:1].lower() in "aeiou" else "a"
 
 
 class JeepdollyError(Exception):
@@ -70,4 +81,4 @@ class NotAllowedError(JeepdollyError):
         self.what = what
         self.state = state
         self.wanted = wanted
-        super().__init__(f"cannot {wanted} a {what} that is {state}")
+        super().__init__(f"cannot {wanted} {article(what)} {what} that is {state}")

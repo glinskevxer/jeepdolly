@@ -205,6 +205,53 @@ def test_a_superload_is_referred_and_not_issued(desk):
         desk.issue(filed.key, DECIDED)
 
 
+def test_voiding_refunds_a_charged_permit(desk):
+    from jeepdolly.units.money import cents
+
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
+    desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
+    before = desk.office.accounts.balance("VANCE")
+    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    after = desk.office.accounts.balance("VANCE")
+    assert int(after) - int(before) == int(permit.fee)
+
+
+def test_voiding_an_uncharged_permit_refunds_nothing(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    assert int(desk.office.accounts.balance("VANCE")) == 0
+
+
+def test_a_refund_is_posted_once_even_if_asked_twice(desk):
+    from jeepdolly.errors import NotAllowedError
+    from jeepdolly.units.money import cents
+
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
+    desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
+    desk.void(str(permit.number), "cancelled", DECIDED)
+    with pytest.raises(NotAllowedError):
+        desk.void(str(permit.number), "cancelled again", DECIDED)
+    refunds = [e for e in desk.office.accounts.entries("VANCE") if str(e.kind) == "refund"]
+    assert len(refunds) == 1
+
+
+def test_voiding_may_be_told_not_to_refund(desk):
+    from jeepdolly.units.money import cents
+
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
+    desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
+    before = desk.office.accounts.balance("VANCE")
+    desk.void(str(permit.number), "cancelled", DECIDED, refund=False)
+    assert desk.office.accounts.balance("VANCE") == before
+
+
 def test_voiding_is_kept_in_the_file(desk):
     filed = desk.file(an_application())
     permit = desk.issue(filed.key, DECIDED)

@@ -155,11 +155,14 @@ def show(session: Session, number: str) -> None:
 @click.argument("number")
 @click.option("--reason", required=True, help="Why the permit is being voided.")
 @click.option("--on", default="", help="Day the void is recorded.")
+@click.option("--no-refund", is_flag=True, help="Leave the account alone.")
 @click.pass_obj
-def void(session: Session, number: str, reason: str, on: str) -> None:
-    """Void an issued permit."""
+def void(session: Session, number: str, reason: str, on: str, no_refund: bool) -> None:
+    """Void an issued permit and refund what was charged for it."""
     with office_of(session) as office, office.writing():
-        made = Desk(office=office).void(number, reason, parse_day(on) if on else _today())
+        made = Desk(office=office).void(
+            number, reason, parse_day(on) if on else _today(), refund=not no_refund
+        )
     click.echo(f"{made.number} void: {made.reason}")
 
 

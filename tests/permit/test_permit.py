@@ -216,3 +216,12 @@ def test_a_permit_refuses_a_decision_that_is_not_one():
 
 def test_a_permit_prints_its_state_and_span():
     assert str(a_permit()) == "P-000123 VANCE active 2025-06-18..2025-06-20"
+
+
+def test_the_refusal_message_takes_the_right_article():
+    from jeepdolly.errors import NotAllowedError, article
+
+    assert article("application") == "an"
+    assert article("permit") == "a"
+    assert "an application" in str(NotAllowedError("application", "refuse", "issue"))
+    assert "a permit" in str(NotAllowedError("permit", "void", "extend"))

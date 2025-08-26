@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 
 from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.almanac.season import SeasonBook
+from jeepdolly.billing.account import EntryKind
 from jeepdolly.billing.tariff import SCHEDULE, Tariff
 from jeepdolly.errors import NotAllowedError, NotFoundError
 from jeepdolly.limits.assess import assess
@@ -148,10 +149,35 @@ class Desk:
         permit = issue(self.office.permits.next_number(), made, on)
         return self.office.permits.add(permit, seen.filed.key)
 
-    def void(self, number: str, reason: str, on: Day) -> Permit:
-        """Void an issued permit."""
+    def void(self, number: str, reason: str, on: Day, refund: bool = True) -> Permit:
+        """Void an issued permit and put the fee back on the account.
+
+        The refund is posted only if the fee was actually charged. A permit
+        issued and never charged has nothing to give back, and posting a refund
+        for it would hand the carrier money the office never took, which is a
+        mistake the void report would not show.
+        """
         permit = self.office.permits.get(number)
-        return self.office.permits.save_state(permit.voided(reason, on))
+        voided = self.office.permits.save_state(permit.voided(reason, on))
+        if refund and self._was_charged(voided):
+            self.office.accounts.post(
+                carrier=voided.carrier,
+                day=on,
+                kind=EntryKind.REFUND,
+                amount=voided.fee,
+                reference=str(voided.number),
+                note=f"void: {voided.reason}",
+            )
+        return voided
+
+    def _was_charged(self, permit: Permit) -> bool:
+        """Has this permit's fee already been charged to its carrier."""
+        charges = self.office.accounts.account(permit.carrier).of_kind(EntryKind.CHARGE)
+        refunds = self.office.accounts.account(permit.carrier).of_kind(EntryKind.REFUND)
+        number = str(permit.number)
+        charged = any(entry.reference == number for entry in charges)
+        already = any(entry.reference == number for entry in refunds)
+        return charged and not already
 
     def extend(self, number: str, last: Day) -> Permit:
         """Push an issued permit's last day back a few days."""

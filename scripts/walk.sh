@@ -39,7 +39,7 @@ run road segment --code SEG-CD --start JCT-C --end JCT-D --route US-12 --miles 6
 run road segment --code SEG-BD --start JCT-B --end JCT-D --route SR-200 --miles 31.00 --class state
 run road structure --segment SEG-BC --name "Sixmile Creek" --milepost 4.20 --rating 64,000
 run road structure --segment SEG-BC --name "MRL overhead" --kind overhead --milepost 1.10 --clearance "15'2"
-run road structure --segment SEG-BD --name "Clark Fork bridge" --milepost 18.40 --rating 96,000
+run road structure --segment SEG-BD --name "Clark Fork bridge" --milepost 18.40 --rating 150,000
 run road map
 
 echo "== rigs =="
