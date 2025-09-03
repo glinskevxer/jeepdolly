@@ -1,0 +1,189 @@
+# jeepdolly schema
+
+Generated from a freshly migrated file by `tools/schema_dump.py`.
+Run that with `--write` after adding a migration.
+
+Schema version 7.
+
+## account_entry
+
+| column | type | constraints |
+| --- | --- | --- |
+| carrier_code | TEXT | primary key, not null |
+| sequence | INTEGER | primary key, not null |
+| day | TEXT | not null |
+| kind | TEXT | not null |
+| amount | INTEGER | not null |
+| reference | TEXT | not null, default '' |
+| note | TEXT | not null, default '' |
+
+Indexes: `account_by_day`
+
+## account_terms
+
+| column | type | constraints |
+| --- | --- | --- |
+| carrier_code | TEXT | primary key |
+| floor | INTEGER | not null |
+
+## application
+
+| column | type | constraints |
+| --- | --- | --- |
+| id | INTEGER | primary key |
+| carrier_code | TEXT | not null |
+| rig_reference | TEXT | not null |
+| load_id | INTEGER | not null |
+| kind | TEXT | not null |
+| first_day | TEXT | not null |
+| last_day | TEXT | not null |
+| filed_on | TEXT | not null |
+| origin | TEXT |  |
+| destination | TEXT |  |
+
+Indexes: `application_by_carrier`, `application_by_day`
+
+## carrier
+
+| column | type | constraints |
+| --- | --- | --- |
+| code | TEXT | primary key |
+| name | TEXT | not null |
+| usdot | INTEGER | not null |
+| home_state | TEXT | not null |
+| active | INTEGER | not null, default 1 |
+
+Indexes: `carrier_by_name`
+
+## load_item
+
+| column | type | constraints |
+| --- | --- | --- |
+| id | INTEGER | primary key |
+| description | TEXT | not null |
+| weight | INTEGER | not null |
+| width | INTEGER | not null |
+| height | INTEGER | not null |
+| length | INTEGER | not null |
+| front_overhang | INTEGER | not null, default 0 |
+| rear_overhang | INTEGER | not null, default 0 |
+| divisible | INTEGER | not null, default 1 |
+| reason | TEXT | not null, default '' |
+
+## node
+
+| column | type | constraints |
+| --- | --- | --- |
+| code | TEXT | primary key |
+| name | TEXT | not null |
+| county | TEXT | not null |
+
+## permit
+
+| column | type | constraints |
+| --- | --- | --- |
+| number | TEXT | primary key |
+| application_id | INTEGER | not null |
+| outcome | TEXT | not null |
+| decided_on | TEXT | not null |
+| issued_on | TEXT | not null |
+| first_day | TEXT | not null |
+| last_day | TEXT | not null |
+| state | TEXT | not null |
+| reason | TEXT | not null, default '' |
+| replaced_by | TEXT |  |
+| distance | INTEGER |  |
+
+Indexes: `permit_by_application`, `permit_by_day`
+
+## permit_escort
+
+| column | type | constraints |
+| --- | --- | --- |
+| permit_number | TEXT | primary key, not null |
+| position | INTEGER | primary key, not null |
+| role | TEXT | not null |
+| reasons | TEXT | not null |
+
+## permit_fee_line
+
+| column | type | constraints |
+| --- | --- | --- |
+| permit_number | TEXT | primary key, not null |
+| position | INTEGER | primary key, not null |
+| code | TEXT | not null |
+| detail | TEXT | not null |
+| amount | INTEGER | not null |
+
+## permit_finding
+
+| column | type | constraints |
+| --- | --- | --- |
+| permit_number | TEXT | primary key, not null |
+| position | INTEGER | primary key, not null |
+| rule | TEXT | not null |
+| subject | TEXT | not null |
+| severity | TEXT | not null |
+| detail | TEXT | not null |
+| excess | INTEGER | not null, default 0 |
+
+## rig
+
+| column | type | constraints |
+| --- | --- | --- |
+| reference | TEXT | primary key |
+| carrier_code | TEXT | not null |
+| name | TEXT | not null |
+| recorded_on | TEXT | not null |
+
+Indexes: `rig_by_carrier`
+
+## rig_axle
+
+| column | type | constraints |
+| --- | --- | --- |
+| rig_reference | TEXT | primary key, not null |
+| position | INTEGER | primary key, not null |
+| weight | INTEGER | not null |
+| tires | INTEGER | not null |
+| tire_width | INTEGER | not null |
+| liftable | INTEGER | not null, default 0 |
+| steering | INTEGER | not null, default 0 |
+| spacing_ahead | INTEGER | not null, default 0 |
+
+## schema_change
+
+| column | type | constraints |
+| --- | --- | --- |
+| number | INTEGER | primary key |
+| name | TEXT | not null |
+| ran_at | TEXT | not null, default datetime('now') |
+
+## segment
+
+| column | type | constraints |
+| --- | --- | --- |
+| code | TEXT | primary key |
+| start_node | TEXT | not null |
+| end_node | TEXT | not null |
+| route | TEXT | not null |
+| distance | INTEGER | not null |
+| road_class | TEXT | not null |
+| one_way | INTEGER | not null, default 0 |
+| posted_gross | INTEGER |  |
+
+Indexes: `segment_by_end`, `segment_by_start`
+
+## structure
+
+| column | type | constraints |
+| --- | --- | --- |
+| reference | TEXT | primary key |
+| segment_code | TEXT | not null |
+| name | TEXT | not null |
+| kind | TEXT | not null |
+| milepost | INTEGER | not null |
+| clearance | INTEGER |  |
+| rating | INTEGER |  |
+
+Indexes: `structure_by_segment`

@@ -9,6 +9,10 @@ def test_the_command_reference_is_one_of_them():
     assert "commands" in WRITERS
 
 
+def test_the_schema_document_is_one_of_them():
+    assert "schema" in WRITERS
+
+
 def test_every_writer_is_callable():
     assert all(callable(writer) for writer in WRITERS.values())
 
