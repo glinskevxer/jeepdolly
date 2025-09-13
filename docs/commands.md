@@ -111,9 +111,21 @@ Show one carrier.
 | --- | --- | --- |
 | `code` | argument |  |
 
+### `jeepdolly check`
+
+Read the whole file back and say whether it holds together.
+
 ### `jeepdolly init`
 
 Make a new office file.
+
+### `jeepdolly load`
+
+Bulk load carriers and the map from a folder of csv files.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `folder` | argument |  |
 
 ### `jeepdolly permit`
 

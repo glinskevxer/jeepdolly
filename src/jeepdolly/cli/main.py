@@ -14,6 +14,7 @@ from jeepdolly.cli.permit import permit
 from jeepdolly.cli.report import report
 from jeepdolly.cli.rig import rig
 from jeepdolly.cli.road import road
+from jeepdolly.importer.csv_in import load_all
 from jeepdolly.store.migrations import LATEST
 from jeepdolly.store.office import create, opened_office
 
@@ -45,6 +46,47 @@ def init(session: Session) -> None:
     with reporting(session):
         create(session.path)
     click.echo(f"created {session.path} at schema {LATEST}")
+
+
+@main.command("load")
+@click.argument("folder", type=click.Path(exists=True, file_okay=False))
+@click.pass_obj
+def load(session: Session, folder: str) -> None:
+    """Bulk load carriers and the map from a folder of csv files."""
+    with reporting(session), opened_office(session.path) as office:
+        got = load_all(office, Path(folder))
+    click.echo(f"loaded {got}")
+
+
+@main.command("check")
+@click.pass_obj
+def check(session: Session) -> None:
+    """Read the whole file back and say whether it holds together.
+
+    Everything the office stores is validated on the way out, so reading it all
+    is the check. A file that has been edited by hand, or that came off a backup
+    half written, fails here rather than at the counter.
+    """
+    with reporting(session), opened_office(session.path) as office:
+        network = office.roadway.network()
+        counts = (
+            len(office.carriers.all()),
+            len(office.rigs.all()),
+            len(office.loads.all()),
+            len(office.applications.all()),
+            len(office.permits.all()),
+        )
+        click.echo(f"schema {office.version} of {LATEST}")
+        click.echo(f"map {'joined up' if network.connected else 'not joined up'}")
+        click.echo(
+            "read back {} carriers, {} rigs, {} loads, {} applications, {} permits".format(
+                *counts
+            )
+        )
+        for carrier in office.carriers.all():
+            office.accounts.account(str(carrier.code))
+        click.echo("every account balances")
+    click.echo("check: clean")
 
 
 @main.command("status")
