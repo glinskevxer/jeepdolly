@@ -43,6 +43,7 @@ LAYERS: dict[str, int] = {
     "jeepdolly.permit.permit": 11,
     "jeepdolly.store": 12,
     "jeepdolly.permit.desk": 13,
+    "jeepdolly.invariants": 14,
     "jeepdolly.report": 14,
     "jeepdolly.importer": 14,
     "jeepdolly.cli": 15,
