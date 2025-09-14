@@ -11,13 +11,14 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 
-from jeepdolly.tools import build_docs, schema_dump
+from jeepdolly.tools import build_docs, build_glossary, schema_dump
 
 __all__ = ["WRITERS", "main"]
 
 #: Every generated document, by the name the build reports.
 WRITERS: dict[str, Callable[[list[str]], int]] = {
     "commands": build_docs.main,
+    "glossary": build_glossary.main,
     "schema": schema_dump.main,
 }
 
