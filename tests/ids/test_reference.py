@@ -4,6 +4,7 @@ from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import (
     KINDS,
     PERMIT,
+    REVIEW,
     RIG,
     STRUCTURE,
     SerialKind,
@@ -160,5 +161,13 @@ def test_structure_prefix_is_three_letters():
 
 
 def test_kinds_names_every_kind_once():
-    assert set(KINDS) == {"permit", "rig", "structure"}
-    assert len({k.prefix for k in KINDS.values()}) == 3
+    assert set(KINDS) == {"permit", "rig", "structure", "review"}
+    assert len({k.prefix for k in KINDS.values()}) == 4
+
+
+def test_the_review_prefix_is_a_single_letter():
+    assert REVIEW.format(3) == "E-00003"
+
+
+def test_a_review_reference_is_not_a_permit_reference():
+    assert REVIEW.format(3) != PERMIT.format(3)

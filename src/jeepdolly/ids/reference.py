@@ -20,6 +20,7 @@ from jeepdolly.errors import BadValueError
 __all__ = [
     "KINDS",
     "PERMIT",
+    "REVIEW",
     "RIG",
     "STRUCTURE",
     "Code",
@@ -128,4 +129,12 @@ RIG = SerialKind("R", 5)
 #: Bridges, culverts and overhead structures.
 STRUCTURE = SerialKind("STR", 5)
 
-KINDS: dict[str, SerialKind] = {"permit": PERMIT, "rig": RIG, "structure": STRUCTURE}
+#: Engineering reviews of a superload or an over dimension application.
+REVIEW = SerialKind("E", 5)
+
+KINDS: dict[str, SerialKind] = {
+    "permit": PERMIT,
+    "rig": RIG,
+    "structure": STRUCTURE,
+    "review": REVIEW,
+}

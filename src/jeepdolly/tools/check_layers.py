@@ -39,6 +39,7 @@ LAYERS: dict[str, int] = {
     "jeepdolly.permit": 9,
     "jeepdolly.permit.application": 9,
     "jeepdolly.billing": 9,
+    "jeepdolly.permit.review": 10,
     "jeepdolly.permit.decision": 10,
     "jeepdolly.permit.permit": 11,
     "jeepdolly.store": 12,
