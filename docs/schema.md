@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 7.
+Schema version 8.
 
 ## account_entry
 
@@ -126,6 +126,28 @@ Indexes: `permit_by_application`, `permit_by_day`
 | severity | TEXT | not null |
 | detail | TEXT | not null |
 | excess | INTEGER | not null, default 0 |
+
+## review
+
+| column | type | constraints |
+| --- | --- | --- |
+| reference | TEXT | primary key |
+| application_id | INTEGER | not null |
+| opened_on | TEXT | not null |
+| state | TEXT | not null |
+| engineer | TEXT | not null, default '' |
+| decided_on | TEXT |  |
+| note | TEXT | not null, default '' |
+
+Indexes: `review_by_application`, `review_by_state`
+
+## review_condition
+
+| column | type | constraints |
+| --- | --- | --- |
+| review_reference | TEXT | primary key, not null |
+| position | INTEGER | primary key, not null |
+| text | TEXT | not null |
 
 ## rig
 

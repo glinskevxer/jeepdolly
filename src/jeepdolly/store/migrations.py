@@ -286,6 +286,37 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX account_by_day ON account_entry (carrier_code, day)",
         ),
     ),
+    Migration(
+        number=8,
+        name="engineering reviews",
+        statements=(
+            """
+            CREATE TABLE review (
+                reference       TEXT PRIMARY KEY,
+                application_id  INTEGER NOT NULL REFERENCES application (id),
+                opened_on       TEXT NOT NULL,
+                state           TEXT NOT NULL
+                                CHECK (state IN ('open', 'approved', 'refused', 'withdrawn')),
+                engineer        TEXT NOT NULL DEFAULT '',
+                decided_on      TEXT,
+                note            TEXT NOT NULL DEFAULT '',
+                CHECK (state <> 'open' OR (decided_on IS NULL AND engineer = '')),
+                CHECK (state = 'open' OR decided_on IS NOT NULL),
+                CHECK (state <> 'refused' OR note <> '')
+            )
+            """,
+            """
+            CREATE TABLE review_condition (
+                review_reference  TEXT NOT NULL REFERENCES review (reference) ON DELETE CASCADE,
+                position          INTEGER NOT NULL,
+                text              TEXT NOT NULL CHECK (text <> ''),
+                PRIMARY KEY (review_reference, position)
+            )
+            """,
+            "CREATE INDEX review_by_application ON review (application_id)",
+            "CREATE INDEX review_by_state ON review (state, opened_on)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
