@@ -12,6 +12,7 @@ from jeepdolly.cli.carrier import carrier
 from jeepdolly.cli.context import DEFAULT_FILE, Session, reporting
 from jeepdolly.cli.permit import permit
 from jeepdolly.cli.report import report
+from jeepdolly.cli.review import review
 from jeepdolly.cli.rig import rig
 from jeepdolly.cli.road import road
 from jeepdolly.importer.csv_in import load_all
@@ -113,3 +114,4 @@ main.add_command(rig)
 main.add_command(permit)
 main.add_command(account)
 main.add_command(report)
+main.add_command(review)

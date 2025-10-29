@@ -28,13 +28,14 @@ from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.almanac.season import SeasonBook
 from jeepdolly.billing.account import EntryKind
 from jeepdolly.billing.tariff import SCHEDULE, Tariff
-from jeepdolly.errors import NotAllowedError, NotFoundError
+from jeepdolly.errors import ConflictError, NotAllowedError, NotFoundError
 from jeepdolly.limits.assess import assess
 from jeepdolly.limits.dimension import LEGAL, SizeRule
 from jeepdolly.limits.finding import Finding, Severity
 from jeepdolly.permit.application import Application
 from jeepdolly.permit.decision import Decision, Outcome, decide
 from jeepdolly.permit.permit import Permit, issue
+from jeepdolly.permit.review import Review, open_review
 from jeepdolly.rig.config import Configuration
 from jeepdolly.route.clear import RouteReport, walk
 from jeepdolly.route.plan import Route
@@ -45,6 +46,7 @@ from jeepdolly.travel.escort import ORDINARY as ORDINARY_ESCORTS
 from jeepdolly.travel.escort import EscortSchedule
 from jeepdolly.units.clock import Day
 from jeepdolly.units.distance import Miles
+from jeepdolly.units.mass import NO_WEIGHT
 
 __all__ = ["Assessed", "Desk"]
 
@@ -141,13 +143,99 @@ class Desk:
         )
         return seen, made
 
+    def refer(self, key: int, on: Day) -> Review:
+        """Put an application on the engineer's list.
+
+        Only an application the desk would refer gets a review. Referring one a
+        clerk could have written is how an engineer's list fills up with work
+        nobody needed doing.
+        """
+        _, made = self.decide(key, on)
+        if made.outcome is not Outcome.REFER:
+            raise NotAllowedError("application", str(made.outcome), "refer")
+        for existing in self.office.reviews.for_application(key):
+            if existing.open:
+                raise ConflictError("review", existing.reference)
+        return self.office.reviews.add(
+            open_review(self.office.reviews.next_reference(), key, on)
+        )
+
+    def approve(
+        self, reference: str, engineer: str, on: Day, conditions: tuple[str, ...] = ()
+    ) -> Review:
+        """Approve a review, with whatever conditions the engineer set."""
+        review = self.office.reviews.get(reference)
+        return self.office.reviews.save_state(review.approved_by(engineer, on, conditions))
+
+    def refuse(self, reference: str, engineer: str, on: Day, note: str) -> Review:
+        """Refuse a review, with the engineer's reason."""
+        review = self.office.reviews.get(reference)
+        return self.office.reviews.save_state(review.refused_by(engineer, on, note))
+
+    def approval_for(self, key: int) -> Review | None:
+        """The approved review covering one application, if there is one."""
+        for review in self.office.reviews.for_application(key):
+            if review.approved:
+                return review
+        return None
+
     def issue(self, key: int, on: Day) -> Permit:
-        """Decide one application and write the permit, if there is one."""
+        """Decide one application and write the permit, if there is one.
+
+        A referred application may still be issued once an engineer has approved
+        it. The engineer's conditions come through onto the permit as notes, so
+        the driver's copy carries them and nothing has to be remembered.
+        """
         seen, made = self.decide(key, on)
+        if made.outcome is Outcome.REFER:
+            approval = self.approval_for(key)
+            if approval is None:
+                raise NotAllowedError("application", str(made.outcome), "issue a permit for")
+            made = self._cleared(seen, made, approval, on)
         if made.outcome is not Outcome.ISSUE:
             raise NotAllowedError("application", str(made.outcome), "issue a permit for")
         permit = issue(self.office.permits.next_number(), made, on)
         return self.office.permits.add(permit, seen.filed.key)
+
+    def _cleared(self, seen: Assessed, made: Decision, approval: Review, on: Day) -> Decision:
+        """Redecide an application an engineer has cleared.
+
+        The blocking findings are kept, with their severity lowered to a note, so
+        the permit still shows what was over and by how much. The engineer's own
+        conditions are added beside them.
+        """
+        softened = tuple(
+            Finding(
+                rule=f.rule,
+                subject=f.subject,
+                severity=Severity.NOTE if f.severity is Severity.REFUSE else f.severity,
+                detail=(
+                    f"{f.detail} (cleared by {approval.reference})"
+                    if f.severity is Severity.REFUSE
+                    else f.detail
+                ),
+                excess=NO_WEIGHT if f.severity is Severity.REFUSE else f.excess,
+            )
+            for f in made.findings
+        )
+        conditions = tuple(
+            Finding(
+                rule="review-condition",
+                subject=str(approval.reference),
+                severity=Severity.NOTE,
+                detail=text,
+            )
+            for text in approval.conditions
+        )
+        return decide(
+            application=seen.application,
+            findings=softened + conditions,
+            decided_on=on,
+            distance=seen.distance,
+            tariff=self.tariff,
+            size_rule=self.size_rule,
+            escort_schedule=self.escorts,
+        )
 
     def void(self, number: str, reason: str, on: Day, refund: bool = True) -> Permit:
         """Void an issued permit and put the fee back on the account.

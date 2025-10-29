@@ -248,6 +248,49 @@ Print the route sheet between two junctions.
 | `--from` | required option | Junction the run starts at. |
 | `--to` | required option | Junction the run ends at. |
 
+### `jeepdolly review`
+
+Open, approve and refuse engineering reviews.
+
+### `jeepdolly review approve`
+
+Approve a review with the engineer's conditions.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `reference` | argument |  |
+| `--engineer` | required option | Who signed it off. |
+| `--on` | option | Day the decision was made. |
+| `--condition` | option | A condition to print on the permit. Repeat for each one. |
+
+### `jeepdolly review list`
+
+List the engineer's work, open ones by default.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--all` | flag | Include closed reviews. |
+
+### `jeepdolly review open`
+
+Put a referred application on the engineer's list.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `application` | argument |  |
+| `--on` | option | Day the review is opened. |
+
+### `jeepdolly review refuse`
+
+Refuse a review with the engineer's reason.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `reference` | argument |  |
+| `--engineer` | required option | Who refused it. |
+| `--note` | required option | Why it was refused. |
+| `--on` | option | Day the decision was made. |
+
 ### `jeepdolly rig`
 
 Record rigs and read them back.
