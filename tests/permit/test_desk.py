@@ -325,3 +325,101 @@ def test_the_permit_reads_back_the_same_after_a_reopen(desk):
     read = desk.office.permits.get(str(permit.number))
     assert read.fee == permit.fee
     assert read.decision.findings == permit.decision.findings
+
+
+def a_superload(**over: object) -> Application:
+    """An application wide enough to need an engineer."""
+    return an_application(kind=Kind.SUPERLOAD, load=a_load(width=feet(17)), **over)
+
+
+def test_referring_opens_a_review(desk):
+    filed = desk.file(a_superload())
+    made = desk.refer(filed.key, DECIDED)
+    assert made.open
+    assert made.reference == "E-00001"
+
+
+def test_referring_an_application_that_would_issue_is_refused(desk):
+    filed = desk.file(an_application())
+    with pytest.raises(NotAllowedError):
+        desk.refer(filed.key, DECIDED)
+
+
+def test_referring_twice_is_refused_while_one_is_open(desk):
+    from jeepdolly.errors import ConflictError
+
+    filed = desk.file(a_superload())
+    desk.refer(filed.key, DECIDED)
+    with pytest.raises(ConflictError):
+        desk.refer(filed.key, DECIDED)
+
+
+def test_a_referred_application_will_not_issue(desk):
+    filed = desk.file(a_superload())
+    desk.refer(filed.key, DECIDED)
+    with pytest.raises(NotAllowedError):
+        desk.issue(filed.key, DECIDED)
+
+
+def test_an_approved_review_lets_the_permit_issue(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.approve(str(review.reference), "R Halloran", DECIDED)
+    permit = desk.issue(filed.key, DECIDED)
+    assert permit.number == "P-000001"
+
+
+def test_the_engineers_conditions_reach_the_permit(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.approve(
+        str(review.reference), "R Halloran", DECIDED, ("walking pace over the bridge",)
+    )
+    permit = desk.issue(filed.key, DECIDED)
+    details = [f.detail for f in permit.decision.findings if f.rule == "review-condition"]
+    assert details == ["walking pace over the bridge"]
+
+
+def test_the_cleared_findings_say_which_review_cleared_them(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.approve(str(review.reference), "R Halloran", DECIDED)
+    permit = desk.issue(filed.key, DECIDED)
+    width = next(f for f in permit.decision.findings if f.rule == "over-width")
+    assert "cleared by E-00001" in width.detail
+
+
+def test_a_cleared_finding_no_longer_blocks(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.approve(str(review.reference), "R Halloran", DECIDED)
+    permit = desk.issue(filed.key, DECIDED)
+    assert not any(f.blocking for f in permit.decision.findings)
+
+
+def test_a_refused_review_does_not_let_the_permit_issue(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.refuse(str(review.reference), "R Halloran", DECIDED, "the bridge will not take it")
+    with pytest.raises(NotAllowedError):
+        desk.issue(filed.key, DECIDED)
+
+
+def test_a_cleared_permit_is_still_priced(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.approve(str(review.reference), "R Halloran", DECIDED)
+    permit = desk.issue(filed.key, DECIDED)
+    assert int(permit.fee) > 0
+    assert permit.decision.invoice is not None
+    assert permit.decision.invoice.has("SUPER")
+
+
+def test_the_approval_is_found_by_application(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    assert desk.approval_for(filed.key) is None
+    desk.approve(str(review.reference), "R Halloran", DECIDED)
+    found = desk.approval_for(filed.key)
+    assert found is not None
+    assert found.reference == review.reference

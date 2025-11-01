@@ -235,6 +235,7 @@ class Desk:
             tariff=self.tariff,
             size_rule=self.size_rule,
             escort_schedule=self.escorts,
+            cleared=True,
         )
 
     def void(self, number: str, reason: str, on: Day, refund: bool = True) -> Permit:

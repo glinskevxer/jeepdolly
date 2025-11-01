@@ -190,3 +190,26 @@ def test_a_tall_load_gets_a_height_pole_and_a_height_line():
     assert made.escort_count == 1
     assert made.invoice is not None
     assert made.invoice.has("HEIGHT")
+
+
+def test_a_cleared_superload_issues():
+    made = decide(
+        an_application(kind=Kind.SUPERLOAD), (), DECIDED, miles("42.00"), cleared=True
+    )
+    assert made.outcome is Outcome.ISSUE
+
+
+def test_clearing_lifts_a_referable_block(trip):
+    referable = a_finding(rule="over-width", severity=Severity.REFUSE, excess=pounds(0))
+    made = decide(trip, (referable,), DECIDED, miles("42.00"), cleared=True)
+    assert made.outcome is Outcome.ISSUE
+
+
+def test_clearing_does_not_lift_a_posted_bridge(trip):
+    blocked = a_finding(rule="posted-bridge", severity=Severity.REFUSE, excess=pounds(0))
+    made = decide(trip, (blocked,), DECIDED, miles("42.00"), cleared=True)
+    assert made.outcome is Outcome.REFUSE
+
+
+def test_outcome_for_takes_the_cleared_flag(trip):
+    assert outcome_for(trip, (), cleared=True) is Outcome.ISSUE

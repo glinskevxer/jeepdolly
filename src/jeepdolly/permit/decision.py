@@ -104,11 +104,21 @@ class Decision:
         return f"{self.application.carrier} {self.outcome}{tail}"
 
 
-def outcome_for(application: Application, findings: tuple[Finding, ...]) -> Outcome:
-    """Which of the three answers this application gets."""
+def outcome_for(
+    application: Application, findings: tuple[Finding, ...], cleared: bool = False
+) -> Outcome:
+    """Which of the three answers this application gets.
+
+    ``cleared`` is set once an engineer has approved the application. It lifts
+    the referral, and only the referral: a blocking finding that is not
+    referable still refuses, because an engineer's signature does not raise a
+    posted bridge.
+    """
     blockers = [f for f in findings if f.severity is Severity.REFUSE]
     if any(f.rule not in REFERABLE_RULES for f in blockers):
         return Outcome.REFUSE
+    if cleared:
+        return Outcome.ISSUE
     if blockers or application.reviewed:
         return Outcome.REFER
     return Outcome.ISSUE
@@ -122,6 +132,7 @@ def decide(
     tariff: Tariff = SCHEDULE,
     size_rule: SizeRule = LEGAL,
     escort_schedule: EscortSchedule = ORDINARY,
+    cleared: bool = False,
 ) -> Decision:
     """Decide one application against findings already worked out.
 
@@ -129,7 +140,7 @@ def decide(
     rig and hands the findings in, which is what lets the same decision be
     replayed later against the findings that were actually used.
     """
-    outcome = outcome_for(application, findings)
+    outcome = outcome_for(application, findings, cleared)
     escorts = escorts_for(application.load, escort_schedule)
     invoice = None
     if outcome is Outcome.ISSUE:
