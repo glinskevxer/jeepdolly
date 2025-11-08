@@ -317,6 +317,54 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX review_by_state ON review (state, opened_on)",
         ),
     ),
+    Migration(
+        number=9,
+        name="the almanac",
+        statements=(
+            """
+            CREATE TABLE season (
+                code       TEXT PRIMARY KEY,
+                first_day  TEXT NOT NULL,
+                last_day   TEXT NOT NULL,
+                percent    INTEGER NOT NULL
+                           CHECK (percent BETWEEN 25 AND 150 AND percent <> 100),
+                note       TEXT NOT NULL DEFAULT '',
+                CHECK (last_day >= first_day)
+            )
+            """,
+            """
+            CREATE TABLE season_county (
+                season_code  TEXT NOT NULL REFERENCES season (code) ON DELETE CASCADE,
+                county       TEXT NOT NULL CHECK (county <> ''),
+                PRIMARY KEY (season_code, county)
+            )
+            """,
+            """
+            CREATE TABLE embargo (
+                code           TEXT PRIMARY KEY,
+                first_day      TEXT NOT NULL,
+                last_day       TEXT NOT NULL,
+                reason         TEXT NOT NULL CHECK (reason <> ''),
+                window_start   INTEGER CHECK (window_start IS NULL
+                                              OR window_start BETWEEN 0 AND 1439),
+                window_end     INTEGER CHECK (window_end IS NULL
+                                              OR window_end BETWEEN 0 AND 1439),
+                weekends_only  INTEGER NOT NULL DEFAULT 0 CHECK (weekends_only IN (0, 1)),
+                CHECK (last_day >= first_day),
+                CHECK ((window_start IS NULL) = (window_end IS NULL))
+            )
+            """,
+            """
+            CREATE TABLE embargo_county (
+                embargo_code  TEXT NOT NULL REFERENCES embargo (code) ON DELETE CASCADE,
+                county        TEXT NOT NULL CHECK (county <> ''),
+                PRIMARY KEY (embargo_code, county)
+            )
+            """,
+            "CREATE INDEX season_by_day ON season (first_day, last_day)",
+            "CREATE INDEX embargo_by_day ON embargo (first_day, last_day)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

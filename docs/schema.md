@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 8.
+Schema version 9.
 
 ## account_entry
 
@@ -54,6 +54,27 @@ Indexes: `application_by_carrier`, `application_by_day`
 | active | INTEGER | not null, default 1 |
 
 Indexes: `carrier_by_name`
+
+## embargo
+
+| column | type | constraints |
+| --- | --- | --- |
+| code | TEXT | primary key |
+| first_day | TEXT | not null |
+| last_day | TEXT | not null |
+| reason | TEXT | not null |
+| window_start | INTEGER |  |
+| window_end | INTEGER |  |
+| weekends_only | INTEGER | not null, default 0 |
+
+Indexes: `embargo_by_day`
+
+## embargo_county
+
+| column | type | constraints |
+| --- | --- | --- |
+| embargo_code | TEXT | primary key, not null |
+| county | TEXT | primary key, not null |
 
 ## load_item
 
@@ -180,6 +201,25 @@ Indexes: `rig_by_carrier`
 | number | INTEGER | primary key |
 | name | TEXT | not null |
 | ran_at | TEXT | not null, default datetime('now') |
+
+## season
+
+| column | type | constraints |
+| --- | --- | --- |
+| code | TEXT | primary key |
+| first_day | TEXT | not null |
+| last_day | TEXT | not null |
+| percent | INTEGER | not null |
+| note | TEXT | not null, default '' |
+
+Indexes: `season_by_day`
+
+## season_county
+
+| column | type | constraints |
+| --- | --- | --- |
+| season_code | TEXT | primary key, not null |
+| county | TEXT | primary key, not null |
 
 ## segment
 
