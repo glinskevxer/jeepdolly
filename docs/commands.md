@@ -56,6 +56,59 @@ Print a carrier's statement.
 | `--first` | option | First day of the statement. |
 | `--last` | option | Last day of the statement. |
 
+### `jeepdolly almanac`
+
+Record the seasonal orders and the embargoes.
+
+### `jeepdolly almanac embargo`
+
+Stop movement over a span of days, or an hour of each of them.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--code` | required option | The office's key for the order. |
+| `--first` | required option | First day movement is stopped. |
+| `--last` | required option | Last day it is stopped. |
+| `--reason` | required option | Why movement is stopped. |
+| `--from-time` | option | Start of a daily window, like 07:00. |
+| `--to-time` | option | End of that window. |
+| `--counties` | option | Comma separated list, or blank for statewide. |
+| `--weekends-only` | flag | Only Saturdays and Sundays. |
+
+### `jeepdolly almanac holidays`
+
+Put a year of holiday embargoes on the books.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `year` | argument |  |
+
+### `jeepdolly almanac list`
+
+List every seasonal order and every embargo.
+
+### `jeepdolly almanac on`
+
+Say what is in force in one county on one day.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `day` | argument |  |
+| `--county` | required option | Which county to look at. |
+
+### `jeepdolly almanac season`
+
+Put a frost law or a winter premium on the books.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--code` | required option | The office's key for the order. |
+| `--first` | required option | First day the order is in force. |
+| `--last` | required option | Last day it is in force. |
+| `--percent` | required option | Percent of the usual limits. |
+| `--counties` | required option | Comma separated county list. |
+| `--note` | option | Anything worth recording. |
+
 ### `jeepdolly carrier`
 
 Add, list and retire carriers.
