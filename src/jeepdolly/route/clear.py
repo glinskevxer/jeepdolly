@@ -19,18 +19,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from jeepdolly.almanac.season import SeasonBook
 from jeepdolly.limits.assess import Assessment, assess
 from jeepdolly.limits.dimension import LEGAL, SizeRule
 from jeepdolly.limits.finding import Finding, Severity, excess_of, worst
+from jeepdolly.limits.statute import Statute
 from jeepdolly.rig.config import Configuration
 from jeepdolly.rig.load import Load
 from jeepdolly.roadway.network import Network
 from jeepdolly.roadway.segment import RoadClass, statute_for
 from jeepdolly.route.plan import Leg, Route
+from jeepdolly.units.clock import Day
 from jeepdolly.units.length import Inches
 from jeepdolly.units.mass import Pounds, format_weight
 
-__all__ = ["LegReport", "RouteReport", "check_leg", "walk"]
+__all__ = ["LegReport", "RouteReport", "check_leg", "counties_on", "walk"]
 
 
 def check_leg(leg: Leg, network: Network, gross: Pounds, height: Inches) -> list[Finding]:
@@ -143,14 +146,32 @@ class RouteReport:
         return f"{self.route}: {len(self.findings)} findings, worst {self.severity}"
 
 
+def counties_on(route: Route, network: Network) -> tuple[str, ...]:
+    """Every county the route touches, in order, once each."""
+    seen: list[str] = []
+    for node in route.nodes:
+        county = network.node(str(node)).county
+        if county not in seen:
+            seen.append(county)
+    return tuple(seen)
+
+
 def walk(
     route: Route,
     network: Network,
     config: Configuration,
     load: Load,
     size_rule: SizeRule = LEGAL,
+    seasons: SeasonBook | None = None,
+    on: Day | None = None,
 ) -> RouteReport:
-    """Take a rig and load over a route and report everything found."""
+    """Take a rig and load over a route and report everything found.
+
+    ``seasons`` and ``on`` bring the frost laws in. Without them the statutory
+    limits are used as written, which is what a quote before the orders are
+    published has to do. With them the limits are whatever the orders leave,
+    which is what an actual permit is written against.
+    """
     gross = config.gross
     reports = tuple(
         LegReport(leg=leg, findings=tuple(check_leg(leg, network, gross, load.height)))
@@ -160,8 +181,30 @@ def walk(
     for leg in route.legs:
         if leg.segment.road_class not in seen:
             seen.append(leg.segment.road_class)
+    counties = counties_on(route, network)
     surfaces = tuple(
-        (road_class, assess(config, load, statute_for(road_class), size_rule))
+        (
+            road_class,
+            assess(
+                config,
+                load,
+                _statute(road_class, seasons, on, counties),
+                size_rule,
+            ),
+        )
         for road_class in sorted(seen, key=str)
     )
     return RouteReport(route=route, legs=reports, surfaces=surfaces)
+
+
+def _statute(
+    road_class: RoadClass,
+    seasons: SeasonBook | None,
+    on: Day | None,
+    counties: tuple[str, ...],
+) -> Statute:
+    """The limits for one class of road, seasonal orders included."""
+    base = statute_for(road_class)
+    if seasons is None or on is None:
+        return base
+    return seasons.statute_over(base, on, counties)

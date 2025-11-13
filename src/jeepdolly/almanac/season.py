@@ -17,7 +17,7 @@ up would hand back weight the order took away.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 
 from jeepdolly.errors import BadValueError
@@ -123,6 +123,30 @@ class SeasonBook:
         """
         result = statute
         for season in self.in_force(day, county):
+            result = season.applied(result)
+        return result
+
+    def over(self, day: Day, counties: Iterable[str]) -> tuple[Season, ...]:
+        """Every order in force on one day in any of these counties.
+
+        An order covering two of the counties is listed once. The route is one
+        move and the order applies to it or it does not.
+        """
+        wanted: list[Season] = []
+        for season in self.seasons:
+            if any(season.covers(day, county) for county in counties):
+                wanted.append(season)
+        return tuple(wanted)
+
+    def statute_over(self, statute: Statute, day: Day, counties: Iterable[str]) -> Statute:
+        """The limit set after every order touching any of these counties.
+
+        A route crossing three counties runs under the orders of all three, and
+        the harshest of them decides. The office does not let a load run heavy
+        through one county because the next one is thawed out.
+        """
+        result = statute
+        for season in self.over(day, counties):
             result = season.applied(result)
         return result
 

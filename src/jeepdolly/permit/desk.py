@@ -88,6 +88,20 @@ class Desk:
     seasons: SeasonBook = field(default_factory=lambda: SeasonBook(seasons=()))
     embargoes: EmbargoBook = field(default_factory=lambda: EmbargoBook(embargoes=()))
 
+    @classmethod
+    def at(cls, office: Office, **rules: object) -> Desk:
+        """A desk with the almanac read off the file it is working on.
+
+        Building the books here rather than in every caller is what stops a
+        permit being decided against an empty almanac because somebody forgot to
+        pass one in. That has happened, and the permit that came out was legal
+        against the statute and not against the frost law in force that week.
+        """
+        made = cls(office=office, **rules)  # type: ignore[arg-type]
+        made.seasons = office.almanac.season_book()
+        made.embargoes = office.almanac.embargo_book()
+        return made
+
     def file(self, application: Application) -> FiledApplication:
         """Take an application at the counter, refusing a retired carrier."""
         carrier = self.office.carriers.get(str(application.carrier))
@@ -120,7 +134,15 @@ class Desk:
             route = shortest(network, str(application.origin), str(application.destination))
         if route is None:
             raise NotFoundError("route", f"{application.origin} to {application.destination}")
-        report = walk(route, network, config, application.load, self.size_rule)
+        report = walk(
+            route,
+            network,
+            config,
+            application.load,
+            self.size_rule,
+            seasons=self.seasons,
+            on=application.span.first,
+        )
         return Assessed(
             filed=filed,
             config=config,
