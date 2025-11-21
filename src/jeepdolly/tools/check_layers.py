@@ -30,6 +30,7 @@ LAYERS: dict[str, int] = {
     "jeepdolly.ids": 1,
     "jeepdolly.limits.finding": 2,
     "jeepdolly.rig": 3,
+    "jeepdolly.rig.spread": 5,
     "jeepdolly.party": 3,
     "jeepdolly.limits": 4,
     "jeepdolly.roadway": 5,
