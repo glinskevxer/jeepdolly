@@ -21,6 +21,7 @@ from dataclasses import dataclass
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.limits.assess import assess
+from jeepdolly.limits.bridge import bridge_limit
 from jeepdolly.limits.dimension import LEGAL, SizeRule
 from jeepdolly.limits.statute import INTERSTATE, Statute
 from jeepdolly.rig.axle import Axle
@@ -37,6 +38,7 @@ __all__ = [
     "already_legal",
     "best",
     "spread_options",
+    "spread_score",
     "suggest",
 ]
 
@@ -134,20 +136,41 @@ class Suggestion:
         )
 
 
-def _score(
-    config: Configuration, load: Load, statute: Statute, size_rule: SizeRule
-) -> tuple[int, int]:
-    """How bad an arrangement is: the largest overage, then how many findings."""
-    seen = assess(config, load, statute, size_rule)
-    weighty = [f for f in seen.findings if f.billable]
-    return (int(seen.excess), len(weighty))
+def spread_score(config: Configuration, statute: Statute) -> tuple[int, int]:
+    """How bad an arrangement is on the rules a dolly can actually move.
+
+    Two rules are deliberately left out, and getting both wrong is what this
+    search did first.
+
+    The gross limit is not a dolly's business. A jeep cannot reduce gross weight;
+    it *adds* its own tare to it. Scoring on gross reported that every dolly made
+    things worse, which was arithmetically true and useless.
+
+    Neither is the bridge formula applied to the whole rig, because that run is
+    capped at the gross limit and so is the gross limit wearing a hat. Every
+    shorter run is counted, and those are exactly the ones another axle helps.
+    """
+    excesses: list[int] = []
+    for axle in config.axles:
+        over = int(axle.weight) - int(statute.single)
+        if over > 0:
+            excesses.append(over)
+        if axle.over_tires:
+            excesses.append(int(axle.weight) - int(axle.tire_limit))
+    for run in config.runs():
+        if run.single or run.count == config.count:
+            continue
+        if statute.is_tandem(run) and int(run.weight) > int(statute.tandem):
+            excesses.append(int(run.weight) - int(statute.tandem))
+        case = bridge_limit(config, run, statute)
+        if int(case.over) > 0:
+            excesses.append(int(case.over))
+    return (max(excesses, default=0), len(excesses))
 
 
 def spread_options(
     config: Configuration,
-    load: Load,
     statute: Statute = INTERSTATE,
-    size_rule: SizeRule = LEGAL,
     catalogue: tuple[tuple[str, Dolly], ...] = CATALOGUE,
 ) -> list[Suggestion]:
     """Every arrangement worth trying, best first.
@@ -171,7 +194,7 @@ def spread_options(
                     made = attach(config, dolly, at, pounds(transfer))
                 except BadValueError:
                     continue
-                excess, findings = _score(made, load, statute, size_rule)
+                excess, findings = spread_score(made, statute)
                 found.append(
                     Suggestion(
                         excess=excess,
@@ -187,9 +210,7 @@ def spread_options(
 
 def suggest(
     config: Configuration,
-    load: Load,
     statute: Statute = INTERSTATE,
-    size_rule: SizeRule = LEGAL,
     catalogue: tuple[tuple[str, Dolly], ...] = CATALOGUE,
     limit: int = 3,
 ) -> list[Suggestion]:
@@ -198,7 +219,7 @@ def suggest(
         raise BadValueError("limit", limit, "want at least one")
     seen: set[str] = set()
     out: list[Suggestion] = []
-    for option in spread_options(config, load, statute, size_rule, catalogue):
+    for option in spread_options(config, statute, catalogue):
         if option.name in seen:
             continue
         seen.add(option.name)
@@ -210,13 +231,11 @@ def suggest(
 
 def best(
     config: Configuration,
-    load: Load,
     statute: Statute = INTERSTATE,
-    size_rule: SizeRule = LEGAL,
     catalogue: tuple[tuple[str, Dolly], ...] = CATALOGUE,
 ) -> Suggestion | None:
     """The single best arrangement, or nothing if none was tried."""
-    found = suggest(config, load, statute, size_rule, catalogue, limit=1)
+    found = suggest(config, statute, catalogue, limit=1)
     return found[0] if found else None
 
 
@@ -226,6 +245,11 @@ def already_legal(
     statute: Statute = INTERSTATE,
     size_rule: SizeRule = LEGAL,
 ) -> bool:
-    """Is the rig already under every weight limit as presented."""
-    excess, findings = _score(config, load, statute, size_rule)
-    return excess == 0 and findings == 0
+    """Is the rig under every weight limit as presented, gross included.
+
+    This is the honest question, so it looks at everything rather than only at
+    what a dolly could move. A rig that is legal on every axle and forty thousand
+    pounds over gross is not legal, it is a permit.
+    """
+    seen = assess(config, load, statute, size_rule)
+    return not any(f.billable for f in seen.findings)

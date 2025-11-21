@@ -6,11 +6,11 @@ axle and no group of axles is over its limit, and both cost the carrier money an
 manoeuvring room, so nobody adds one for fun.
 
 The office does not do statics. It takes the transfer the carrier declares,
-checks it against what the dolly is rated for, removes it from the axles on the
-load side of the hitch in proportion to what they are already carrying, and puts
-it on the dolly axles evenly. That is a simplification and it is the one written
-into the office manual, so a permit recalculated during an audit lands on the
-same numbers as the permit that was issued.
+checks it against what the dolly is rated for, removes it from the axles ahead
+of the hitch in proportion to what they are already carrying, and puts it on the
+dolly axles evenly. That is a simplification and it is the one written into the
+office manual, so a permit recalculated during an audit lands on the same
+numbers as the permit that was issued.
 """
 
 from __future__ import annotations
@@ -85,15 +85,23 @@ class Dolly:
         return inches(sum(int(s) for s in self.spacings))
 
 
-def _donors(config: Configuration, kind: Hitch, at: int) -> list[int]:
+def _donors(config: Configuration, at: int) -> list[int]:
     """The axle positions that give up weight to the dolly.
 
-    For a jeep that is everything behind the hitch, which is the trailer. For a
-    booster it is everything ahead of the hitch except the steer axle, which is
-    never relieved because relieving it is how a rig loses its steering.
+    Everything ahead of the hitch except the steer axle, whichever kind of dolly
+    it is. That is the same rule for both because it is the same physics: the
+    dolly picks up load that was passing through the coupling it was inserted
+    at, and the coupling is ahead of it.
+
+    For a jeep that means the tractor's drives. A jeep sits between the fifth
+    wheel and the trailer, so what it relieves is the drive group, not the
+    trailer group behind it. This package had that backwards to begin with, and
+    the symptom was the dolly search reporting that no jeep helped a rig that was
+    over on the drives, which is the one thing carriers buy them for.
+
+    The steer axle is never a donor. Relieving it is how a rig loses its
+    steering, and no amount of paperwork makes that acceptable.
     """
-    if kind is Hitch.JEEP:
-        return list(range(at + 1, config.count))
     return [i for i in range(at + 1) if not config.axles[i].steering]
 
 
@@ -112,8 +120,10 @@ def attach(config: Configuration, dolly: Dolly, at: int, transfer: Pounds) -> Co
         raise BadValueError("transfer", int(moved), f"over the {int(dolly.capacity)} rating")
     if dolly.kind is Hitch.BOOSTER and at != config.count - 1:
         raise BadValueError("hitch point", at, "a booster goes on the back")
+    if dolly.kind is Hitch.JEEP and at >= config.count - 1:
+        raise BadValueError("hitch point", at, "a jeep goes ahead of the trailer")
 
-    donors = _donors(config, dolly.kind, at)
+    donors = _donors(config, at)
     if not donors:
         raise BadValueError("hitch point", at, "nothing on that side to relieve")
     available = sum(int(config.axles[i].weight) for i in donors)

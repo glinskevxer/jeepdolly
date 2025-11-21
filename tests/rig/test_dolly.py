@@ -85,15 +85,20 @@ def test_attach_conserves_the_transfer(five_axle):
     assert on_dolly == 6000 + 20000
 
 
-def test_attach_takes_the_transfer_off_the_trailer(five_axle):
+def test_attach_takes_the_transfer_off_the_drives(five_axle):
     made = attach(five_axle, a_dolly(), at=2, transfer=pounds(20000))
-    behind = int(made.axles[5].weight) + int(made.axles[6].weight)
-    assert behind == 34000 - 20000
+    drives = int(made.axles[1].weight) + int(made.axles[2].weight)
+    assert drives == 34000 - 20000
 
 
-def test_attach_leaves_the_front_alone_for_a_jeep(five_axle):
+def test_attach_leaves_the_trailer_alone_for_a_jeep(five_axle):
     made = attach(five_axle, a_dolly(), at=2, transfer=pounds(20000))
-    assert [int(a.weight) for a in made.axles[:3]] == [12000, 17000, 17000]
+    assert [int(a.weight) for a in made.axles[5:]] == [17000, 17000]
+
+
+def test_attach_never_relieves_the_steer_axle(five_axle):
+    made = attach(five_axle, a_dolly(), at=2, transfer=pounds(20000))
+    assert int(made.axles[0].weight) == 12000
 
 
 def test_attach_splits_the_transfer_evenly_across_the_dolly(five_axle):
@@ -141,6 +146,11 @@ def test_attach_refuses_a_transfer_bigger_than_the_side_carries(five_axle):
         attach(five_axle, a_dolly(), at=2, transfer=pounds(40000))
 
 
+def test_a_jeep_hitched_behind_the_last_axle_is_refused(five_axle):
+    with pytest.raises(BadValueError):
+        attach(five_axle, a_dolly(), at=4, transfer=pounds(1000))
+
+
 def test_attach_refuses_a_hitch_off_the_end(five_axle):
     with pytest.raises(BadValueError):
         attach(five_axle, a_dolly(), at=5, transfer=pounds(1000))
@@ -151,15 +161,10 @@ def test_attach_refuses_a_bool_hitch_point(five_axle):
         attach(five_axle, a_dolly(), at=True, transfer=pounds(1000))
 
 
-def test_jeep_at_the_back_has_nothing_to_relieve(five_axle):
-    with pytest.raises(BadValueError):
-        attach(five_axle, a_dolly(), at=4, transfer=pounds(1000))
-
-
 def test_attach_of_zero_transfer_only_adds_tare(five_axle):
     made = attach(five_axle, a_dolly(), at=2, transfer=pounds(0))
     assert int(made.gross) == int(five_axle.gross) + 6000
-    assert int(made.axles[5].weight) == 17000
+    assert int(made.axles[1].weight) == 17000
 
 
 def test_attach_keeps_the_spacing_count_right(five_axle):
