@@ -9,29 +9,40 @@ package, plus the ideas listed by hand at the end of that file.
 | --- | --- | --- |
 | active | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
 | adjustment | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
+| amended | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | annual | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
+| approved | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | approved | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | booster | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
 | bridge | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | charge | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
+| charged | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | culvert | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | deposit | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
+| extended | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
+| filed | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | front | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | height pole | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | interstate | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | issue | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
+| issued | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | jeep | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
+| loaded | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | local | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | note | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | open | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | overhead | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | permit | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | police | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
+| quoted | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | rear | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | refer | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
+| referred | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | refund | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
+| refunded | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | refuse | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | refuse | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
+| refused | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | refused | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | state | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | superload | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
@@ -39,6 +50,7 @@ package, plus the ideas listed by hand at the end of that file.
 | trip | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
 | tunnel | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | void | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
+| voided | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | withdrawn | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 
 ## ideas

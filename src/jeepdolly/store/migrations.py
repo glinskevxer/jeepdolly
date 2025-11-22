@@ -365,6 +365,24 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX embargo_by_day ON embargo (first_day, last_day)",
         ),
     ),
+    Migration(
+        number=10,
+        name="the journal",
+        statements=(
+            """
+            CREATE TABLE journal (
+                sequence  INTEGER PRIMARY KEY AUTOINCREMENT,
+                day       TEXT NOT NULL,
+                kind      TEXT NOT NULL CHECK (kind <> ''),
+                subject   TEXT NOT NULL CHECK (subject <> ''),
+                detail    TEXT NOT NULL DEFAULT '',
+                clerk     TEXT NOT NULL DEFAULT ''
+            )
+            """,
+            "CREATE INDEX journal_by_subject ON journal (subject, sequence)",
+            "CREATE INDEX journal_by_day ON journal (day, sequence)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

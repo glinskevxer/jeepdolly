@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 9.
+Schema version 10.
 
 ## account_entry
 
@@ -75,6 +75,19 @@ Indexes: `embargo_by_day`
 | --- | --- | --- |
 | embargo_code | TEXT | primary key, not null |
 | county | TEXT | primary key, not null |
+
+## journal
+
+| column | type | constraints |
+| --- | --- | --- |
+| sequence | INTEGER | primary key |
+| day | TEXT | not null |
+| kind | TEXT | not null |
+| subject | TEXT | not null |
+| detail | TEXT | not null, default '' |
+| clerk | TEXT | not null, default '' |
+
+Indexes: `journal_by_day`, `journal_by_subject`
 
 ## load_item
 
