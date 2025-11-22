@@ -348,6 +348,16 @@ Refuse a review with the engineer's reason.
 
 Record rigs and read them back.
 
+### `jeepdolly rig advise`
+
+Say which dolly would get a rig under the axle limits.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `reference` | argument |  |
+| `--class` | option | Which limit set to work against. |
+| `--count` | option | How many arrangements to show. |
+
 ### `jeepdolly rig build`
 
 Record a rig, axle by axle.

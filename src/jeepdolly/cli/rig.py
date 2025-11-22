@@ -9,9 +9,11 @@ import click
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
+from jeepdolly.rig.spread import spread_score, suggest
+from jeepdolly.roadway.segment import RoadClass, statute_for
 from jeepdolly.units.clock import format_day, parse_day
 from jeepdolly.units.length import feet, format_length, inches
-from jeepdolly.units.mass import format_weight, parse_weight
+from jeepdolly.units.mass import format_weight, parse_weight, pounds
 
 __all__ = ["rig"]
 
@@ -92,6 +94,36 @@ def show(session: Session, reference: str) -> None:
             "" if index == 0 else f", {format_length(filed.config.spacings[index - 1])} ahead"
         )
         click.echo(f"  axle {index + 1}: {axle}{ahead}")
+
+
+@rig.command("advise")
+@click.argument("reference")
+@click.option(
+    "--class",
+    "road_class",
+    type=click.Choice([str(c) for c in RoadClass]),
+    default=str(RoadClass.INTERSTATE),
+    show_default=True,
+    help="Which limit set to work against.",
+)
+@click.option("--count", default=3, show_default=True, help="How many arrangements to show.")
+@click.pass_obj
+def advise(session: Session, reference: str, road_class: str, count: int) -> None:
+    """Say which dolly would get a rig under the axle limits.
+
+    The gross limit is not part of this. A dolly adds its own tare to gross and
+    a permit is what covers gross; what a dolly buys is axle and group weight.
+    """
+    with office_of(session) as office:
+        filed = office.rigs.get(reference)
+    statute = statute_for(RoadClass(road_class))
+    worst, over = spread_score(filed.config, statute)
+    if worst == 0:
+        click.echo(f"{filed.reference} is already under every axle limit on {road_class}")
+        return
+    click.echo(f"{filed.reference} is {format_weight(pounds(worst))} over on {over} rules")
+    for option in suggest(filed.config, statute, limit=count):
+        click.echo(f"  {option}")
 
 
 @rig.command("list")

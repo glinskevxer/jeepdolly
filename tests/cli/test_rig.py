@@ -122,3 +122,71 @@ def test_list_of_another_carrier_is_empty(with_carrier):
 def test_status_counts_the_rigs(with_carrier):
     with_carrier("rig", "build", "--carrier", "VANCE", "--name", "3S2")
     assert "rigs 1" in with_carrier("status").output
+
+
+def build_heavy(run, name: str = "HEAVY") -> None:
+    """Record a rig that is over on the drives."""
+    run(
+        "rig",
+        "build",
+        "--carrier",
+        "VANCE",
+        "--name",
+        name,
+        "--axle",
+        "12000,2,11,0",
+        "--axle",
+        "21000,4,11,15",
+        "--axle",
+        "21000,4,11,4",
+        "--axle",
+        "17000,4,11,30",
+        "--axle",
+        "17000,4,11,4",
+    )
+
+
+def test_advise_says_a_legal_rig_needs_nothing(with_carrier):
+    with_carrier("rig", "build", "--carrier", "VANCE", "--name", "3S2")
+    result = with_carrier("rig", "advise", "R-00001")
+    assert result.exit_code == 0
+    assert "already under every axle limit" in result.output
+
+
+def test_advise_names_the_overage(with_carrier):
+    build_heavy(with_carrier)
+    result = with_carrier("rig", "advise", "R-00001")
+    assert result.exit_code == 0
+    assert "over on" in result.output
+
+
+def test_advise_offers_a_jeep(with_carrier):
+    build_heavy(with_carrier)
+    assert "jeep" in with_carrier("rig", "advise", "R-00001").output
+
+
+def test_advise_shows_the_transfer(with_carrier):
+    build_heavy(with_carrier)
+    assert "taking" in with_carrier("rig", "advise", "R-00001").output
+
+
+def test_advise_offers_the_number_asked_for(with_carrier):
+    build_heavy(with_carrier)
+    output = with_carrier("rig", "advise", "R-00001", "--count", "2").output
+    assert len([line for line in output.splitlines() if line.startswith("  ")]) == 2
+
+
+def test_advise_takes_a_road_class(with_carrier):
+    build_heavy(with_carrier)
+    assert with_carrier("rig", "advise", "R-00001", "--class", "state").exit_code == 0
+
+
+def test_advise_raises_on_a_rig_that_is_not_there(with_carrier):
+    assert with_carrier("rig", "advise", "R-00099").exit_code == 1
+
+
+def test_the_state_limits_forgive_more_than_the_interstate_ones(with_carrier):
+    build_heavy(with_carrier)
+    federal = with_carrier("rig", "advise", "R-00001").output
+    state = with_carrier("rig", "advise", "R-00001", "--class", "state").output
+    assert federal != state
