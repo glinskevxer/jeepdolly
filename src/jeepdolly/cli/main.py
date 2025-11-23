@@ -11,6 +11,7 @@ from jeepdolly.cli.account import account
 from jeepdolly.cli.almanac import almanac
 from jeepdolly.cli.carrier import carrier
 from jeepdolly.cli.context import DEFAULT_FILE, Session, reporting
+from jeepdolly.cli.history import history
 from jeepdolly.cli.permit import permit
 from jeepdolly.cli.report import report
 from jeepdolly.cli.review import review
@@ -111,6 +112,7 @@ def status(session: Session) -> None:
         seasons, embargoes = office.almanac.counts()
         click.echo(f"seasons {seasons}")
         click.echo(f"embargoes {embargoes}")
+        click.echo(f"journal {office.history.count()}")
 
 
 main.add_command(carrier)
@@ -121,3 +123,4 @@ main.add_command(account)
 main.add_command(report)
 main.add_command(review)
 main.add_command(almanac)
+main.add_command(history)

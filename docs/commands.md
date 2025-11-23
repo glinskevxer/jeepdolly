@@ -168,6 +168,25 @@ Show one carrier.
 
 Read the whole file back and say whether it holds together.
 
+### `jeepdolly history`
+
+Read the office journal.
+
+### `jeepdolly history kinds`
+
+List the kinds of entry the journal holds.
+
+### `jeepdolly history show`
+
+Print the journal, narrowed however you like.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--about` | option | Only entries about this permit or application. |
+| `--kind` | option | Only entries of this kind. |
+| `--first` | option | First day to show. |
+| `--last` | option | Last day to show. |
+
 ### `jeepdolly init`
 
 Make a new office file.

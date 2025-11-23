@@ -41,12 +41,14 @@ from jeepdolly.route.clear import RouteReport, walk
 from jeepdolly.route.plan import Route
 from jeepdolly.route.search import clearing, shortest
 from jeepdolly.store.applications import FiledApplication
+from jeepdolly.store.history import EventKind
 from jeepdolly.store.office import Office
 from jeepdolly.travel.escort import ORDINARY as ORDINARY_ESCORTS
 from jeepdolly.travel.escort import EscortSchedule
 from jeepdolly.units.clock import Day
 from jeepdolly.units.distance import Miles
 from jeepdolly.units.mass import NO_WEIGHT
+from jeepdolly.units.money import format_money
 
 __all__ = ["Assessed", "Desk"]
 
@@ -79,7 +81,12 @@ class Assessed:
 
 @dataclass(slots=True)
 class Desk:
-    """The counter, holding the file and the office's standing rules."""
+    """The counter, holding the file and the office's standing rules.
+
+    ``clerk`` is whoever is at the counter. It is written into the journal and
+    nowhere else, and it is allowed to be blank, because the office ran for a
+    year before anybody was asked to sign on.
+    """
 
     office: Office
     tariff: Tariff = SCHEDULE
@@ -87,6 +94,11 @@ class Desk:
     escorts: EscortSchedule = ORDINARY_ESCORTS
     seasons: SeasonBook = field(default_factory=lambda: SeasonBook(seasons=()))
     embargoes: EmbargoBook = field(default_factory=lambda: EmbargoBook(embargoes=()))
+    clerk: str = ""
+
+    def note(self, day: Day, kind: EventKind, subject: str, detail: str = "") -> None:
+        """Write one line in the journal, beside the change it describes."""
+        self.office.history.write(day, kind, subject, detail, self.clerk)
 
     @classmethod
     def at(cls, office: Office, **rules: object) -> Desk:
@@ -107,7 +119,14 @@ class Desk:
         carrier = self.office.carriers.get(str(application.carrier))
         if not carrier.issuable:
             raise NotAllowedError("carrier", "retired", "file an application for")
-        return self.office.applications.add(application)
+        filed = self.office.applications.add(application)
+        self.note(
+            application.filed_on,
+            EventKind.FILED,
+            f"application {filed.key}",
+            f"{application.carrier} {application.kind} {application.load.description}",
+        )
+        return filed
 
     def assess(self, key: int) -> Assessed:
         """Work out everything about a filed application without deciding it."""
@@ -178,21 +197,32 @@ class Desk:
         for existing in self.office.reviews.for_application(key):
             if existing.open:
                 raise ConflictError("review", existing.reference)
-        return self.office.reviews.add(
+        opened = self.office.reviews.add(
             open_review(self.office.reviews.next_reference(), key, on)
         )
+        self.note(on, EventKind.REFERRED, str(opened.reference), f"application {key}")
+        return opened
 
     def approve(
         self, reference: str, engineer: str, on: Day, conditions: tuple[str, ...] = ()
     ) -> Review:
         """Approve a review, with whatever conditions the engineer set."""
         review = self.office.reviews.get(reference)
-        return self.office.reviews.save_state(review.approved_by(engineer, on, conditions))
+        done = self.office.reviews.save_state(review.approved_by(engineer, on, conditions))
+        self.note(
+            on,
+            EventKind.APPROVED,
+            str(done.reference),
+            f"{engineer}, {len(done.conditions)} conditions",
+        )
+        return done
 
     def refuse(self, reference: str, engineer: str, on: Day, note: str) -> Review:
         """Refuse a review, with the engineer's reason."""
         review = self.office.reviews.get(reference)
-        return self.office.reviews.save_state(review.refused_by(engineer, on, note))
+        done = self.office.reviews.save_state(review.refused_by(engineer, on, note))
+        self.note(on, EventKind.REFUSED, str(done.reference), f"{engineer}: {done.note}")
+        return done
 
     def approval_for(self, key: int) -> Review | None:
         """The approved review covering one application, if there is one."""
@@ -217,7 +247,14 @@ class Desk:
         if made.outcome is not Outcome.ISSUE:
             raise NotAllowedError("application", str(made.outcome), "issue a permit for")
         permit = issue(self.office.permits.next_number(), made, on)
-        return self.office.permits.add(permit, seen.filed.key)
+        written = self.office.permits.add(permit, seen.filed.key)
+        self.note(
+            on,
+            EventKind.ISSUED,
+            str(written.number),
+            f"{written.carrier} {format_money(written.fee)} on application {seen.filed.key}",
+        )
+        return written
 
     def _cleared(self, seen: Assessed, made: Decision, approval: Review, on: Day) -> Decision:
         """Redecide an application an engineer has cleared.
@@ -270,6 +307,7 @@ class Desk:
         """
         permit = self.office.permits.get(number)
         voided = self.office.permits.save_state(permit.voided(reason, on))
+        self.note(on, EventKind.VOIDED, str(voided.number), voided.reason)
         if refund and self._was_charged(voided):
             self.office.accounts.post(
                 carrier=voided.carrier,
@@ -279,6 +317,7 @@ class Desk:
                 reference=str(voided.number),
                 note=f"void: {voided.reason}",
             )
+            self.note(on, EventKind.REFUNDED, str(voided.number), format_money(voided.fee))
         return voided
 
     def _was_charged(self, permit: Permit) -> bool:
@@ -293,7 +332,9 @@ class Desk:
     def extend(self, number: str, last: Day) -> Permit:
         """Push an issued permit's last day back a few days."""
         permit = self.office.permits.get(number)
-        return self.office.permits.save_state(permit.extended(last))
+        longer = self.office.permits.save_state(permit.extended(last))
+        self.note(last, EventKind.EXTENDED, str(longer.number), f"good to {longer.span.last}")
+        return longer
 
     def amend(self, number: str, application: Application, on: Day) -> Permit:
         """Replace a permit with a fresh one and mark the old one superseded.
@@ -308,6 +349,7 @@ class Desk:
         filed = self.file(application)
         new = self.issue(filed.key, on)
         self.office.permits.save_state(old.superseded_by(new.number))
+        self.note(on, EventKind.AMENDED, str(old.number), f"replaced by {new.number}")
         return new
 
     def blockers_of(self, key: int) -> tuple[Finding, ...]:
