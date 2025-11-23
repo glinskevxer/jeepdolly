@@ -423,3 +423,74 @@ def test_the_approval_is_found_by_application(desk):
     found = desk.approval_for(filed.key)
     assert found is not None
     assert found.reference == review.reference
+
+
+def test_filing_is_written_to_the_journal(desk):
+    filed = desk.file(an_application())
+    entries = desk.office.history.about(f"application {filed.key}")
+    assert [str(e.kind) for e in entries] == ["filed"]
+
+
+def test_issuing_is_written_to_the_journal(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    entries = desk.office.history.about(str(permit.number))
+    assert [str(e.kind) for e in entries] == ["issued"]
+
+
+def test_the_journal_records_the_clerk(desk):
+    desk.clerk = "jhalloran"
+    desk.file(an_application())
+    assert desk.office.history.all()[0].clerk == "jhalloran"
+
+
+def test_voiding_and_refunding_are_both_journalled(desk):
+    from jeepdolly.units.money import cents
+
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
+    desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
+    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    kinds = [str(e.kind) for e in desk.office.history.about(str(permit.number))]
+    assert kinds == ["issued", "voided", "refunded"]
+
+
+def test_an_uncharged_void_writes_no_refund_line(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.void(str(permit.number), "cancelled", DECIDED)
+    kinds = [str(e.kind) for e in desk.office.history.about(str(permit.number))]
+    assert kinds == ["issued", "voided"]
+
+
+def test_extending_a_permit_is_journalled(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.extend(str(permit.number), dt.date(2025, 6, 22))
+    kinds = [str(e.kind) for e in desk.office.history.about(str(permit.number))]
+    assert "extended" in kinds
+
+
+def test_amending_a_permit_is_journalled(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    new = desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    entries = desk.office.history.about(str(old.number))
+    assert any(str(new.number) in e.detail for e in entries)
+
+
+def test_referring_and_approving_are_journalled(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.approve(str(review.reference), "R Halloran", DECIDED, ("walking pace",))
+    kinds = [str(e.kind) for e in desk.office.history.about(str(review.reference))]
+    assert kinds == ["referred", "approved"]
+
+
+def test_a_review_refusal_is_journalled(desk):
+    filed = desk.file(a_superload())
+    review = desk.refer(filed.key, DECIDED)
+    desk.refuse(str(review.reference), "R Halloran", DECIDED, "no")
+    kinds = [str(e.kind) for e in desk.office.history.about(str(review.reference))]
+    assert kinds == ["referred", "refused"]
