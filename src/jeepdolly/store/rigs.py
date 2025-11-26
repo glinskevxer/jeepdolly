@@ -21,6 +21,7 @@ from jeepdolly.errors import BadValueError, ConflictError, NotFoundError
 from jeepdolly.ids.reference import RIG, Code, Serial, code, serial
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
+from jeepdolly.store.counter import next_serial
 from jeepdolly.store.sqlite import maybe_one, one, rows, scalar
 from jeepdolly.units.clock import Day, format_day, parse_day
 from jeepdolly.units.length import inches
@@ -64,10 +65,7 @@ class RigStore:
 
     def next_reference(self) -> Serial:
         """The reference the next rig will be filed under."""
-        highest = scalar(self.connection, "SELECT max(reference) FROM rig")
-        if highest is None:
-            return RIG.format(1)
-        return RIG.format(RIG.number(str(highest)) + 1)
+        return next_serial(self.connection, RIG, "rig", "reference")
 
     def add(self, carrier: str, config: Configuration, recorded_on: Day) -> FiledRig:
         """File a rig under the next reference."""

@@ -21,8 +21,9 @@ from jeepdolly.roadway.network import Network, build
 from jeepdolly.roadway.node import Node
 from jeepdolly.roadway.segment import RoadClass, Segment
 from jeepdolly.roadway.structure import Structure, StructureKind
+from jeepdolly.store.counter import next_serial
 from jeepdolly.store.repo import Repository
-from jeepdolly.store.sqlite import rows, scalar
+from jeepdolly.store.sqlite import rows
 from jeepdolly.units.distance import hundredths
 from jeepdolly.units.length import inches
 from jeepdolly.units.mass import pounds
@@ -244,10 +245,7 @@ class RoadwayStore:
 
     def next_structure(self) -> Serial:
         """The reference the next structure will be filed under."""
-        highest = scalar(self.connection, "SELECT max(reference) FROM structure")
-        if highest is None:
-            return STRUCTURE.format(1)
-        return STRUCTURE.format(STRUCTURE.number(str(highest)) + 1)
+        return next_serial(self.connection, STRUCTURE, "structure", "reference")
 
     def add_structure(self, structure: Structure) -> Structure:
         """Put something in the way on a stretch."""

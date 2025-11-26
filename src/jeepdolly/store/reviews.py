@@ -19,6 +19,7 @@ from jeepdolly.errors import ConflictError
 from jeepdolly.ids.reference import REVIEW, Serial, serial
 from jeepdolly.permit.review import Review, ReviewState
 from jeepdolly.store.applications import ApplicationStore
+from jeepdolly.store.counter import next_serial
 from jeepdolly.store.sqlite import maybe_one, one, rows, scalar
 from jeepdolly.units.clock import Day, format_day, parse_day
 
@@ -35,10 +36,7 @@ class ReviewStore:
 
     def next_reference(self) -> Serial:
         """The reference the next review will be opened under."""
-        highest = scalar(self.connection, "SELECT max(reference) FROM review")
-        if highest is None:
-            return REVIEW.format(1)
-        return REVIEW.format(REVIEW.number(str(highest)) + 1)
+        return next_serial(self.connection, REVIEW, "review", "reference")
 
     def add(self, review: Review) -> Review:
         """Open a review against an application that is on file."""

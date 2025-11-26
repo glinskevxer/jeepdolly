@@ -23,6 +23,7 @@ from jeepdolly.limits.finding import Finding, Severity
 from jeepdolly.permit.decision import Decision, Outcome
 from jeepdolly.permit.permit import Permit, State
 from jeepdolly.store.applications import ApplicationStore
+from jeepdolly.store.counter import next_serial
 from jeepdolly.store.sqlite import maybe_one, one, rows, scalar
 from jeepdolly.travel.escort import Escort, Role
 from jeepdolly.units.clock import Day, DaySpan, format_day, parse_day
@@ -49,10 +50,7 @@ class PermitStore:
 
     def next_number(self) -> Serial:
         """The number the next permit will be issued under."""
-        highest = scalar(self.connection, "SELECT max(number) FROM permit")
-        if highest is None:
-            return PERMIT.format(1)
-        return PERMIT.format(PERMIT.number(str(highest)) + 1)
+        return next_serial(self.connection, PERMIT, "permit", "number")
 
     def add(self, permit: Permit, application_key: int) -> Permit:
         """Write an issued permit and everything that went into it."""
