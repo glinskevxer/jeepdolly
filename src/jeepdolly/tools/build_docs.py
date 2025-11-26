@@ -19,9 +19,10 @@ import click
 
 from jeepdolly import __version__
 from jeepdolly.cli.main import main as cli
+from jeepdolly.tools.document import Document
 from jeepdolly.tools.walk import repo_root
 
-__all__ = ["DOC_NAME", "doc_path", "main", "render", "write"]
+__all__ = ["DOCUMENT", "DOC_NAME", "doc_path", "main", "render", "write"]
 
 #: Where the reference is committed.
 DOC_NAME = "commands.md"
@@ -88,28 +89,17 @@ def render() -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+DOCUMENT = Document(name="build_docs", render=render, path_of=lambda: doc_path())
+
+
 def write() -> Path:
-    """Write the reference out and hand back where it went."""
-    path = doc_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render(), encoding="utf-8")
-    return path
+    """Write the document out and hand back where it went."""
+    return DOCUMENT.write()
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Write the reference, or check the committed one is current."""
-    args = sys.argv[1:] if argv is None else argv
-    if "--write" in args:
-        print(f"build_docs: wrote {write()}")
-        return 0
-    path = doc_path()
-    if not path.exists():
-        print(f"build_docs: {path} has never been written")
-        return 1
-    if path.read_text(encoding="utf-8") != render():
-        print(f"build_docs: {path} is out of date, run with --write")
-        return 1
-    return 0
+    """Write the document, or check the committed one is current."""
+    return DOCUMENT.main(argv)
 
 
 if __name__ == "__main__":

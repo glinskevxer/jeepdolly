@@ -94,3 +94,15 @@ def test_the_command_tree_is_a_group():
 
 def test_the_writer_is_a_callable_the_build_can_reach():
     assert callable(write)
+
+
+def test_the_document_knows_its_own_name():
+    from jeepdolly.tools.build_docs import DOCUMENT
+
+    assert DOCUMENT.name == "build_docs"
+
+
+def test_the_document_is_current():
+    from jeepdolly.tools.build_docs import DOCUMENT
+
+    assert DOCUMENT.current
