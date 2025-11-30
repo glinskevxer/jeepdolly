@@ -6,6 +6,7 @@ import click
 
 from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.cli.context import Session, office_of
+from jeepdolly.report.carrier import CarrierFile, carrier_sheet
 from jeepdolly.report.daily import day_sheet
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
@@ -45,6 +46,28 @@ def route_report(session: Session, origin: str, destination: str) -> None:
             click.echo("no way through")
             return
         lines = route_sheet(found, network)
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("carrier")
+@click.argument("code")
+@click.pass_obj
+def carrier_report(session: Session, code: str) -> None:
+    """Print everything the office holds about one carrier."""
+    with office_of(session) as office:
+        found = office.carriers.get(code)
+        permits = office.permits.for_carrier(str(found.code))
+        subjects = {str(p.number) for p in permits}
+        events = [e for e in office.history.all() if e.subject in subjects]
+        file = CarrierFile(
+            carrier=found,
+            rigs=tuple(office.rigs.for_carrier(str(found.code))),
+            permits=tuple(permits),
+            account=office.accounts.account(str(found.code)),
+            events=tuple(events),
+        )
+        lines = carrier_sheet(file)
     for line in lines:
         click.echo(line)
 

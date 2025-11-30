@@ -286,6 +286,14 @@ Void an issued permit and refund what was charged for it.
 
 Print the office's paperwork.
 
+### `jeepdolly report carrier`
+
+Print everything the office holds about one carrier.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+
 ### `jeepdolly report day`
 
 Print the movement sheet for one day.
