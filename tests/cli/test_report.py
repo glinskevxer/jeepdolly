@@ -64,3 +64,25 @@ def test_revenue_report_filters_by_span(issued):
 
 def test_revenue_report_says_when_there_is_nothing(run):
     assert "nothing to report" in run("report", "revenue").output
+
+
+def test_the_carrier_sheet_names_the_carrier(issued):
+    output = issued("report", "carrier", "VANCE").output
+    assert "carrier file VANCE" in output
+    assert "Vance Heavy Haul" in output
+
+
+def test_the_carrier_sheet_lists_the_rig(issued):
+    assert "R-00001" in issued("report", "carrier", "VANCE").output
+
+
+def test_the_carrier_sheet_lists_the_permit(issued):
+    assert "P-000001" in issued("report", "carrier", "VANCE").output
+
+
+def test_the_carrier_sheet_shows_the_activity(issued):
+    assert "recent activity" in issued("report", "carrier", "VANCE").output
+
+
+def test_the_carrier_sheet_raises_on_one_that_is_not_there(issued):
+    assert issued("report", "carrier", "NOBODY").exit_code == 1
