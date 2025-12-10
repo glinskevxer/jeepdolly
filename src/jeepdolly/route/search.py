@@ -36,8 +36,10 @@ __all__ = [
     "Passable",
     "cheapest_distance",
     "clearing",
+    "ends_of",
     "every_route",
     "passable_for",
+    "search_between",
     "shortest",
 ]
 
@@ -97,7 +99,7 @@ def _unwind(came: dict[Code, _Step], destination: Code) -> Route | None:
     return Route(legs=tuple(legs))
 
 
-def _search(
+def search_between(
     network: Network, origin: Code, destination: Code, passable: Passable
 ) -> Route | None:
     """Dijkstra from one junction to another over the passable legs."""
@@ -116,7 +118,8 @@ def _search(
     return _unwind(came, destination)
 
 
-def _ends(network: Network, origin: str, destination: str) -> tuple[Code, Code]:
+def ends_of(network: Network, origin: str, destination: str) -> tuple[Code, Code]:
+    """Check both junctions are on the map and are not the same one."""
     start = code(str(origin))
     finish = code(str(destination))
     network.node(str(start))
@@ -128,8 +131,8 @@ def _ends(network: Network, origin: str, destination: str) -> tuple[Code, Code]:
 
 def shortest(network: Network, origin: str, destination: str) -> Route | None:
     """The fewest miles from one junction to another, whatever is on the rig."""
-    start, finish = _ends(network, origin, destination)
-    return _search(network, start, finish, _always)
+    start, finish = ends_of(network, origin, destination)
+    return search_between(network, start, finish, _always)
 
 
 def passable_for(network: Network, config: Configuration, load: Load) -> Passable:
@@ -147,8 +150,8 @@ def clearing(
     network: Network, origin: str, destination: str, config: Configuration, load: Load
 ) -> Route | None:
     """The fewest miles this rig can actually be driven, or nothing."""
-    start, finish = _ends(network, origin, destination)
-    return _search(network, start, finish, passable_for(network, config, load))
+    start, finish = ends_of(network, origin, destination)
+    return search_between(network, start, finish, passable_for(network, config, load))
 
 
 def every_route(
@@ -160,7 +163,7 @@ def every_route(
     see the alternatives rather than the best one. ``max_legs`` is a hard stop,
     not a suggestion.
     """
-    start, finish = _ends(network, origin, destination)
+    start, finish = ends_of(network, origin, destination)
     if isinstance(max_legs, bool) or not isinstance(max_legs, int) or max_legs < 1:
         raise BadValueError("max legs", max_legs, "want at least one")
     found: list[Route] = []
