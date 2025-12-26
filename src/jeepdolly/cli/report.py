@@ -10,8 +10,11 @@ from jeepdolly.report.carrier import CarrierFile, carrier_sheet
 from jeepdolly.report.daily import day_sheet
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
+from jeepdolly.rig.load import Load
+from jeepdolly.route.detour import detour_for
 from jeepdolly.route.search import shortest
 from jeepdolly.units.clock import DaySpan, parse_day
+from jeepdolly.units.length import feet, parse_length
 
 __all__ = ["report"]
 
@@ -70,6 +73,45 @@ def carrier_report(session: Session, code: str) -> None:
         lines = carrier_sheet(file)
     for line in lines:
         click.echo(line)
+
+
+@report.command("detour")
+@click.option("--from", "origin", required=True, help="Junction the run starts at.")
+@click.option("--to", "destination", required=True, help="Junction the run ends at.")
+@click.option("--rig", required=True, help="Which rig, by reference.")
+@click.option("--closed", required=True, help="Comma separated stretches that are shut.")
+@click.option("--width", default="8'6\"", show_default=True, help="Load width.")
+@click.option("--height", default="13'6\"", show_default=True, help="Load height.")
+@click.pass_obj
+def detour_report(
+    session: Session,
+    origin: str,
+    destination: str,
+    rig: str,
+    closed: str,
+    width: str,
+    height: str,
+) -> None:
+    """Say what closing some stretches does to one rig's run."""
+    shut = [part.strip() for part in closed.split(",") if part.strip()]
+    with office_of(session) as office:
+        network = office.roadway.network()
+        filed = office.rigs.get(rig)
+        load = Load(
+            description="detour enquiry",
+            weight=filed.config.gross,
+            width=parse_length(width),
+            height=parse_length(height),
+            length=feet(48),
+            divisible=False,
+            reason="single-piece",
+        )
+        made = detour_for(network, origin, destination, filed.config, load, shut)
+    click.echo(str(made))
+    if made.usual is not None:
+        click.echo(f"  usual   {' '.join(str(s.code) for s in made.usual.segments)}")
+    if made.instead is not None:
+        click.echo(f"  instead {' '.join(str(s.code) for s in made.instead.segments)}")
 
 
 @report.command("day")

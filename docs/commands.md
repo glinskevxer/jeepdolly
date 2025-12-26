@@ -302,6 +302,19 @@ Print the movement sheet for one day.
 | --- | --- | --- |
 | `day` | argument |  |
 
+### `jeepdolly report detour`
+
+Say what closing some stretches does to one rig's run.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--from` | required option | Junction the run starts at. |
+| `--to` | required option | Junction the run ends at. |
+| `--rig` | required option | Which rig, by reference. |
+| `--closed` | required option | Comma separated stretches that are shut. |
+| `--width` | option | Load width. |
+| `--height` | option | Load height. |
+
 ### `jeepdolly report permit`
 
 Print one permit as it goes in the cab.
