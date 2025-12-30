@@ -86,3 +86,84 @@ def test_the_carrier_sheet_shows_the_activity(issued):
 
 def test_the_carrier_sheet_raises_on_one_that_is_not_there(issued):
     assert issued("report", "carrier", "NOBODY").exit_code == 1
+
+
+def test_a_detour_off_the_route_says_so(issued):
+    result = issued(
+        "report",
+        "detour",
+        "--from",
+        "JCT-A",
+        "--to",
+        "JCT-D",
+        "--rig",
+        "R-00001",
+        "--closed",
+        "SEG-CD",
+    )
+    assert result.exit_code == 0
+    assert "is not on the route" in result.output
+
+
+def test_a_detour_that_strands_the_rig_says_so(issued):
+    result = issued(
+        "report",
+        "detour",
+        "--from",
+        "JCT-A",
+        "--to",
+        "JCT-D",
+        "--rig",
+        "R-00001",
+        "--closed",
+        "SEG-AB",
+    )
+    assert "nothing gets through" in result.output
+
+
+def test_a_detour_prints_the_route_it_would_use(issued):
+    result = issued(
+        "report",
+        "detour",
+        "--from",
+        "JCT-A",
+        "--to",
+        "JCT-D",
+        "--rig",
+        "R-00001",
+        "--closed",
+        "SEG-CD",
+    )
+    assert "usual" in result.output
+
+
+def test_a_detour_refuses_a_rig_that_is_not_there(issued):
+    result = issued(
+        "report",
+        "detour",
+        "--from",
+        "JCT-A",
+        "--to",
+        "JCT-D",
+        "--rig",
+        "R-00099",
+        "--closed",
+        "SEG-CD",
+    )
+    assert result.exit_code == 1
+
+
+def test_a_detour_refuses_a_stretch_that_is_not_there(issued):
+    result = issued(
+        "report",
+        "detour",
+        "--from",
+        "JCT-A",
+        "--to",
+        "JCT-D",
+        "--rig",
+        "R-00001",
+        "--closed",
+        "SEG-ZZ",
+    )
+    assert result.exit_code == 1
