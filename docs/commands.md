@@ -341,6 +341,15 @@ Print the route sheet between two junctions.
 | `--from` | required option | Junction the run starts at. |
 | `--to` | required option | Junction the run ends at. |
 
+### `jeepdolly report schedule`
+
+Print the day by day movement plan for one permit.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+| `--county` | option | Which county, or blank for every one on the route. |
+
 ### `jeepdolly review`
 
 Open, approve and refuse engineering reviews.

@@ -7,13 +7,15 @@ import click
 from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.carrier import CarrierFile, carrier_sheet
-from jeepdolly.report.daily import day_sheet
+from jeepdolly.report.daily import counties_of, day_sheet
+from jeepdolly.report.layout import banner, pairs, table
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
 from jeepdolly.rig.load import Load
 from jeepdolly.route.detour import detour_for
 from jeepdolly.route.search import shortest
-from jeepdolly.units.clock import DaySpan, parse_day
+from jeepdolly.travel.schedule import plan_days
+from jeepdolly.units.clock import DaySpan, format_day, parse_day
 from jeepdolly.units.length import feet, parse_length
 
 __all__ = ["report"]
@@ -123,6 +125,46 @@ def day_report(session: Session, day: str) -> None:
         network = office.roadway.network()
         wanted = parse_day(day)
         lines = day_sheet(office.permits.good_on(wanted), wanted, network, EmbargoBook(()))
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("schedule")
+@click.argument("number")
+@click.option("--county", default="", help="Which county, or blank for every one on the route.")
+@click.pass_obj
+def schedule_report(session: Session, number: str, county: str) -> None:
+    """Print the day by day movement plan for one permit."""
+    with office_of(session) as office:
+        found = office.permits.get(number)
+        network = office.roadway.network()
+        book = office.almanac.embargo_book()
+        counties = [county] if county else list(counties_of(found, network)) or ["statewide"]
+        lines: list[str] = []
+        for where in counties:
+            made = plan_days(found.application.load, found.span, where, book)
+            if lines:
+                lines.append("")
+            lines.extend(banner(f"{found.number} in {where}"))
+            lines.extend(
+                table(
+                    ["day", "hours", "stopped by"],
+                    [
+                        [format_day(one.day), one.hours, ", ".join(one.stopped_by) or "-"]
+                        for one in made.days
+                    ],
+                )
+            )
+            lines.append("")
+            lines.extend(
+                pairs(
+                    [
+                        ("days", str(len(made))),
+                        ("movable", str(len(made.movable))),
+                        ("stopped", str(len(made.stopped))),
+                    ]
+                )
+            )
     for line in lines:
         click.echo(line)
 

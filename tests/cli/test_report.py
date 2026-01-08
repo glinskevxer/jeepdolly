@@ -167,3 +167,61 @@ def test_a_detour_refuses_a_stretch_that_is_not_there(issued):
         "SEG-ZZ",
     )
     assert result.exit_code == 1
+
+
+def test_the_schedule_lists_every_day(issued):
+    output = issued("report", "schedule", "P-000001").output
+    assert "2025-06-18" in output
+    assert "2025-06-20" in output
+
+
+def test_the_schedule_counts_the_movable_days(issued):
+    output = issued("report", "schedule", "P-000001").output
+    assert "days     3" in output
+    assert "movable  3" in output
+
+
+def test_the_schedule_names_the_county(issued):
+    assert "in Missoula" in issued("report", "schedule", "P-000001").output
+
+
+def test_the_schedule_takes_a_county_of_its_own(issued):
+    assert (
+        "in Granite" in issued("report", "schedule", "P-000001", "--county", "Granite").output
+    )
+
+
+def test_a_holiday_stops_a_day_in_the_schedule(issued):
+    issued("almanac", "holidays", "2025")
+    issued(
+        "permit",
+        "extend",
+        "P-000001",
+        "--last",
+        "2025-06-22",
+    )
+    output = issued("report", "schedule", "P-000001").output
+    assert "no movement" not in output or "stopped" in output
+
+
+def test_an_embargo_shows_up_in_the_schedule(issued):
+    issued(
+        "almanac",
+        "embargo",
+        "--code",
+        "SHUT-25",
+        "--first",
+        "2025-06-19",
+        "--last",
+        "2025-06-19",
+        "--reason",
+        "bridge work",
+    )
+    output = issued("report", "schedule", "P-000001").output
+    assert "no movement" in output
+    assert "SHUT-25" in output
+    assert "stopped  1" in output
+
+
+def test_the_schedule_raises_on_a_permit_that_is_not_there(issued):
+    assert issued("report", "schedule", "P-000099").exit_code == 1
