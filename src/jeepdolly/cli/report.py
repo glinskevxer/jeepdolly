@@ -6,6 +6,7 @@ import click
 
 from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.cli.context import Session, office_of
+from jeepdolly.report.audit import audit, audit_sheet
 from jeepdolly.report.carrier import CarrierFile, carrier_sheet
 from jeepdolly.report.daily import counties_of, day_sheet
 from jeepdolly.report.layout import banner, pairs, table
@@ -165,6 +166,28 @@ def schedule_report(session: Session, number: str, county: str) -> None:
                     ]
                 )
             )
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("audit")
+@click.option("--carrier", default="", help="Only this carrier.")
+@click.pass_obj
+def audit_report(session: Session, carrier: str) -> None:
+    """Check the permits, the accounts and the journal against each other."""
+    with office_of(session) as office:
+        wanted = [office.carriers.get(carrier)] if carrier else office.carriers.all()
+        journal = office.history.all()
+        results = [
+            audit(
+                str(one.code),
+                office.permits.for_carrier(str(one.code)),
+                office.accounts.account(str(one.code)),
+                journal,
+            )
+            for one in wanted
+        ]
+        lines = audit_sheet(results)
     for line in lines:
         click.echo(line)
 

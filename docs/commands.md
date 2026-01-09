@@ -286,6 +286,14 @@ Void an issued permit and refund what was charged for it.
 
 Print the office's paperwork.
 
+### `jeepdolly report audit`
+
+Check the permits, the accounts and the journal against each other.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--carrier` | option | Only this carrier. |
+
 ### `jeepdolly report carrier`
 
 Print everything the office holds about one carrier.
