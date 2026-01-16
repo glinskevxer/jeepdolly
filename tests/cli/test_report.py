@@ -225,3 +225,28 @@ def test_an_embargo_shows_up_in_the_schedule(issued):
 
 def test_the_schedule_raises_on_a_permit_that_is_not_there(issued):
     assert issued("report", "schedule", "P-000099").exit_code == 1
+
+
+def test_the_audit_reports_an_uncharged_permit(issued):
+    output = issued("report", "audit").output
+    assert "account audit" in output
+    assert "never charged" in output
+
+
+def test_the_audit_is_clean_once_the_permit_is_charged(issued):
+    issued("account", "deposit", "VANCE", "--amount", "1,000.00", "--on", "2025-06-17")
+    issued("account", "charge", "VANCE", "--permit", "P-000001", "--on", "2025-06-17")
+    output = issued("report", "audit").output
+    assert "clean     1" in output
+
+
+def test_the_audit_narrows_to_one_carrier(issued):
+    assert "VANCE" in issued("report", "audit", "--carrier", "VANCE").output
+
+
+def test_the_audit_raises_on_a_carrier_that_is_not_there(issued):
+    assert issued("report", "audit", "--carrier", "NOBODY").exit_code == 1
+
+
+def test_the_audit_says_when_there_are_no_carriers(run):
+    assert "no carriers on file" in run("report", "audit").output
