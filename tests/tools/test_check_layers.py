@@ -1,10 +1,10 @@
 import pytest
 
-from jeepdolly.tools.check_layers import LAYERS, layer_of, main, violations
+from jeepdolly.tools.check_layers import LAYERS, layer_of, main, problems
 
 
-def test_the_package_has_no_violations():
-    assert violations() == []
+def test_the_package_has_no_problems():
+    assert problems() == []
 
 
 def test_main_passes_over_the_package():
@@ -48,7 +48,7 @@ def test_the_desk_sits_above_the_store():
 
 def test_the_check_fires_when_a_layer_is_moved(monkeypatch):
     monkeypatch.setitem(LAYERS, "jeepdolly.units", 99)
-    found = violations()
+    found = problems()
     assert found
     assert any("jeepdolly.units" in line for line in found)
 

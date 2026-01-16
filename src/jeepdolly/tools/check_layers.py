@@ -20,7 +20,7 @@ import sys
 
 from jeepdolly.tools.walk import imports_of, module_of, parse, source_files
 
-__all__ = ["LAYERS", "layer_of", "main", "violations"]
+__all__ = ["LAYERS", "layer_of", "main", "problems"]
 
 #: Most specific prefix wins, so ``limits.finding`` sits below the rest of the
 #: limits and ``permit.desk`` sits above the file it reads.
@@ -72,8 +72,12 @@ def layer_of(module: str) -> int | None:
     return None if best is None else best[1]
 
 
-def violations() -> list[str]:
-    """Every import that reaches up a layer, one line each."""
+def problems() -> list[str]:
+    """Every import that reaches up a layer, one line each.
+
+    Called ``problems`` like every other check's finder, so the build can run
+    them through one loop and a test can feed any of them a made up finding.
+    """
     found: list[str] = []
     for path in source_files():
         module = module_of(path)
@@ -92,7 +96,7 @@ def violations() -> list[str]:
 
 def main() -> int:
     """Report every violation and fail if there is one."""
-    found = violations()
+    found = problems()
     for line in found:
         print(f"check_layers: {line}")
     if found:
