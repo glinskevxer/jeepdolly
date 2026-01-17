@@ -22,6 +22,7 @@ package, plus the ideas listed by hand at the end of that file.
 | extended | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | filed | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | front | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
+| go another way | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | height pole | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | interstate | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | issue | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
@@ -30,10 +31,12 @@ package, plus the ideas listed by hand at the end of that file.
 | loaded | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | local | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | note | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
+| nothing will fix this | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | open | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | overhead | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | permit | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | police | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
+| put wider rubber on | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | quoted | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | rear | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | refer | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
@@ -44,9 +47,13 @@ package, plus the ideas listed by hand at the end of that file.
 | refuse | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
 | refused | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | refused | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
+| shed weight | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
+| spread the axles | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | state | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | superload | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
 | superseded | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
+| take it to engineering | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
+| take the load apart | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | trip | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
 | tunnel | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | void | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
