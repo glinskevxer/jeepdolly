@@ -187,3 +187,61 @@ def test_a_divisible_load_is_blocked_at_quote(stocked):
     result = stocked("permit", "quote", "1", "--on", "2025-06-17")
     assert "outcome refuse" in result.output
     assert "divisible" in result.output
+
+
+def test_advise_says_when_nothing_has_to_change(stocked):
+    apply_one(
+        stocked,
+        **{"--width": "8'6\"", "--height": "13'0\"", "--weight": "60,000"},
+    )
+    assert "nothing has to change" in stocked("permit", "advise", "1").output
+
+
+def test_advise_names_the_over_width(stocked):
+    apply_one(stocked)
+    output = stocked("permit", "advise", "1").output
+    assert "the load" in output
+    assert "over size" in output
+
+
+def test_advise_says_to_reroute_a_tall_load(stocked):
+    apply_one(stocked, **{"--height": "18'0"})
+    output = stocked("permit", "advise", "1").output
+    assert "engineering" in output or "another way" in output
+
+
+def test_advise_says_to_split_a_divisible_load(stocked):
+    stocked(
+        "permit",
+        "apply",
+        "--carrier",
+        "VANCE",
+        "--rig",
+        "R-00001",
+        "--description",
+        "washed gravel",
+        "--weight",
+        "148,000",
+        "--width",
+        "8'6\"",
+        "--height",
+        "12'",
+        "--length",
+        "40'",
+        "--first",
+        "2025-06-18",
+        "--last",
+        "2025-06-20",
+        "--origin",
+        "JCT-A",
+        "--destination",
+        "JCT-D",
+        "--filed",
+        "2025-06-16",
+        "--divisible",
+    )
+    assert "two trips" in stocked("permit", "advise", "1").output
+
+
+def test_advise_raises_on_an_application_that_is_not_there(stocked):
+    assert stocked("permit", "advise", "99").exit_code == 1

@@ -203,6 +203,14 @@ Bulk load carriers and the map from a folder of csv files.
 
 Apply for, price and issue permits.
 
+### `jeepdolly permit advise`
+
+Say what would have to change to get an application through.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `key` | argument |  |
+
 ### `jeepdolly permit apply`
 
 Take an application at the counter.

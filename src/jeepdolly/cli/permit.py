@@ -7,7 +7,10 @@ import datetime as dt
 import click
 
 from jeepdolly.cli.context import Session, office_of
+from jeepdolly.limits.assess import Assessment
 from jeepdolly.limits.finding import Finding
+from jeepdolly.limits.relief import remedies_for
+from jeepdolly.limits.statute import INTERSTATE
 from jeepdolly.permit.application import Application, Kind
 from jeepdolly.permit.desk import Desk
 from jeepdolly.rig.load import NONDIVISIBLE_REASONS, Load
@@ -120,6 +123,21 @@ def quote(session: Session, key: int, on: str) -> None:
         for line in made.invoice.lines:
             click.echo(f"  {line}")
         click.echo(f"total {format_money(made.invoice.total)}")
+
+
+@permit.command("advise")
+@click.argument("key", type=int)
+@click.pass_obj
+def advise(session: Session, key: int) -> None:
+    """Say what would have to change to get an application through."""
+    with office_of(session) as office:
+        seen = Desk.at(office).assess(key)
+        remedies = remedies_for(Assessment(findings=seen.findings), INTERSTATE)
+    if not remedies:
+        click.echo("nothing has to change")
+        return
+    for one in remedies:
+        click.echo(f"{one.kind}: {one}")
 
 
 @permit.command("issue")
