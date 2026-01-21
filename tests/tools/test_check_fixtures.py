@@ -57,3 +57,32 @@ def test_every_opener_is_a_bare_name():
 def test_the_opener_list_covers_the_office_helpers():
     assert "opened_new_office" in OPENERS
     assert "opened_office" in OPENERS
+
+
+def test_an_opener_inside_a_with_is_not_a_leak():
+    text = "def go():\n    with opened(path) as one:\n        one.execute('x')"
+    assert not opens_something(function_of(text))
+
+
+def test_an_opener_outside_a_with_is_a_leak():
+    text = "def go():\n    one = opened(path)\n    return one"
+    assert opens_something(function_of(text))
+
+
+def test_one_managed_opener_does_not_excuse_another():
+    text = "def go():\n    with opened(path):\n        pass\n    return connect(other)"
+    assert opens_something(function_of(text))
+
+
+def test_two_openers_in_one_with_are_both_managed():
+    text = "def go():\n    with opened(a), opened(b):\n        pass"
+    assert not opens_something(function_of(text))
+
+
+def test_creating_a_file_is_not_an_opener():
+    assert "create" not in OPENERS
+
+
+def test_a_fixture_that_only_creates_is_not_a_leak():
+    text = "def go():\n    create(path)\n    return path"
+    assert not opens_something(function_of(text))
