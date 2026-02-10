@@ -199,6 +199,30 @@ Bulk load carriers and the map from a folder of csv files.
 | --- | --- | --- |
 | `folder` | argument |  |
 
+### `jeepdolly office`
+
+Look after the office file itself.
+
+### `jeepdolly office backup`
+
+Copy the office file page by page to somewhere else.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `target` | argument |  |
+
+### `jeepdolly office rows`
+
+Print how many rows each table holds.
+
+### `jeepdolly office sound`
+
+Ask sqlite whether the file is whole, and the office whether it is current.
+
+### `jeepdolly office vacuum`
+
+Rebuild the file into as few pages as it needs.
+
 ### `jeepdolly permit`
 
 Apply for, price and issue permits.
