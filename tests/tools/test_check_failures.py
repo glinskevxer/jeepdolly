@@ -12,6 +12,7 @@ import pytest
 
 from jeepdolly.tools import (
     check_boundaries,
+    check_commands,
     check_dataclasses,
     check_docstrings,
     check_exports,
@@ -24,6 +25,7 @@ from jeepdolly.tools import (
 
 CHECKS = [
     check_boundaries,
+    check_commands,
     check_dataclasses,
     check_docstrings,
     check_exports,
