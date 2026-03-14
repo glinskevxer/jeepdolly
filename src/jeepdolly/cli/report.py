@@ -9,14 +9,16 @@ from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.audit import audit, audit_sheet
 from jeepdolly.report.carrier import CarrierFile, carrier_sheet
 from jeepdolly.report.daily import counties_of, day_sheet
-from jeepdolly.report.layout import banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
 from jeepdolly.rig.load import Load
 from jeepdolly.route.detour import detour_for
 from jeepdolly.route.search import shortest
+from jeepdolly.route.stage import DEFAULT_SPEED, stage_run
 from jeepdolly.travel.schedule import plan_days
 from jeepdolly.units.clock import DaySpan, format_day, parse_day
+from jeepdolly.units.distance import format_distance
 from jeepdolly.units.length import feet, parse_length
 
 __all__ = ["report"]
@@ -188,6 +190,59 @@ def audit_report(session: Session, carrier: str) -> None:
             for one in wanted
         ]
         lines = audit_sheet(results)
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("stage")
+@click.argument("number")
+@click.option(
+    "--speed", default=DEFAULT_SPEED, show_default=True, help="Haul speed in miles an hour."
+)
+@click.option("--county", default="", help="Which county's hours to use.")
+@click.pass_obj
+def stage_report(session: Session, number: str, speed: int, county: str) -> None:
+    """Say where the truck stops each night on one permit."""
+    with office_of(session) as office:
+        found = office.permits.get(number)
+        network = office.roadway.network()
+        application = found.application
+        if not application.routed:
+            click.echo("an annual permit has no route to stage")
+            return
+        route = shortest(network, str(application.origin), str(application.destination))
+        if route is None:
+            click.echo("no way through")
+            return
+        where = county or (counties_of(found, network) or ("statewide",))[0]
+        plan = plan_days(application.load, found.span, where, office.almanac.embargo_book())
+        made = stage_run(route, plan, speed)
+        lines = banner(f"{found.number} staged at {speed} mph in {where}")
+        lines.extend(
+            table(
+                ["day", "miles", "minutes", "stops at"],
+                [
+                    [
+                        format_day(one.day),
+                        format_distance(one.distance),
+                        str(one.minutes),
+                        str(one.ends_at) if one.ends_at else "-",
+                    ]
+                    for one in made.stages
+                ],
+                aligns=[LEFT, RIGHT, RIGHT, LEFT],
+            )
+        )
+        lines.append("")
+        lines.extend(
+            pairs(
+                [
+                    ("driving days", str(made.days)),
+                    ("covered", format_distance(made.covered)),
+                    ("finished", "yes" if made.finished else "no"),
+                ]
+            )
+        )
     for line in lines:
         click.echo(line)
 

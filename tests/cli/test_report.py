@@ -250,3 +250,37 @@ def test_the_audit_raises_on_a_carrier_that_is_not_there(issued):
 
 def test_the_audit_says_when_there_are_no_carriers(run):
     assert "no carriers on file" in run("report", "audit").output
+
+
+def test_the_staging_lists_the_days(issued):
+    output = issued("report", "stage", "P-000001").output
+    assert "staged at 35 mph" in output
+    assert "2025-06-18" in output
+
+
+def test_the_staging_says_it_finished(issued):
+    assert "finished      yes" in issued("report", "stage", "P-000001").output
+
+
+def test_the_staging_takes_a_slower_speed(issued):
+    output = issued("report", "stage", "P-000001", "--speed", "5").output
+    assert "staged at 5 mph" in output
+
+
+def test_a_slower_haul_needs_more_driving_days(issued):
+    quick = issued("report", "stage", "P-000001", "--speed", "35").output
+    slow = issued("report", "stage", "P-000001", "--speed", "1").output
+    assert "driving days  1" in quick
+    assert "driving days  2" in slow
+
+
+def test_the_staging_takes_a_county(issued):
+    assert "in Granite" in issued("report", "stage", "P-000001", "--county", "Granite").output
+
+
+def test_the_staging_names_the_overnight_stop(issued):
+    assert "JCT-D" in issued("report", "stage", "P-000001").output
+
+
+def test_the_staging_raises_on_a_permit_that_is_not_there(issued):
+    assert issued("report", "stage", "P-000099").exit_code == 1

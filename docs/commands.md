@@ -390,6 +390,16 @@ Print the day by day movement plan for one permit.
 | `number` | argument |  |
 | `--county` | option | Which county, or blank for every one on the route. |
 
+### `jeepdolly report stage`
+
+Say where the truck stops each night on one permit.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+| `--speed` | option | Haul speed in miles an hour. |
+| `--county` | option | Which county's hours to use. |
+
 ### `jeepdolly review`
 
 Open, approve and refuse engineering reviews.
