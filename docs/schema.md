@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 10.
+Schema version 11.
 
 ## account_entry
 
@@ -41,7 +41,7 @@ Indexes: `account_by_day`
 | origin | TEXT |  |
 | destination | TEXT |  |
 
-Indexes: `application_by_carrier`, `application_by_day`
+Indexes: `application_by_carrier`, `application_by_day`, `application_by_destination`, `application_by_load`, `application_by_origin`, `application_by_rig`
 
 ## carrier
 
@@ -128,7 +128,7 @@ Indexes: `journal_by_day`, `journal_by_subject`
 | replaced_by | TEXT |  |
 | distance | INTEGER |  |
 
-Indexes: `permit_by_application`, `permit_by_day`
+Indexes: `permit_by_application`, `permit_by_day`, `permit_by_successor`
 
 ## permit_escort
 

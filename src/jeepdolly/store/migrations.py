@@ -383,6 +383,17 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX journal_by_day ON journal (day, sequence)",
         ),
     ),
+    Migration(
+        number=11,
+        name="index the references sqlite does not",
+        statements=(
+            "CREATE INDEX application_by_rig ON application (rig_reference)",
+            "CREATE INDEX application_by_load ON application (load_id)",
+            "CREATE INDEX application_by_origin ON application (origin)",
+            "CREATE INDEX application_by_destination ON application (destination)",
+            "CREATE INDEX permit_by_successor ON permit (replaced_by)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
