@@ -284,3 +284,22 @@ def test_the_staging_names_the_overnight_stop(issued):
 
 def test_the_staging_raises_on_a_permit_that_is_not_there(issued):
     assert issued("report", "stage", "P-000099").exit_code == 1
+
+
+def test_the_expiry_list_names_a_permit_running_out(issued):
+    output = issued("report", "expiring", "2025-06-19").output
+    assert "expiry list" in output
+    assert "P-000001" in output
+
+
+def test_the_expiry_list_says_when_nothing_runs_out(issued):
+    output = issued("report", "expiring", "2025-06-01", "--within", "3").output
+    assert "nothing runs out" in output
+
+
+def test_the_expiry_list_shows_what_has_gone(issued):
+    assert "already run out" in issued("report", "expiring", "2025-06-25").output
+
+
+def test_the_expiry_list_refuses_a_bad_date(issued):
+    assert issued("report", "expiring", "19/06/2025").exit_code == 1

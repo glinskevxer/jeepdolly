@@ -355,6 +355,15 @@ Say what closing some stretches does to one rig's run.
 | `--width` | option | Load width. |
 | `--height` | option | Load height. |
 
+### `jeepdolly report expiring`
+
+List the permits about to run out, and the ones that already have.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `day` | argument |  |
+| `--within` | option | How many days ahead. |
+
 ### `jeepdolly report permit`
 
 Print one permit as it goes in the cab.

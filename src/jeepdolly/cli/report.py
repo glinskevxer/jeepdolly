@@ -9,6 +9,7 @@ from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.audit import audit, audit_sheet
 from jeepdolly.report.carrier import CarrierFile, carrier_sheet
 from jeepdolly.report.daily import counties_of, day_sheet
+from jeepdolly.report.expiring import SOON, expiry_sheet
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
@@ -243,6 +244,18 @@ def stage_report(session: Session, number: str, speed: int, county: str) -> None
                 ]
             )
         )
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("expiring")
+@click.argument("day")
+@click.option("--within", default=SOON, show_default=True, help="How many days ahead.")
+@click.pass_obj
+def expiring_report(session: Session, day: str, within: int) -> None:
+    """List the permits about to run out, and the ones that already have."""
+    with office_of(session) as office:
+        lines = expiry_sheet(office.permits.all(), parse_day(day), within)
     for line in lines:
         click.echo(line)
 
