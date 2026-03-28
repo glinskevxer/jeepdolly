@@ -6,16 +6,12 @@ import click
 
 from jeepdolly.almanac.embargo import Embargo
 from jeepdolly.almanac.season import Season
+from jeepdolly.cli.ask import county_list, window_of
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.layout import LEFT, RIGHT, banner, table
-from jeepdolly.units.clock import DaySpan, Window, parse_clock, parse_day
+from jeepdolly.units.clock import DaySpan, parse_day
 
 __all__ = ["almanac"]
-
-
-def _counties(text: str) -> frozenset[str]:
-    """Read a comma separated county list."""
-    return frozenset(part.strip() for part in text.split(",") if part.strip())
 
 
 @click.group()
@@ -47,7 +43,7 @@ def season(
                 code=code,  # type: ignore[arg-type]
                 span=DaySpan(parse_day(first), parse_day(last)),
                 percent=percent,
-                counties=_counties(counties),
+                counties=county_list(counties),
                 note=note,
             )
         )
@@ -76,11 +72,7 @@ def embargo(
     weekends_only: bool,
 ) -> None:
     """Stop movement over a span of days, or an hour of each of them."""
-    window = None
-    if bool(from_time) != bool(to_time):
-        raise click.BadParameter("a window needs both ends")
-    if from_time:
-        window = Window(parse_clock(from_time), parse_clock(to_time))
+    window = window_of(from_time, to_time)
     with office_of(session) as office, office.writing():
         made = office.almanac.add_embargo(
             Embargo(
@@ -88,7 +80,7 @@ def embargo(
                 span=DaySpan(parse_day(first), parse_day(last)),
                 reason=reason,
                 window=window,
-                counties=_counties(counties) or None,
+                counties=county_list(counties) or None,
                 weekends_only=weekends_only,
             )
         )

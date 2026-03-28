@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import datetime as dt
-
 import click
 
+from jeepdolly.cli.ask import day_or_today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
 from jeepdolly.rig.spread import spread_score, suggest
 from jeepdolly.roadway.segment import RoadClass, statute_for
-from jeepdolly.units.clock import format_day, parse_day
+from jeepdolly.units.clock import format_day
 from jeepdolly.units.length import feet, format_length, inches
 from jeepdolly.units.mass import format_weight, parse_weight, pounds
 
@@ -61,7 +60,7 @@ def build(session: Session, carrier: str, name: str, axles: tuple[str, ...], on:
         spacings=tuple(feet(gap) for *_, gap in parsed[1:]),
     )
     with office_of(session) as office, office.writing():
-        day = parse_day(on) if on else dt.datetime.now().astimezone().date()
+        day = day_or_today(on)
         filed = office.rigs.add(carrier, made, day)
     click.echo(f"{filed.reference} {filed.config}")
 

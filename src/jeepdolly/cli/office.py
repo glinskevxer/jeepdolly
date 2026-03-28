@@ -6,20 +6,12 @@ from pathlib import Path
 
 import click
 
+from jeepdolly.cli.ask import bytes_of
 from jeepdolly.cli.context import Session, office_of, reporting
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
 from jeepdolly.store.backup import back_up, check_file, file_size, row_counts, vacuum
 
 __all__ = ["office"]
-
-
-def _bytes(count: int) -> str:
-    """A byte count in the units a clerk reads."""
-    if count < 1024:
-        return f"{count} B"
-    if count < 1024 * 1024:
-        return f"{count / 1024:.1f} kB"
-    return f"{count / (1024 * 1024):.1f} MB"
 
 
 @click.group()
@@ -45,7 +37,7 @@ def backup(session: Session, target: Path) -> None:
     """Copy the office file page by page to somewhere else."""
     with reporting(session):
         made = back_up(session.path, target)
-    click.echo(f"wrote {made} ({_bytes(file_size(made))})")
+    click.echo(f"wrote {made} ({bytes_of(file_size(made))})")
 
 
 @office.command("vacuum")
@@ -55,7 +47,7 @@ def compact(session: Session) -> None:
     with reporting(session):
         before = file_size(session.path)
         saved = vacuum(session.path)
-    click.echo(f"{_bytes(before)} before, {_bytes(saved)} freed")
+    click.echo(f"{bytes_of(before)} before, {bytes_of(saved)} freed")
 
 
 @office.command("rows")
@@ -78,7 +70,7 @@ def counts(session: Session) -> None:
                 [
                     ("tables", str(len(found))),
                     ("rows", str(sum(found.values()))),
-                    ("size", _bytes(file_size(session.path))),
+                    ("size", bytes_of(file_size(session.path))),
                 ]
             )
         )

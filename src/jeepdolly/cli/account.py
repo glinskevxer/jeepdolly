@@ -2,22 +2,16 @@
 
 from __future__ import annotations
 
-import datetime as dt
-
 import click
 
 from jeepdolly.billing.account import running
+from jeepdolly.cli.ask import today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
 from jeepdolly.units.clock import DaySpan, format_day, parse_day
 from jeepdolly.units.money import format_money, parse_money
 
 __all__ = ["account"]
-
-
-def _today() -> dt.date:
-    """The office's idea of today."""
-    return dt.datetime.now().astimezone().date()
 
 
 @click.group()
@@ -35,7 +29,7 @@ def deposit(session: Session, carrier: str, amount: str, on: str, note: str) -> 
     """Take money onto a carrier's account."""
     with office_of(session) as office, office.writing():
         made = office.accounts.deposit(
-            carrier, parse_day(on) if on else _today(), parse_money(amount), note
+            carrier, parse_day(on) if on else today(), parse_money(amount), note
         )
         balance = office.accounts.balance(carrier)
     click.echo(f"{made} balance {format_money(balance)}")
@@ -51,7 +45,7 @@ def charge(session: Session, carrier: str, permit: str, amount: str, on: str) ->
     """Charge a permit to a carrier's account."""
     with office_of(session) as office, office.writing():
         owed = parse_money(amount) if amount else office.permits.get(permit).fee
-        made = office.accounts.charge(carrier, parse_day(on) if on else _today(), owed, permit)
+        made = office.accounts.charge(carrier, parse_day(on) if on else today(), owed, permit)
         balance = office.accounts.balance(carrier)
     click.echo(f"{made} balance {format_money(balance)}")
 

@@ -2,21 +2,15 @@
 
 from __future__ import annotations
 
-import datetime as dt
-
 import click
 
+from jeepdolly.cli.ask import today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.permit.desk import Desk
 from jeepdolly.report.layout import LEFT, banner, table
 from jeepdolly.units.clock import format_day, parse_day
 
 __all__ = ["review"]
-
-
-def _today() -> dt.date:
-    """The office's idea of today."""
-    return dt.datetime.now().astimezone().date()
 
 
 @click.group()
@@ -31,7 +25,7 @@ def review() -> None:
 def open_one(session: Session, application: int, on: str) -> None:
     """Put a referred application on the engineer's list."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).refer(application, parse_day(on) if on else _today())
+        made = Desk.at(office).refer(application, parse_day(on) if on else today())
     click.echo(str(made))
 
 
@@ -52,7 +46,7 @@ def approve(
     """Approve a review with the engineer's conditions."""
     with office_of(session) as office, office.writing():
         made = Desk.at(office).approve(
-            reference, engineer, parse_day(on) if on else _today(), conditions
+            reference, engineer, parse_day(on) if on else today(), conditions
         )
     click.echo(str(made))
     for text in made.conditions:
@@ -69,7 +63,7 @@ def refuse(session: Session, reference: str, engineer: str, note: str, on: str) 
     """Refuse a review with the engineer's reason."""
     with office_of(session) as office, office.writing():
         made = Desk.at(office).refuse(
-            reference, engineer, parse_day(on) if on else _today(), note
+            reference, engineer, parse_day(on) if on else today(), note
         )
     click.echo(f"{made} because {made.note}")
 

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import datetime as dt
-
 import click
 
+from jeepdolly.cli.ask import today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.limits.assess import Assessment
 from jeepdolly.limits.finding import Finding
@@ -21,11 +20,6 @@ from jeepdolly.units.mass import parse_weight
 from jeepdolly.units.money import format_money
 
 __all__ = ["permit"]
-
-
-def _today() -> dt.date:
-    """The office's idea of today, which is the machine's local date."""
-    return dt.datetime.now().astimezone().date()
 
 
 def _show(findings: tuple[Finding, ...]) -> None:
@@ -84,7 +78,7 @@ def apply(session: Session, /, **given: str) -> None:
             divisible=bool(given["divisible"]),
             reason="" if given["divisible"] else given["reason"],
         )
-        filed_on = parse_day(given["filed"]) if given["filed"] else _today()
+        filed_on = parse_day(given["filed"]) if given["filed"] else today()
         application = Application(
             carrier=given["carrier"],  # type: ignore[arg-type]
             rig=given["rig"],  # type: ignore[arg-type]
@@ -107,7 +101,7 @@ def quote(session: Session, key: int, on: str) -> None:
     """Price an application without issuing anything."""
     with office_of(session) as office:
         desk = Desk.at(office)
-        seen, made = desk.decide(key, parse_day(on) if on else _today())
+        seen, made = desk.decide(key, parse_day(on) if on else today())
         if seen.route is not None:
             codes = " ".join(str(s.code) for s in seen.route.segments)
             click.echo(f"route {codes} {format_distance(seen.route.distance)}")
@@ -147,7 +141,7 @@ def advise(session: Session, key: int) -> None:
 def issue_one(session: Session, key: int, on: str) -> None:
     """Decide an application and write the permit."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).issue(key, parse_day(on) if on else _today())
+        made = Desk.at(office).issue(key, parse_day(on) if on else today())
     click.echo(f"{made.number} issued, {format_money(made.fee)}")
 
 
@@ -179,7 +173,7 @@ def void(session: Session, number: str, reason: str, on: str, no_refund: bool) -
     """Void an issued permit and refund what was charged for it."""
     with office_of(session) as office, office.writing():
         made = Desk.at(office).void(
-            number, reason, parse_day(on) if on else _today(), refund=not no_refund
+            number, reason, parse_day(on) if on else today(), refund=not no_refund
         )
     click.echo(f"{made.number} void: {made.reason}")
 
