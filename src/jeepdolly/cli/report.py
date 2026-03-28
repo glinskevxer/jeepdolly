@@ -13,6 +13,7 @@ from jeepdolly.report.expiring import SOON, expiry_sheet
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
+from jeepdolly.report.workload import workload_sheet
 from jeepdolly.rig.load import Load
 from jeepdolly.route.detour import detour_for
 from jeepdolly.route.search import shortest
@@ -256,6 +257,16 @@ def expiring_report(session: Session, day: str, within: int) -> None:
     """List the permits about to run out, and the ones that already have."""
     with office_of(session) as office:
         lines = expiry_sheet(office.permits.all(), parse_day(day), within)
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("workload")
+@click.pass_obj
+def workload_report(session: Session) -> None:
+    """Say how much came through the counter and how long it took."""
+    with office_of(session) as office:
+        lines = workload_sheet(office.history.all())
     for line in lines:
         click.echo(line)
 

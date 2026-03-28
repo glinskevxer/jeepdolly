@@ -409,6 +409,10 @@ Say where the truck stops each night on one permit.
 | `--speed` | option | Haul speed in miles an hour. |
 | `--county` | option | Which county's hours to use. |
 
+### `jeepdolly report workload`
+
+Say how much came through the counter and how long it took.
+
 ### `jeepdolly review`
 
 Open, approve and refuse engineering reviews.

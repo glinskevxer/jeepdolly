@@ -303,3 +303,17 @@ def test_the_expiry_list_shows_what_has_gone(issued):
 
 def test_the_expiry_list_refuses_a_bad_date(issued):
     assert issued("report", "expiring", "19/06/2025").exit_code == 1
+
+
+def test_the_workload_lists_the_month(issued):
+    output = issued("report", "workload").output
+    assert "counter workload" in output
+    assert "2025-06" in output
+
+
+def test_the_workload_reports_the_average_wait(issued):
+    assert "average days" in issued("report", "workload").output
+
+
+def test_the_workload_says_when_nothing_came_through(run):
+    assert "nothing has come through" in run("report", "workload").output
