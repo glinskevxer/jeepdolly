@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import click
 
-from jeepdolly.cli.ask import today
+from jeepdolly.cli.ask import day_or_today, today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.limits.assess import Assessment
 from jeepdolly.limits.finding import Finding
@@ -143,6 +143,20 @@ def issue_one(session: Session, key: int, on: str) -> None:
     with office_of(session) as office, office.writing():
         made = Desk.at(office).issue(key, parse_day(on) if on else today())
     click.echo(f"{made.number} issued, {format_money(made.fee)}")
+
+
+@permit.command("renew")
+@click.argument("number")
+@click.option("--on", default="", help="Day the renewal is taken.")
+@click.option("--first", default="", help="First day of the new permit.")
+@click.pass_obj
+def renew_one(session: Session, number: str, on: str, first: str) -> None:
+    """File the application that renews a permit."""
+    with office_of(session) as office, office.writing():
+        made = Desk.at(office).renew(
+            number, day_or_today(on), parse_day(first) if first else None
+        )
+    click.echo(f"application {made.key}: {made.application}")
 
 
 @permit.command("show")

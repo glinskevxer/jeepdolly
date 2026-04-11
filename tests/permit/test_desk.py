@@ -494,3 +494,39 @@ def test_a_review_refusal_is_journalled(desk):
     desk.refuse(str(review.reference), "R Halloran", DECIDED, "no")
     kinds = [str(e.kind) for e in desk.office.history.about(str(review.reference))]
     assert kinds == ["referred", "refused"]
+
+
+def test_renewing_files_a_fresh_application(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    renewed = desk.renew(str(permit.number), TRIP.last)
+    assert renewed.key == 2
+    assert renewed.application.span.first == TRIP.last + dt.timedelta(days=1)
+
+
+def test_renewing_carries_the_rig_across(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    renewed = desk.renew(str(permit.number), TRIP.last)
+    assert renewed.application.rig == permit.application.rig
+
+
+def test_a_renewal_is_journalled_against_the_old_permit(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    desk.renew(str(permit.number), TRIP.last)
+    entries = desk.office.history.about("application 2")
+    assert any(str(permit.number) in e.detail for e in entries)
+
+
+def test_a_renewal_can_then_be_issued(desk):
+    filed = desk.file(an_application())
+    permit = desk.issue(filed.key, DECIDED)
+    renewed = desk.renew(str(permit.number), TRIP.last)
+    second = desk.issue(renewed.key, TRIP.last)
+    assert second.number == "P-000002"
+
+
+def test_renewing_a_permit_that_is_not_there_is_refused(desk):
+    with pytest.raises(NotFoundError):
+        desk.renew("P-000099", TRIP.last)

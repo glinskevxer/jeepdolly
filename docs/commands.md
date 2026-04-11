@@ -295,6 +295,16 @@ Price an application without issuing anything.
 | `key` | argument |  |
 | `--on` | option | Day the decision is made. |
 
+### `jeepdolly permit renew`
+
+File the application that renews a permit.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+| `--on` | option | Day the renewal is taken. |
+| `--first` | option | First day of the new permit. |
+
 ### `jeepdolly permit show`
 
 Print one permit.

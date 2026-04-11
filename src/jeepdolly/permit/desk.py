@@ -35,6 +35,7 @@ from jeepdolly.limits.finding import Finding, Severity
 from jeepdolly.permit.application import Application
 from jeepdolly.permit.decision import Decision, Outcome, decide
 from jeepdolly.permit.permit import Permit, issue
+from jeepdolly.permit.renewal import renew
 from jeepdolly.permit.review import Review, open_review
 from jeepdolly.rig.config import Configuration
 from jeepdolly.route.clear import RouteReport, walk
@@ -351,6 +352,24 @@ class Desk:
         self.office.permits.save_state(old.superseded_by(new.number))
         self.note(on, EventKind.AMENDED, str(old.number), f"replaced by {new.number}")
         return new
+
+    def renew(self, number: str, on: Day, first: Day | None = None) -> FiledApplication:
+        """File the application that renews a permit, without deciding it.
+
+        Filing and deciding are kept apart here on purpose. A renewal is assessed
+        against today's limits and this year's frost laws, and the clerk wants to
+        see what it says before the carrier is told the price.
+        """
+        permit = self.office.permits.get(number)
+        made = renew(permit, on, first)
+        filed = self.file(made.application)
+        self.note(
+            on,
+            EventKind.FILED,
+            f"application {filed.key}",
+            f"renews {permit.number} as {made.span}",
+        )
+        return filed
 
     def blockers_of(self, key: int) -> tuple[Finding, ...]:
         """Just the reasons one application cannot be permitted."""

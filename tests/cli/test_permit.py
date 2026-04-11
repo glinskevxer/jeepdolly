@@ -245,3 +245,37 @@ def test_advise_says_to_split_a_divisible_load(stocked):
 
 def test_advise_raises_on_an_application_that_is_not_there(stocked):
     assert stocked("permit", "advise", "99").exit_code == 1
+
+
+def test_renewing_files_a_fresh_application(stocked):
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    result = stocked("permit", "renew", "P-000001", "--on", "2025-06-20")
+    assert result.exit_code == 0
+    assert "application 2" in result.output
+
+
+def test_a_renewal_starts_the_day_after(stocked):
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    result = stocked("permit", "renew", "P-000001", "--on", "2025-06-20")
+    assert "2025-06-21" in result.output
+
+
+def test_a_renewal_may_be_asked_to_start_later(stocked):
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    result = stocked(
+        "permit", "renew", "P-000001", "--on", "2025-06-20", "--first", "2025-06-25"
+    )
+    assert "2025-06-25" in result.output
+
+
+def test_renewing_too_early_is_refused(stocked):
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    assert stocked("permit", "renew", "P-000001", "--on", "2025-01-02").exit_code == 1
+
+
+def test_renewing_a_permit_that_is_not_there_is_refused(stocked):
+    assert stocked("permit", "renew", "P-000099").exit_code == 1
