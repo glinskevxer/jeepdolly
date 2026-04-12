@@ -21,6 +21,7 @@ from jeepdolly.tools import (
     check_layers,
     check_links,
     check_naming,
+    check_pins,
     check_sql,
     check_todo,
 )
@@ -36,6 +37,7 @@ CHECKS = [
     check_layers,
     check_links,
     check_naming,
+    check_pins,
     check_sql,
     check_todo,
 ]
