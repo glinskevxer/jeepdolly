@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 11.
+Schema version 12.
 
 ## account_entry
 
@@ -54,6 +54,19 @@ Indexes: `application_by_carrier`, `application_by_day`, `application_by_destina
 | active | INTEGER | not null, default 1 |
 
 Indexes: `carrier_by_name`
+
+## contact
+
+| column | type | constraints |
+| --- | --- | --- |
+| carrier_code | TEXT | primary key, not null |
+| role | TEXT | primary key, not null |
+| name | TEXT | not null |
+| number | TEXT | not null |
+| email | TEXT | not null, default '' |
+| primary_one | INTEGER | not null, default 0 |
+
+Indexes: `contact_by_number`, `contact_one_primary`
 
 ## embargo
 

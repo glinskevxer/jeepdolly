@@ -394,6 +394,27 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX permit_by_successor ON permit (replaced_by)",
         ),
     ),
+    Migration(
+        number=12,
+        name="carrier contacts",
+        statements=(
+            """
+            CREATE TABLE contact (
+                carrier_code  TEXT NOT NULL REFERENCES carrier (code) ON DELETE CASCADE,
+                role          TEXT NOT NULL
+                              CHECK (role IN ('dispatch', 'accounts', 'safety', 'owner')),
+                name          TEXT NOT NULL CHECK (name <> ''),
+                number        TEXT NOT NULL CHECK (length(number) = 10),
+                email         TEXT NOT NULL DEFAULT '',
+                primary_one   INTEGER NOT NULL DEFAULT 0 CHECK (primary_one IN (0, 1)),
+                PRIMARY KEY (carrier_code, role)
+            )
+            """,
+            "CREATE UNIQUE INDEX contact_one_primary ON contact (carrier_code)"
+            " WHERE primary_one = 1",
+            "CREATE INDEX contact_by_number ON contact (number)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
