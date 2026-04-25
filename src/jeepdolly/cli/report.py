@@ -76,6 +76,7 @@ def carrier_report(session: Session, code: str) -> None:
             permits=tuple(permits),
             account=office.accounts.account(str(found.code)),
             events=tuple(events),
+            contacts=tuple(office.contacts.for_carrier(str(found.code))),
         )
         lines = carrier_sheet(file)
     for line in lines:

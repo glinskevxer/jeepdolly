@@ -6,6 +6,7 @@ import click
 
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.party.carrier import Carrier
+from jeepdolly.party.contact import Contact, Role
 
 __all__ = ["carrier"]
 
@@ -76,6 +77,88 @@ def restore(session: Session, code: str) -> None:
         found = office.carriers.get(code)
         office.carriers.save(found.restored())
     click.echo(f"{found.code} restored")
+
+
+@carrier.command("contact")
+@click.argument("code")
+@click.option(
+    "--role",
+    type=click.Choice([str(r) for r in Role]),
+    default=str(Role.DISPATCH),
+    show_default=True,
+    help="What the office would ring them about.",
+)
+@click.option("--name", required=True, help="Who answers.")
+@click.option("--number", required=True, help="Their phone number, however you have it.")
+@click.option("--email", default="", help="Their address, if there is one.")
+@click.option("--primary", is_flag=True, help="Ring this one by default.")
+@click.pass_obj
+def contact(
+    session: Session,
+    code: str,
+    role: str,
+    name: str,
+    number: str,
+    email: str,
+    primary: bool,
+) -> None:
+    """Record who to ring at a carrier."""
+    with office_of(session) as office, office.writing():
+        made = office.contacts.put(
+            Contact(
+                carrier=code,  # type: ignore[arg-type]
+                role=Role(role),
+                name=name,
+                number=number,
+                email=email,
+                primary=primary,
+            )
+        )
+    click.echo(str(made))
+
+
+@carrier.command("contacts")
+@click.argument("code")
+@click.pass_obj
+def contacts(session: Session, code: str) -> None:
+    """List everyone the office has a number for at a carrier."""
+    with office_of(session) as office:
+        found = office.contacts.for_carrier(code)
+    if not found:
+        click.echo("no contacts on file")
+        return
+    for one in found:
+        click.echo(str(one))
+
+
+@carrier.command("primary")
+@click.argument("code")
+@click.option(
+    "--role",
+    type=click.Choice([str(r) for r in Role]),
+    required=True,
+    help="Which contact becomes the default.",
+)
+@click.pass_obj
+def primary(session: Session, code: str, role: str) -> None:
+    """Make one contact the one to ring by default."""
+    with office_of(session) as office, office.writing():
+        made = office.contacts.promote(code, Role(role))
+    click.echo(str(made))
+
+
+@carrier.command("ring")
+@click.argument("number")
+@click.pass_obj
+def ring(session: Session, number: str) -> None:
+    """Say whose number this is."""
+    with office_of(session) as office:
+        found = office.contacts.by_number(number)
+    if not found:
+        click.echo("nobody on file has that number")
+        return
+    for one in found:
+        click.echo(str(one))
 
 
 @carrier.command("search")

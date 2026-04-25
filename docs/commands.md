@@ -124,6 +124,27 @@ Put a new carrier on file.
 | `--usdot` | required option | The federal number. |
 | `--state` | required option | Two letter home state. |
 
+### `jeepdolly carrier contact`
+
+Record who to ring at a carrier.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+| `--role` | option | What the office would ring them about. |
+| `--name` | required option | Who answers. |
+| `--number` | required option | Their phone number, however you have it. |
+| `--email` | option | Their address, if there is one. |
+| `--primary` | flag | Ring this one by default. |
+
+### `jeepdolly carrier contacts`
+
+List everyone the office has a number for at a carrier.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+
 ### `jeepdolly carrier list`
 
 List carriers, active ones by default.
@@ -131,6 +152,15 @@ List carriers, active ones by default.
 | name | kind | what it is for |
 | --- | --- | --- |
 | `--all` | flag | Include retired carriers. |
+
+### `jeepdolly carrier primary`
+
+Make one contact the one to ring by default.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+| `--role` | required option | Which contact becomes the default. |
 
 ### `jeepdolly carrier restore`
 
@@ -147,6 +177,14 @@ Stop a carrier being issued new permits.
 | name | kind | what it is for |
 | --- | --- | --- |
 | `code` | argument |  |
+
+### `jeepdolly carrier ring`
+
+Say whose number this is.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
 
 ### `jeepdolly carrier search`
 

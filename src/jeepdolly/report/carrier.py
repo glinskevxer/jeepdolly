@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 from jeepdolly.billing.account import Account
 from jeepdolly.party.carrier import Carrier
+from jeepdolly.party.contact import Contact
 from jeepdolly.permit.permit import Permit, State
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
 from jeepdolly.store.history import Event
@@ -40,6 +41,7 @@ class CarrierFile:
     permits: tuple[Permit, ...]
     account: Account
     events: tuple[Event, ...]
+    contacts: tuple[Contact, ...] = ()
 
     @property
     def live_permits(self) -> tuple[Permit, ...]:
@@ -79,6 +81,18 @@ def carrier_sheet(file: CarrierFile) -> list[str]:
             ]
         )
     )
+    if file.contacts:
+        lines.append("")
+        lines.extend(banner("who to ring"))
+        lines.extend(
+            table(
+                ["role", "name", "number", "email"],
+                [
+                    [str(one.role), one.name, one.printed, one.email or "-"]
+                    for one in file.contacts
+                ],
+            )
+        )
     lines.append("")
     lines.extend(banner("rigs"))
     if not file.rigs:
