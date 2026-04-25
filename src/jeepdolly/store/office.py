@@ -24,6 +24,7 @@ from jeepdolly.store.accounts import AccountStore
 from jeepdolly.store.almanac import AlmanacStore
 from jeepdolly.store.applications import ApplicationStore
 from jeepdolly.store.carriers import CarrierStore
+from jeepdolly.store.contacts import ContactStore
 from jeepdolly.store.history import HistoryStore
 from jeepdolly.store.loads import LoadStore
 from jeepdolly.store.migrations import LATEST, migrate, version
@@ -52,6 +53,7 @@ class Office:
         self.reviews = ReviewStore(connection)
         self.almanac = AlmanacStore(connection)
         self.history = HistoryStore(connection)
+        self.contacts = ContactStore(connection)
 
     @property
     def version(self) -> int:
