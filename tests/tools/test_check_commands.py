@@ -101,3 +101,57 @@ def test_every_group_has_commands(group):
     node = cli.commands[group]
     assert isinstance(node, click.Group)
     assert node.commands
+
+
+def test_the_walk_script_runs_every_command():
+    from jeepdolly.tools.check_commands import WALK, unwalked
+    from jeepdolly.tools.walk import repo_root
+
+    text = (repo_root() / WALK).read_text(encoding="utf-8")
+    assert unwalked(text, paths_of(cli)) == []
+
+
+def test_the_spoken_pattern_matches_a_run_line():
+    from jeepdolly.tools.check_commands import spoken
+
+    assert spoken(("permit", "issue")).search("run permit issue 1 --on 2025-06-17")
+
+
+def test_the_spoken_pattern_matches_an_indented_line():
+    from jeepdolly.tools.check_commands import spoken
+
+    assert spoken(("permit", "issue")).search("  run permit issue 1\n")
+
+
+def test_the_spoken_pattern_does_not_match_a_prefix():
+    from jeepdolly.tools.check_commands import spoken
+
+    assert spoken(("permit", "issue")).search("run permit issued 1") is None
+
+
+def test_the_spoken_pattern_needs_the_run_wrapper():
+    from jeepdolly.tools.check_commands import spoken
+
+    assert spoken(("permit", "issue")).search("jeepdolly permit issue 1") is None
+
+
+def test_unwalked_finds_a_command_the_script_misses():
+    from jeepdolly.tools.check_commands import unwalked
+
+    paths = [("permit", "issue"), ("permit", "nothing")]
+    assert unwalked("run permit issue 1", paths) == [("permit", "nothing")]
+
+
+def test_a_missing_walk_script_is_reported(monkeypatch):
+    from jeepdolly.tools import check_commands
+
+    monkeypatch.setattr(check_commands, "WALK", "scripts/nothing-like-this.sh")
+    found = check_commands.problems()
+    assert any("nothing drives an installed copy" in line for line in found)
+
+
+def test_the_walk_script_is_where_it_is_said_to_be():
+    from jeepdolly.tools.check_commands import WALK
+    from jeepdolly.tools.walk import repo_root
+
+    assert (repo_root() / WALK).exists()
