@@ -46,7 +46,7 @@ def test_a_computed_argument_is_left_out():
 
 
 def test_the_exception_list_is_short():
-    assert len(MUTABLE) <= 3
+    assert len(MUTABLE) <= 4
 
 
 def test_every_exception_says_why():
@@ -59,3 +59,7 @@ def test_every_exception_names_a_class_in_this_package():
 
 def test_the_desk_is_one_of_the_exceptions():
     assert "jeepdolly.permit.desk.Desk" in MUTABLE
+
+
+def test_the_sheet_builder_is_one_of_the_exceptions():
+    assert "jeepdolly.report.sheet.Sheet" in MUTABLE

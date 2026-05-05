@@ -22,7 +22,8 @@ from dataclasses import dataclass
 
 from jeepdolly.billing.account import Account, EntryKind
 from jeepdolly.permit.permit import Permit, State
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.store.history import Event, EventKind
 from jeepdolly.units.money import ZERO, Money, cents, format_money, total
 
@@ -122,39 +123,32 @@ def audit(carrier: str, permits: list[Permit], account: Account, journal: list[E
 
 def audit_sheet(results: list[Audit]) -> list[str]:
     """The whole audit, ready to print."""
-    lines = banner("account audit")
-    dirty = [one for one in results if not one.clean]
+    sheet = Sheet().title("account audit")
     if not results:
-        lines.append("no carriers on file")
-        return lines
-    lines.extend(
-        table(
-            ["carrier", "permits owe", "account charged", "apart", "problems"],
+        return sheet.note("no carriers on file").done()
+    dirty = [one for one in results if not one.clean]
+    sheet.rows(
+        ["carrier", "permits owe", "account charged", "apart", "problems"],
+        [
             [
-                [
-                    one.carrier,
-                    format_money(one.owed),
-                    format_money(one.charged),
-                    format_money(one.gap),
-                    str(len(one.findings)),
-                ]
-                for one in results
-            ],
-            aligns=[LEFT, RIGHT, RIGHT, RIGHT, RIGHT],
-        )
+                one.carrier,
+                format_money(one.owed),
+                format_money(one.charged),
+                format_money(one.gap),
+                str(len(one.findings)),
+            ]
+            for one in results
+        ],
+        aligns=[LEFT, RIGHT, RIGHT, RIGHT, RIGHT],
     )
     for one in dirty:
-        lines.append("")
-        lines.extend(banner(f"{one.carrier} problems"))
-        lines.extend(f"- {finding}" for finding in one.findings)
-    lines.append("")
-    lines.extend(
-        pairs(
-            [
-                ("carriers", str(len(results))),
-                ("clean", str(len(results) - len(dirty))),
-                ("apart", format_money(total(one.gap for one in results))),
-            ]
+        sheet.section(f"{one.carrier} problems").notes(
+            f"- {finding}" for finding in one.findings
         )
-    )
-    return lines
+    return sheet.summary(
+        [
+            ("carriers", str(len(results))),
+            ("clean", str(len(results) - len(dirty))),
+            ("apart", format_money(total(one.gap for one in results))),
+        ]
+    ).done()

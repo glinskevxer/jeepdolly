@@ -21,7 +21,8 @@ from dataclasses import dataclass
 
 from jeepdolly.billing.account import Account, EntryKind
 from jeepdolly.permit.permit import Permit, State
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.units.clock import Day, DaySpan
 from jeepdolly.units.money import ZERO, Money, cents, format_money, total
 
@@ -123,34 +124,25 @@ def revenue_sheet(permits: list[Permit], span: DaySpan | None = None) -> list[st
     """The whole return, ready to print."""
     held = permits if span is None else within(permits, span)
     heading = "revenue return" if span is None else f"revenue return {span}"
-    lines = banner(heading)
+    sheet = Sheet().title(heading)
     kept = counted(held)
     if not kept:
-        lines.append("nothing to report")
-        return lines
+        return sheet.note("nothing to report").done()
     for title, buckets in (
         ("by month", by_month(held)),
         ("by carrier", by_carrier(held)),
         ("by fee line", by_code(held)),
     ):
-        lines.append("")
-        lines.extend(banner(title))
-        lines.extend(
-            table(
-                ["key", "count", "amount"],
-                [[t.key, str(t.permits), format_money(t.amount)] for t in buckets],
-                aligns=[LEFT, RIGHT, RIGHT],
-            )
+        sheet.section(title).rows(
+            ["key", "count", "amount"],
+            [[t.key, str(t.permits), format_money(t.amount)] for t in buckets],
+            aligns=[LEFT, RIGHT, RIGHT],
         )
     voided = [p for p in held if p.state is State.VOID]
-    lines.append("")
-    lines.extend(
-        pairs(
-            [
-                ("permits counted", str(len(kept))),
-                ("permits voided", str(len(voided))),
-                ("total", format_money(total(p.fee for p in kept) if kept else ZERO)),
-            ]
-        )
-    )
-    return lines
+    return sheet.summary(
+        [
+            ("permits counted", str(len(kept))),
+            ("permits voided", str(len(voided))),
+            ("total", format_money(total(p.fee for p in kept) if kept else ZERO)),
+        ]
+    ).done()

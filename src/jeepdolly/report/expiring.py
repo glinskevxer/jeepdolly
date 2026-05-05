@@ -21,7 +21,8 @@ from dataclasses import dataclass
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.permit.permit import Permit, State
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.units.clock import Day, format_day
 from jeepdolly.units.money import format_money, total
 
@@ -99,36 +100,29 @@ def expiry_sheet(
     """The whole expiry list, ready to print."""
     soon = expiring(permits, on, within)
     gone = expired(permits, on)
-    lines = banner(f"expiry list as at {format_day(on)}")
+    sheet = Sheet().title(f"expiry list as at {format_day(on)}")
     if not soon and not gone:
-        lines.append(f"nothing runs out in the next {within} days")
-        return lines
+        return sheet.note(f"nothing runs out in the next {within} days").done()
     by_number = {str(one.number): one for one in permits}
+    headings = ["permit", "carrier", "last day", "days"]
+    aligns = [LEFT, LEFT, LEFT, RIGHT]
+    if fee_column:
+        headings.append("fee")
+        aligns.append(RIGHT)
     for title, batch in (("running out", soon), ("already run out", gone)):
         if not batch:
             continue
-        lines.append("")
-        lines.extend(banner(title))
-        headings = ["permit", "carrier", "last day", "days"]
-        aligns = [LEFT, LEFT, LEFT, RIGHT]
-        if fee_column:
-            headings.append("fee")
-            aligns.append(RIGHT)
         body: list[list[str]] = []
         for one in batch:
             row = [one.number, one.carrier, format_day(one.last_day), str(one.days_left)]
             if fee_column:
                 row.append(format_money(by_number[one.number].fee))
             body.append(row)
-        lines.extend(table(headings, body, aligns=aligns))
-    lines.append("")
-    lines.extend(
-        pairs(
-            [
-                ("running out", str(len(soon))),
-                ("already gone", str(len(gone))),
-                ("fees at risk", format_money(total(by_number[o.number].fee for o in soon))),
-            ]
-        )
-    )
-    return lines
+        sheet.section(title).rows(headings, body, aligns=aligns)
+    return sheet.summary(
+        [
+            ("running out", str(len(soon))),
+            ("already gone", str(len(gone))),
+            ("fees at risk", format_money(total(by_number[o.number].fee for o in soon))),
+        ]
+    ).done()

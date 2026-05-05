@@ -30,6 +30,10 @@ MUTABLE: dict[str, str] = {
         "the top level group builds it before the subcommand runs and the"
         " subcommand may set the clerk on it"
     ),
+    "jeepdolly.report.sheet.Sheet": (
+        "it is a builder: every method appends to the list it is holding and"
+        " hands the builder back so the calls chain"
+    ),
     "jeepdolly.permit.desk.Desk": (
         "the almanac books are read off the file after the desk is built, so"
         " that a caller who forgets is still given a working desk"

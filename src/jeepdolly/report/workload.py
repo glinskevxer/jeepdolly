@@ -21,8 +21,9 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT
 from jeepdolly.report.revenue import month_of
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.store.history import Event, EventKind
 
 __all__ = ["Month", "average_days", "by_month", "turnarounds", "workload_sheet"]
@@ -101,32 +102,25 @@ def average_days(waits: dict[str, int]) -> float:
 def workload_sheet(journal: list[Event]) -> list[str]:
     """The whole workload return, ready to print."""
     months = by_month(journal)
-    lines = banner("counter workload")
+    sheet = Sheet().title("counter workload")
     if not months:
-        lines.append("nothing has come through the counter")
-        return lines
-    lines.extend(
-        table(
-            ["month", "filed", "issued", "referred", "voided"],
-            [
-                [one.key, str(one.filed), str(one.issued), str(one.referred), str(one.voided)]
-                for one in months
-            ],
-            aligns=[LEFT, RIGHT, RIGHT, RIGHT, RIGHT],
-        )
+        return sheet.note("nothing has come through the counter").done()
+    sheet.rows(
+        ["month", "filed", "issued", "referred", "voided"],
+        [
+            [one.key, str(one.filed), str(one.issued), str(one.referred), str(one.voided)]
+            for one in months
+        ],
+        aligns=[LEFT, RIGHT, RIGHT, RIGHT, RIGHT],
     )
     waits = turnarounds(journal)
-    lines.append("")
-    lines.extend(
-        pairs(
-            [
-                ("months", str(len(months))),
-                ("filed", str(sum(one.filed for one in months))),
-                ("issued", str(sum(one.issued for one in months))),
-                ("measured", str(len(waits))),
-                ("average days", f"{average_days(waits):.2f}"),
-                ("slowest", str(max(waits.values())) if waits else "0"),
-            ]
-        )
-    )
-    return lines
+    return sheet.summary(
+        [
+            ("months", str(len(months))),
+            ("filed", str(sum(one.filed for one in months))),
+            ("issued", str(sum(one.issued for one in months))),
+            ("measured", str(len(waits))),
+            ("average days", f"{average_days(waits):.2f}"),
+            ("slowest", str(max(waits.values())) if waits else "0"),
+        ]
+    ).done()
