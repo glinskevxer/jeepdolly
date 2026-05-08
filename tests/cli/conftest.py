@@ -1,4 +1,11 @@
-"""A runner, an office file and a stocked office for the command line suite."""
+"""A runner, an office file and a stocked office for the command line suite.
+
+The stocked office is built once for the whole session and copied per test. It
+takes eleven commands to build and there are about a hundred and twenty tests
+that want it, which was most of the suite's running time and none of its value.
+The copy goes through sqlite's own backup rather than the filesystem, so a write
+ahead log left over from the build cannot come across half applied.
+"""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -7,6 +14,7 @@ import pytest
 from click.testing import CliRunner, Result
 
 from jeepdolly.cli.main import main
+from jeepdolly.store.backup import back_up
 
 
 @pytest.fixture
@@ -34,9 +42,8 @@ def run(runner: CliRunner, office_file: Path) -> Callable[..., Result]:
     return go
 
 
-@pytest.fixture
-def stocked(run: Callable[..., Result]) -> Callable[..., Result]:
-    """An office file with a carrier, a rig and the corridor map on it."""
+def _stock(run: Callable[..., Result]) -> None:
+    """Put a carrier, a rig and the corridor map on an office file."""
     run(
         "carrier",
         "add",
@@ -87,4 +94,31 @@ def stocked(run: Callable[..., Result]) -> Callable[..., Result]:
         "48,000",
     )
     run("rig", "build", "--carrier", "VANCE", "--name", "3S2")
-    return run
+
+
+@pytest.fixture(scope="session")
+def stocked_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """One stocked office file, built once for the whole session."""
+    path = tmp_path_factory.mktemp("template") / "office.sqlite3"
+    runner = CliRunner()
+
+    def go(*args: str) -> Result:
+        result = runner.invoke(main, ["-f", str(path), *args])
+        assert result.exit_code == 0, result.output
+        return result
+
+    go("init")
+    _stock(go)
+    return path
+
+
+@pytest.fixture
+def stocked(runner: CliRunner, tmp_path: Path, stocked_template: Path) -> Callable[..., Result]:
+    """A fresh copy of the stocked office file, per test."""
+    path = tmp_path / "office.sqlite3"
+    back_up(stocked_template, path)
+
+    def go(*args: str) -> Result:
+        return runner.invoke(main, ["-f", str(path), *args])
+
+    return go

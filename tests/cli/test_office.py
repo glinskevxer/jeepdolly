@@ -94,3 +94,70 @@ def test_the_row_counts_show_the_records(stocked):
     output = stocked("office", "rows").output
     assert "permit" in output
     assert "journal" in output
+
+
+def test_the_stocked_template_is_copied_rather_than_shared(stocked, tmp_path):
+    """A test that writes to its copy must not disturb the next one."""
+    stocked("carrier", "retire", "VANCE")
+    assert "inactive" in stocked("carrier", "list", "--all").output
+
+
+def test_the_following_case_sees_an_untouched_copy(stocked):
+    assert "Vance Heavy Haul" in stocked("carrier", "list").output
+    assert "inactive" not in stocked("carrier", "list", "--all").output
+
+
+def test_the_copied_office_is_sound(stocked):
+    assert "sound" in stocked("office", "sound").output
+
+
+def test_the_copied_office_holds_the_whole_map(stocked):
+    output = stocked("status").output
+    assert "junctions 4" in output
+    assert "segments 4" in output
+    assert "rigs 1" in output
+
+
+def test_the_copied_office_carries_no_journal_from_the_build(stocked):
+    assert "journal 0" in stocked("status").output
+
+
+def test_a_backup_of_a_stocked_office_holds_the_map(stocked, tmp_path):
+    target = tmp_path / "copy.sqlite3"
+    stocked("office", "backup", str(target))
+    from click.testing import CliRunner
+
+    from jeepdolly.cli.main import main
+
+    output = CliRunner().invoke(main, ["-f", str(target), "status"]).output
+    assert "segments 4" in output
+
+
+def test_the_row_counts_of_a_stocked_office(stocked):
+    output = stocked("office", "rows").output
+    assert "node" in output
+    assert "segment" in output
+
+
+def test_vacuuming_a_stocked_office_keeps_the_rigs(stocked):
+    stocked("office", "vacuum")
+    assert "R-00001" in stocked("rig", "list").output
+
+
+def test_the_soundness_check_survives_a_vacuum(stocked):
+    stocked("office", "vacuum")
+    assert "sound" in stocked("office", "sound").output
+
+
+def test_the_backup_of_a_copy_is_still_sound(stocked, tmp_path):
+    first = tmp_path / "first.sqlite3"
+    stocked("office", "backup", str(first))
+    from click.testing import CliRunner
+
+    from jeepdolly.cli.main import main
+
+    runner = CliRunner()
+    second = tmp_path / "second.sqlite3"
+    runner.invoke(main, ["-f", str(first), "office", "backup", str(second)])
+    output = runner.invoke(main, ["-f", str(second), "office", "sound"]).output
+    assert "sound" in output
