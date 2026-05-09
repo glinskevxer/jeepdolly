@@ -22,6 +22,7 @@ from jeepdolly.tools import (
     check_links,
     check_naming,
     check_pins,
+    check_readme,
     check_sql,
     check_todo,
 )
@@ -38,6 +39,7 @@ CHECKS = [
     check_links,
     check_naming,
     check_pins,
+    check_readme,
     check_sql,
     check_todo,
 ]
