@@ -96,6 +96,16 @@ jobs:
         run: |
           /tmp/clean/bin/jeepdolly --version
           /tmp/clean/bin/jeepdolly --help
+      - name: the installed package can read its own data files
+        run: |
+          /tmp/clean/bin/python -c "
+          from jeepdolly.tools.check_migrations import lock_path, read_lock
+          from jeepdolly.store.migrations import MIGRATIONS
+          locked = read_lock()
+          assert locked, f'{lock_path()} did not ship with the wheel'
+          assert set(locked) == {m.number for m in MIGRATIONS}
+          print(f'{lock_path().name}: {len(locked)} fingerprints')
+          "
 
   package:
     name: package metadata
@@ -121,6 +131,12 @@ jobs:
           assert any(n.startswith("jeepdolly/") for n in names), names[:10]
           assert not any(n.startswith("tests/") for n in names), "tests are in the wheel"
           assert not any(n.startswith("src/") for n in names), "src layout leaked in"
+          # The migration fingerprints are read at runtime and are not a .py
+          # file, so they only ship if hatchling was told to take the whole
+          # package directory. Nothing else notices when it stops.
+          assert any(n.endswith("migrations.lock") for n in names), "the lock file is missing"
+          scripts = [n for n in names if "/data/scripts/" in n or n.endswith(".sh")]
+          assert not scripts, f"shell scripts are in the wheel: {scripts}"
           print(f"{wheel.name}: {len(names)} entries")
           PY
 
