@@ -25,6 +25,7 @@ from jeepdolly.tools import (
     check_readme,
     check_sql,
     check_todo,
+    check_version,
 )
 
 CHECKS = [
@@ -42,6 +43,7 @@ CHECKS = [
     check_readme,
     check_sql,
     check_todo,
+    check_version,
 ]
 
 NAMES = [module.__name__.rsplit(".", 1)[-1] for module in CHECKS]
