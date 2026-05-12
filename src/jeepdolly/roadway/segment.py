@@ -11,6 +11,13 @@ ramps and bridges where it matters.
 A segment may post its own gross limit below the statutory one. That is a local
 order, usually on a county road that has been undermined, and it beats the
 statute in both directions.
+
+It may also post a width or a height. Those are not structures: a main street
+with parked cars on both sides has no bridge over it and still will not take a
+sixteen foot load, and a stretch under a rock overhang has a clearance that
+belongs to the road rather than to anything built on it. Both were structures to
+begin with, which meant inventing a bridge that was not there in order to record
+a fact about the road.
 """
 
 from __future__ import annotations
@@ -23,6 +30,7 @@ from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import Code, code
 from jeepdolly.limits.statute import INTERSTATE, STATE_ROUTE, Statute
 from jeepdolly.units.distance import Miles, hundredths
+from jeepdolly.units.length import Inches, inches
 from jeepdolly.units.mass import Pounds, pounds
 
 __all__ = ["ROUTE_PATTERN", "RoadClass", "Segment", "statute_for"]
@@ -63,6 +71,8 @@ class Segment:
     road_class: RoadClass = RoadClass.STATE
     one_way: bool = False
     posted_gross: Pounds | None = None
+    max_width: Inches | None = None
+    max_height: Inches | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "code", code(str(self.code)))
@@ -82,10 +92,21 @@ class Segment:
             raise BadValueError("distance", int(self.distance), "want more than nothing")
         if not isinstance(self.one_way, bool):
             raise BadValueError("one way", self.one_way, "want true or false")
+        self._check_postings()
+
+    def _check_postings(self) -> None:
+        """The three limits a stretch may post are all optional and all positive."""
         if self.posted_gross is not None:
             object.__setattr__(self, "posted_gross", pounds(int(self.posted_gross)))
             if int(self.posted_gross) <= 0:
                 raise BadValueError("posted gross", self.posted_gross, "want more than nothing")
+        for field in ("max_width", "max_height"):
+            value = getattr(self, field)
+            if value is None:
+                continue
+            object.__setattr__(self, field, inches(int(value)))
+            if int(getattr(self, field)) <= 0:
+                raise BadValueError(field, value, "want more than nothing")
 
     @property
     def statute(self) -> Statute:
@@ -105,6 +126,19 @@ class Segment:
         return self.posted_gross is not None and int(self.posted_gross) < int(
             self.statute.gross
         )
+
+    @property
+    def restricted(self) -> bool:
+        """Does this stretch post a size of its own."""
+        return self.max_width is not None or self.max_height is not None
+
+    def takes_width(self, width: Inches) -> bool:
+        """Will this stretch take a load of this width."""
+        return self.max_width is None or int(width) <= int(self.max_width)
+
+    def takes_height(self, height: Inches) -> bool:
+        """Will this stretch take a load of this height."""
+        return self.max_height is None or int(height) <= int(self.max_height)
 
     def runs(self, first: Code, second: Code) -> bool:
         """May this segment be travelled from ``first`` to ``second``."""

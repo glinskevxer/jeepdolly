@@ -144,6 +144,10 @@ def load_segments(office: Office, path: Path) -> int:
                     road_class=RoadClass(row.get("class") or "state"),
                     one_way=row.get("one_way", "") in {"1", "yes", "true"},
                     posted_gross=parse_weight(row["posted"]) if row.get("posted") else None,
+                    max_width=parse_length(row["max_width"]) if row.get("max_width") else None,
+                    max_height=(
+                        parse_length(row["max_height"]) if row.get("max_height") else None
+                    ),
                 )
             )
         except JeepdollyError as exc:

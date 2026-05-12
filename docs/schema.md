@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 12.
+Schema version 13.
 
 ## account_entry
 
@@ -259,8 +259,10 @@ Indexes: `season_by_day`
 | road_class | TEXT | not null |
 | one_way | INTEGER | not null, default 0 |
 | posted_gross | INTEGER |  |
+| max_width | INTEGER |  |
+| max_height | INTEGER |  |
 
-Indexes: `segment_by_end`, `segment_by_start`
+Indexes: `segment_by_end`, `segment_by_restriction`, `segment_by_start`
 
 ## structure
 

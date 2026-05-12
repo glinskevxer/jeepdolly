@@ -415,6 +415,17 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX contact_by_number ON contact (number)",
         ),
     ),
+    Migration(
+        number=13,
+        name="sizes the road itself posts",
+        statements=(
+            "ALTER TABLE segment ADD COLUMN max_width INTEGER"
+            " CHECK (max_width IS NULL OR max_width > 0)",
+            "ALTER TABLE segment ADD COLUMN max_height INTEGER"
+            " CHECK (max_height IS NULL OR max_height > 0)",
+            "CREATE INDEX segment_by_restriction ON segment (max_width, max_height)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

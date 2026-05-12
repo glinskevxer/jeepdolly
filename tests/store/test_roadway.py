@@ -226,3 +226,27 @@ def test_the_office_hands_out_a_roadway_store(office):
     from jeepdolly.store.office import Office
 
     assert isinstance(Office(office).roadway, RoadwayStore)
+
+
+def test_a_posted_width_round_trips(store):
+    from jeepdolly.units.length import feet as as_feet
+
+    store.add_segment(segment("SEG-NW", "JCT-A", "JCT-B", max_width=as_feet(12)))
+    assert int(store.get_segment("SEG-NW").max_width or 0) == 144
+
+
+def test_a_posted_height_round_trips(store):
+    from jeepdolly.units.length import feet as as_feet
+
+    store.add_segment(segment("SEG-LO", "JCT-A", "JCT-B", max_height=as_feet(14)))
+    assert int(store.get_segment("SEG-LO").max_height or 0) == 168
+
+
+def test_an_unrestricted_segment_reads_back_as_none(store):
+    assert store.get_segment("SEG-AB").max_width is None
+    assert store.get_segment("SEG-AB").max_height is None
+
+
+def test_the_table_refuses_a_posted_width_of_nothing(store, office):
+    with pytest.raises(Exception, match="CHECK"):
+        office.execute("UPDATE segment SET max_width = 0 WHERE code = 'SEG-AB'")

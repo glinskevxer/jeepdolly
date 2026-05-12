@@ -4,6 +4,7 @@ from jeepdolly.limits.finding import Severity
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
 from jeepdolly.rig.load import Load
+from jeepdolly.roadway.network import Network
 from jeepdolly.roadway.segment import RoadClass
 from jeepdolly.route.clear import walk
 from jeepdolly.route.plan import along_segments
@@ -170,3 +171,65 @@ def test_walking_backwards_finds_the_same_things(corridor):
     ahead = walk(forward, corridor, a_rig(), a_load())
     behind = walk(backward, corridor, a_rig(), a_load())
     assert [f.rule for f in ahead.findings] == [f.rule for f in behind.findings]
+
+
+def a_narrow_map() -> Network:
+    """A corridor whose only through stretch posts a width of its own."""
+    from jeepdolly.roadway.network import build
+    from jeepdolly.roadway.node import Node
+    from jeepdolly.roadway.segment import Segment
+    from jeepdolly.units.distance import miles
+
+    nodes = [
+        Node(code=key, name=key.lower(), county="Missoula")  # type: ignore[arg-type]
+        for key in ("JCT-A", "JCT-B")
+    ]
+    segments = [
+        Segment(
+            code="SEG-AB",  # type: ignore[arg-type]
+            start="JCT-A",  # type: ignore[arg-type]
+            end="JCT-B",  # type: ignore[arg-type]
+            route="US-12",
+            distance=miles("4.00"),
+            max_width=feet(12),
+            max_height=feet(14),
+        )
+    ]
+    return build(nodes, segments)
+
+
+def test_a_road_posted_width_refuses_a_wider_load():
+    network = a_narrow_map()
+    route = along_segments(network, "JCT-A", ["SEG-AB"])
+    report = walk(route, network, a_rig(), a_load(width=feet(13)))
+    assert "road-width" in [f.rule for f in report.blockers]
+
+
+def test_a_road_posted_width_takes_a_load_at_its_limit():
+    network = a_narrow_map()
+    route = along_segments(network, "JCT-A", ["SEG-AB"])
+    report = walk(route, network, a_rig(), a_load(width=feet(12)))
+    assert "road-width" not in [f.rule for f in report.findings]
+
+
+def test_a_road_posted_height_refuses_a_taller_load():
+    network = a_narrow_map()
+    route = along_segments(network, "JCT-A", ["SEG-AB"])
+    report = walk(route, network, a_rig(), a_load(height=feet(15)))
+    assert "road-height" in [f.rule for f in report.blockers]
+
+
+def test_a_road_posted_size_names_both_figures():
+    network = a_narrow_map()
+    route = along_segments(network, "JCT-A", ["SEG-AB"])
+    report = walk(route, network, a_rig(), a_load(width=feet(13)))
+    found = next(f for f in report.findings if f.rule == "road-width")
+    assert "12'" in found.detail
+    assert "13'" in found.detail
+
+
+def test_the_search_routes_around_a_road_posted_width(corridor):
+    from jeepdolly.route.search import clearing
+
+    wide = clearing(corridor, "JCT-A", "JCT-D", a_rig(), a_load(width=feet(13)))
+    assert wide is not None

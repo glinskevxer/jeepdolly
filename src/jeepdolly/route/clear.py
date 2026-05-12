@@ -30,21 +30,53 @@ from jeepdolly.roadway.network import Network
 from jeepdolly.roadway.segment import RoadClass, statute_for
 from jeepdolly.route.plan import Leg, Route
 from jeepdolly.units.clock import Day
-from jeepdolly.units.length import Inches
+from jeepdolly.units.length import Inches, format_length
 from jeepdolly.units.mass import Pounds, format_weight
 
 __all__ = ["LegReport", "RouteReport", "check_leg", "counties_on", "walk"]
 
 
-def check_leg(leg: Leg, network: Network, gross: Pounds, height: Inches) -> list[Finding]:
+def check_leg(
+    leg: Leg,
+    network: Network,
+    gross: Pounds,
+    height: Inches,
+    width: Inches | None = None,
+) -> list[Finding]:
     """What one stretch has to say about one rig.
 
-    Only the things that belong to the stretch itself: the local gross order and
-    whatever is built on it. The statutory limits are handled once per road
-    class rather than here.
+    Only the things that belong to the stretch itself: the local gross order, the
+    sizes the road itself will take, and whatever is built on it. The statutory
+    limits are handled once per road class rather than here.
     """
     found: list[Finding] = []
     segment = leg.segment
+    if not segment.takes_height(height):
+        assert segment.max_height is not None
+        found.append(
+            Finding(
+                rule="road-height",
+                subject=f"{segment.code} {segment.route}",
+                severity=Severity.REFUSE,
+                detail=(
+                    f"the road itself takes {format_length(segment.max_height)}"
+                    f" and the load is {format_length(height)}"
+                ),
+            )
+        )
+    if width is not None and not segment.takes_width(width):
+        assert segment.max_width is not None
+        found.append(
+            Finding(
+                rule="road-width",
+                subject=f"{segment.code} {segment.route}",
+                severity=Severity.REFUSE,
+                detail=(
+                    f"the road itself takes {format_length(segment.max_width)}"
+                    f" and the load is {format_length(width)}"
+                ),
+            )
+        )
     if segment.posted and int(gross) > int(segment.gross_limit):
         found.append(
             Finding(
@@ -174,7 +206,10 @@ def walk(
     """
     gross = config.gross
     reports = tuple(
-        LegReport(leg=leg, findings=tuple(check_leg(leg, network, gross, load.height)))
+        LegReport(
+            leg=leg,
+            findings=tuple(check_leg(leg, network, gross, load.height, load.width)),
+        )
         for leg in route.legs
     )
     seen: list[RoadClass] = []

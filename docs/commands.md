@@ -577,6 +577,8 @@ Put a stretch of road on the map.
 | `--class` | option | Which limit set applies. |
 | `--one-way` | flag | Only travelled start to end. |
 | `--posted` | option | Local gross order, if there is one. |
+| `--max-width` | option | Width the road itself will take. |
+| `--max-height` | option | Height the road itself will take. |
 
 ### `jeepdolly road structure`
 

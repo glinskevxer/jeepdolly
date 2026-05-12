@@ -139,9 +139,12 @@ def passable_for(network: Network, config: Configuration, load: Load) -> Passabl
     """A test that says whether one leg can carry this rig and load."""
     gross = config.gross
     height = load.height
+    width = load.width
 
     def usable(leg: Leg) -> bool:
-        return not any(finding.blocking for finding in check_leg(leg, network, gross, height))
+        return not any(
+            finding.blocking for finding in check_leg(leg, network, gross, height, width)
+        )
 
     return usable
 

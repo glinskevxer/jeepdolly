@@ -47,6 +47,8 @@ def node_from_row(row: sqlite3.Row) -> Node:
 def segment_from_row(row: sqlite3.Row) -> Segment:
     """Build a stretch out of one row."""
     posted = row["posted_gross"]
+    wide = row["max_width"]
+    tall = row["max_height"]
     return Segment(
         code=Code(row["code"]),
         start=Code(row["start_node"]),
@@ -56,6 +58,8 @@ def segment_from_row(row: sqlite3.Row) -> Segment:
         road_class=RoadClass(row["road_class"]),
         one_way=bool(row["one_way"]),
         posted_gross=None if posted is None else pounds(int(posted)),
+        max_width=None if wide is None else inches(int(wide)),
+        max_height=None if tall is None else inches(int(tall)),
     )
 
 
@@ -116,6 +120,8 @@ class SegmentStore(Repository[Segment]):
         "road_class",
         "one_way",
         "posted_gross",
+        "max_width",
+        "max_height",
     )
 
     def normalise(self, key: str) -> str:
@@ -137,6 +143,8 @@ class SegmentStore(Repository[Segment]):
             str(item.road_class),
             int(item.one_way),
             None if item.posted_gross is None else int(item.posted_gross),
+            None if item.max_width is None else int(item.max_width),
+            None if item.max_height is None else int(item.max_height),
         )
 
     def key_of(self, item: Segment) -> str:

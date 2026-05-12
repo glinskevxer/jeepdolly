@@ -4,6 +4,7 @@ from jeepdolly.errors import BadValueError
 from jeepdolly.limits.statute import INTERSTATE, STATE_ROUTE
 from jeepdolly.roadway.segment import RoadClass, Segment, statute_for
 from jeepdolly.units.distance import miles
+from jeepdolly.units.length import feet, feet_inches, inches
 from jeepdolly.units.mass import pounds
 
 
@@ -150,3 +151,50 @@ def test_a_one_way_segment_prints_a_single_arrow():
 def test_segments_order_by_code():
     first = a_segment(code="AAA")
     assert sorted([a_segment(), first])[0] is first
+
+
+def test_a_plain_segment_posts_no_size():
+    made = a_segment()
+    assert not made.restricted
+    assert made.max_width is None
+    assert made.max_height is None
+
+
+def test_a_segment_may_post_a_width():
+    made = a_segment(max_width=feet(12))
+    assert made.restricted
+    assert int(made.max_width or 0) == 144
+
+
+def test_a_segment_may_post_a_height():
+    made = a_segment(max_height=feet(14))
+    assert made.restricted
+    assert int(made.max_height or 0) == 168
+
+
+def test_a_posted_width_of_nothing_is_refused():
+    with pytest.raises(BadValueError):
+        a_segment(max_width=inches(0))
+
+
+def test_a_posted_height_of_nothing_is_refused():
+    with pytest.raises(BadValueError):
+        a_segment(max_height=inches(0))
+
+
+def test_an_unrestricted_stretch_takes_any_width():
+    assert a_segment().takes_width(feet(20))
+
+
+def test_a_restricted_stretch_takes_a_load_at_its_limit():
+    assert a_segment(max_width=feet(12)).takes_width(feet(12))
+
+
+def test_a_restricted_stretch_refuses_one_inch_more():
+    assert not a_segment(max_width=feet(12)).takes_width(feet_inches(12, 1))
+
+
+def test_a_height_restriction_reads_the_same_way():
+    made = a_segment(max_height=feet(14))
+    assert made.takes_height(feet(14))
+    assert not made.takes_height(feet_inches(14, 1))

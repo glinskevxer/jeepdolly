@@ -203,3 +203,42 @@ def test_status_counts_the_map(run):
     output = run("status").output
     assert "junctions 2" in output
     assert "segments 1" in output
+
+
+def test_a_segment_takes_a_posted_width(run):
+    two_junctions(run)
+    assert a_stretch(run, **{"--max-width": "12'"}).exit_code == 0
+
+
+def test_a_segment_takes_a_posted_height(run):
+    two_junctions(run)
+    assert a_stretch(run, **{"--max-height": "14'"}).exit_code == 0
+
+
+def test_a_segment_refuses_a_posted_width_of_nothing(run):
+    two_junctions(run)
+    assert a_stretch(run, **{"--max-width": "0"}).exit_code == 1
+
+
+def test_a_road_posted_width_stops_a_wide_quote(stocked):
+    from .test_permit import apply_one
+
+    stocked(
+        "road",
+        "segment",
+        "--code",
+        "SEG-NW",
+        "--start",
+        "JCT-B",
+        "--end",
+        "JCT-D",
+        "--route",
+        "SR-200",
+        "--miles",
+        "1.00",
+        "--max-width",
+        "10'",
+    )
+    apply_one(stocked, **{"--width": "12'6\""})
+    output = stocked("permit", "quote", "1", "--on", "2025-06-17").output
+    assert "outcome issue" in output

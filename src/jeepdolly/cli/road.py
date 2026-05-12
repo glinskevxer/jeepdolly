@@ -50,6 +50,8 @@ def add_node(session: Session, code: str, name: str, county: str) -> None:
 )
 @click.option("--one-way", is_flag=True, help="Only travelled start to end.")
 @click.option("--posted", default="", help="Local gross order, if there is one.")
+@click.option("--max-width", default="", help="Width the road itself will take.")
+@click.option("--max-height", default="", help="Height the road itself will take.")
 @click.pass_obj
 def add_segment(
     session: Session,
@@ -61,6 +63,8 @@ def add_segment(
     road_class: str,
     one_way: bool,
     posted: str,
+    max_width: str,
+    max_height: str,
 ) -> None:
     """Put a stretch of road on the map."""
     with office_of(session) as office, office.writing():
@@ -74,6 +78,8 @@ def add_segment(
                 road_class=RoadClass(road_class),
                 one_way=one_way,
                 posted_gross=parse_weight(posted) if posted else None,
+                max_width=parse_length(max_width) if max_width else None,
+                max_height=parse_length(max_height) if max_height else None,
             )
         )
     click.echo(f"{made} {format_distance(made.distance)}")
