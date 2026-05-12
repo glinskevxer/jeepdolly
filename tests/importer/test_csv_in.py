@@ -230,3 +230,58 @@ def test_a_loaded_count_prints_itself():
 
 def test_the_file_names_are_all_csv():
     assert all(name.endswith(".csv") for name in FILES.values())
+
+
+def test_a_posted_width_is_read(office, tmp_path):
+    (tmp_path / FILES["nodes"]).write_text(NODES, encoding="utf-8")
+    (tmp_path / FILES["segments"]).write_text(
+        "code,start,end,route,miles,max_width\nSEG-AB,JCT-A,JCT-B,US-12,12.00,12'\n",
+        encoding="utf-8",
+    )
+    load_all(office, tmp_path)
+    assert int(office.roadway.get_segment("SEG-AB").max_width or 0) == 144
+
+
+def test_a_posted_height_is_read(office, tmp_path):
+    (tmp_path / FILES["nodes"]).write_text(NODES, encoding="utf-8")
+    (tmp_path / FILES["segments"]).write_text(
+        "code,start,end,route,miles,max_height\nSEG-AB,JCT-A,JCT-B,US-12,12.00,14'\n",
+        encoding="utf-8",
+    )
+    load_all(office, tmp_path)
+    assert int(office.roadway.get_segment("SEG-AB").max_height or 0) == 168
+
+
+def test_a_misspelled_column_stops_the_import(office, tmp_path):
+    (tmp_path / FILES["nodes"]).write_text(NODES, encoding="utf-8")
+    (tmp_path / FILES["segments"]).write_text(
+        "code,start,end,route,miles,max_hieght\nSEG-AB,JCT-A,JCT-B,US-12,12.00,14'\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(BadValueError, match="max_hieght"):
+        load_all(office, tmp_path)
+
+
+def test_a_misspelled_column_leaves_nothing_behind(office, tmp_path):
+    (tmp_path / FILES["carriers"]).write_text(CARRIERS, encoding="utf-8")
+    (tmp_path / FILES["nodes"]).write_text(
+        "code,name,conty\nJCT-A,a,Missoula\n", encoding="utf-8"
+    )
+    with pytest.raises(BadValueError):
+        load_all(office, tmp_path)
+    assert office.carriers.count() == 0
+
+
+def test_every_column_the_office_reads_is_on_the_list():
+    from jeepdolly.importer.csv_in import COLUMNS
+
+    assert set(COLUMNS) == set(FILES)
+    assert "max_width" in COLUMNS["segments"]
+    assert "clearance" in COLUMNS["structures"]
+
+
+def test_a_file_with_only_the_columns_it_needs_loads(office, tmp_path):
+    (tmp_path / FILES["nodes"]).write_text(
+        "code,name,county\nJCT-A,a,Missoula\n", encoding="utf-8"
+    )
+    assert load_all(office, tmp_path).nodes == 1

@@ -32,6 +32,7 @@ from jeepdolly.units.length import parse_length
 from jeepdolly.units.mass import parse_weight
 
 __all__ = [
+    "COLUMNS",
     "FILES",
     "Loaded",
     "load_all",
@@ -41,6 +42,27 @@ __all__ = [
     "load_structures",
     "read_rows",
 ]
+
+#: The columns each file may carry. A column not on the list is a typo in a
+#: header row, and a typo in a header row silently loads the wrong thing, so it
+#: stops the import rather than being ignored.
+COLUMNS = {
+    "carriers": ("code", "name", "usdot", "home_state", "active"),
+    "nodes": ("code", "name", "county"),
+    "segments": (
+        "code",
+        "start",
+        "end",
+        "route",
+        "miles",
+        "class",
+        "one_way",
+        "posted",
+        "max_width",
+        "max_height",
+    ),
+    "structures": ("segment", "name", "kind", "milepost", "clearance", "rating"),
+}
 
 #: The file each kind of record is read from.
 FILES = {
@@ -72,16 +94,26 @@ class Loaded:
         )
 
 
-def read_rows(path: Path) -> Iterator[tuple[int, dict[str, str]]]:
+def read_rows(
+    path: Path, allowed: tuple[str, ...] | None = None
+) -> Iterator[tuple[int, dict[str, str]]]:
     """Every row of one file, with the line it came from.
 
     Blank fields come back as empty strings rather than ``None``, which is what
-    the model constructors expect for an absent optional.
+    the model constructors expect for an absent optional. A header naming a
+    column the office does not know stops the import: a misspelled ``max_hieght``
+    would otherwise load as a stretch with no height posted at all.
     """
     with path.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         if reader.fieldnames is None:
             raise BadValueError("file", path.name, "has no header row")
+        if allowed is not None:
+            stray = [name for name in reader.fieldnames if name not in allowed]
+            if stray:
+                raise BadValueError(
+                    "file", path.name, f"has columns nobody reads: {', '.join(stray)}"
+                )
         for number, row in enumerate(reader, start=2):
             yield number, {key: (value or "").strip() for key, value in row.items()}
 
@@ -94,7 +126,7 @@ def _at(path: Path, line: int, exc: JeepdollyError) -> BadValueError:
 def load_carriers(office: Office, path: Path) -> int:
     """Load the carrier file."""
     count = 0
-    for line, row in read_rows(path):
+    for line, row in read_rows(path, COLUMNS["carriers"]):
         try:
             office.carriers.add(
                 Carrier(
@@ -116,7 +148,7 @@ def load_carriers(office: Office, path: Path) -> int:
 def load_nodes(office: Office, path: Path) -> int:
     """Load the junction file."""
     count = 0
-    for line, row in read_rows(path):
+    for line, row in read_rows(path, COLUMNS["nodes"]):
         try:
             office.roadway.add_node(
                 Node(code=row["code"], name=row["name"], county=row["county"])  # type: ignore[arg-type]
@@ -132,7 +164,7 @@ def load_nodes(office: Office, path: Path) -> int:
 def load_segments(office: Office, path: Path) -> int:
     """Load the stretch file."""
     count = 0
-    for line, row in read_rows(path):
+    for line, row in read_rows(path, COLUMNS["segments"]):
         try:
             office.roadway.add_segment(
                 Segment(
@@ -163,7 +195,7 @@ def load_segments(office: Office, path: Path) -> int:
 def load_structures(office: Office, path: Path) -> int:
     """Load the structure file."""
     count = 0
-    for line, row in read_rows(path):
+    for line, row in read_rows(path, COLUMNS["structures"]):
         try:
             office.roadway.add_structure(
                 Structure(

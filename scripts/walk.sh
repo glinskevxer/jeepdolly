@@ -54,8 +54,8 @@ JCT-W,US 93 at Florence,Ravalli
 JCT-X,US 93 at Hamilton,Ravalli
 CSV
 cat > "$feed/segments.csv" <<'CSV'
-code,start,end,route,miles,class
-SEG-WX,JCT-W,JCT-X,US-93,18.40,state
+code,start,end,route,miles,class,max_width,max_height
+SEG-WX,JCT-W,JCT-X,US-93,18.40,state,16',17'
 CSV
 run load "$feed"
 run check
