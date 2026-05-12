@@ -13,7 +13,8 @@ folding them into a larger report.
 from __future__ import annotations
 
 from jeepdolly.permit.permit import Permit
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT, pairs, table
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.roadway.network import Network
 from jeepdolly.route.plan import Route
 from jeepdolly.units.clock import format_day
@@ -53,8 +54,8 @@ def permit_sheet(permit: Permit) -> list[str]:
     """The permit as it is printed for the cab."""
     application = permit.application
     load = application.load
-    lines = banner(f"oversize permit {permit.number}")
-    lines.extend(
+    sheet = Sheet().title(f"oversize permit {permit.number}")
+    sheet.notes(
         pairs(
             [
                 ("carrier", permit.carrier),
@@ -66,9 +67,7 @@ def permit_sheet(permit: Permit) -> list[str]:
             ]
         )
     )
-    lines.append("")
-    lines.extend(banner("load"))
-    lines.extend(
+    sheet.section("load").notes(
         pairs(
             [
                 ("description", load.description),
@@ -76,14 +75,12 @@ def permit_sheet(permit: Permit) -> list[str]:
                 ("width", format_length(load.width)),
                 ("height", format_length(load.height)),
                 ("length", format_length(load.overall_length)),
-                ("divisible", "no" if not load.divisible else "yes"),
+                ("divisible", "yes" if load.divisible else "no"),
             ]
         )
     )
     if application.routed:
-        lines.append("")
-        lines.extend(banner("route"))
-        lines.extend(
+        sheet.section("route").notes(
             pairs(
                 [
                     ("from", str(application.origin)),
@@ -99,23 +96,18 @@ def permit_sheet(permit: Permit) -> list[str]:
         )
     found = conditions(permit)
     if found:
-        lines.append("")
-        lines.extend(banner("conditions"))
-        lines.extend(f"- {line}" for line in found)
-    lines.append("")
-    lines.extend(banner("fee"))
-    lines.extend(fee_table(permit))
+        sheet.section("conditions").notes(f"- {line}" for line in found)
+    sheet.section("fee").notes(fee_table(permit))
     if permit.state != "active":
-        lines.append("")
-        lines.append(f"NOT VALID: this permit is {permit.state}")
+        sheet.section(f"NOT VALID: this permit is {permit.state}")
         if permit.reason:
-            lines.append(f"reason: {permit.reason}")
-    return lines
+            sheet.note(f"reason: {permit.reason}")
+    return sheet.done()
 
 
 def route_sheet(route: Route, network: Network) -> list[str]:
     """The stretch by stretch sheet the driver follows."""
-    lines = banner(f"route sheet {route.origin} to {route.destination}")
+    sheet = Sheet().title(f"route sheet {route.origin} to {route.destination}")
     body: list[list[str]] = []
     running = 0
     for index, leg in enumerate(route.legs, start=1):
@@ -130,12 +122,10 @@ def route_sheet(route: Route, network: Network) -> list[str]:
                 format_distance(hundredths(running)),
             ]
         )
-    lines.extend(
-        table(
-            ["leg", "route", "from", "to", "miles", "running"],
-            body,
-            aligns=[RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT],
-        )
+    sheet.rows(
+        ["leg", "route", "from", "to", "miles", "running"],
+        body,
+        aligns=[RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT],
     )
     built: list[list[str]] = []
     for leg in route.legs:
@@ -157,9 +147,7 @@ def route_sheet(route: Route, network: Network) -> list[str]:
                 ]
             )
     if built:
-        lines.append("")
-        lines.extend(banner("structures on the route"))
-        lines.extend(table(["stretch", "milepost", "reference", "name", "posted"], built))
-    lines.append("")
-    lines.extend(pairs([("total", format_distance(route.distance))]))
-    return lines
+        sheet.section("structures on the route").rows(
+            ["stretch", "milepost", "reference", "name", "posted"], built
+        )
+    return sheet.summary([("total", format_distance(route.distance))]).done()

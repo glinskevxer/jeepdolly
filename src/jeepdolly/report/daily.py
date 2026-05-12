@@ -17,7 +17,8 @@ from dataclasses import dataclass
 
 from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.permit.permit import Permit
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.roadway.network import Network
 from jeepdolly.route.search import shortest
 from jeepdolly.travel.window import ORDINARY, TravelRule, travel_windows
@@ -115,36 +116,25 @@ def day_sheet(
 ) -> list[str]:
     """The whole day sheet, ready to print."""
     found = movements(permits, day, network, book, rule)
-    lines = banner(f"movement sheet for {format_day(day)}")
+    sheet = Sheet().title(f"movement sheet for {format_day(day)}")
     if not found:
-        lines.append("nothing moving")
-        return lines
-    body = [
+        return sheet.note("nothing moving").done()
+    sheet.rows(
+        ["permit", "carrier", "county", "weight", "width", "hours"],
         [
-            str(m.permit.number),
-            m.permit.carrier,
-            m.county,
-            format_weight(m.permit.application.load.weight),
-            format_length(m.permit.application.load.width),
-            m.hours,
-        ]
-        for m in found
-    ]
-    lines.extend(
-        table(
-            ["permit", "carrier", "county", "weight", "width", "hours"],
-            body,
-            aligns=[LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT],
-        )
+            [
+                str(m.permit.number),
+                m.permit.carrier,
+                m.county,
+                format_weight(m.permit.application.load.weight),
+                format_length(m.permit.application.load.width),
+                m.hours,
+            ]
+            for m in found
+        ],
+        aligns=[LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT],
     )
     stopped = [m for m in found if m.blocked]
-    lines.append("")
-    lines.extend(
-        pairs(
-            [
-                ("movements", str(len(found))),
-                ("stopped", str(len(stopped))),
-            ]
-        )
-    )
-    return lines
+    return sheet.summary(
+        [("movements", str(len(found))), ("stopped", str(len(stopped)))]
+    ).done()

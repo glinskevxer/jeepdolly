@@ -18,7 +18,8 @@ from jeepdolly.billing.account import Account
 from jeepdolly.party.carrier import Carrier
 from jeepdolly.party.contact import Contact
 from jeepdolly.permit.permit import Permit, State
-from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.layout import LEFT, RIGHT, pairs
+from jeepdolly.report.sheet import Sheet
 from jeepdolly.store.history import Event
 from jeepdolly.store.rigs import FiledRig
 from jeepdolly.units.clock import format_day
@@ -68,8 +69,8 @@ class CarrierFile:
 def carrier_sheet(file: CarrierFile) -> list[str]:
     """The whole carrier file, ready to print."""
     carrier = file.carrier
-    lines = banner(f"carrier file {carrier.code}")
-    lines.extend(
+    sheet = Sheet().title(f"carrier file {carrier.code}")
+    sheet.notes(
         pairs(
             [
                 ("name", carrier.name),
@@ -82,74 +83,54 @@ def carrier_sheet(file: CarrierFile) -> list[str]:
         )
     )
     if file.contacts:
-        lines.append("")
-        lines.extend(banner("who to ring"))
-        lines.extend(
-            table(
-                ["role", "name", "number", "email"],
-                [
-                    [str(one.role), one.name, one.printed, one.email or "-"]
-                    for one in file.contacts
-                ],
-            )
+        sheet.section("who to ring").rows(
+            ["role", "name", "number", "email"],
+            [[str(one.role), one.name, one.printed, one.email or "-"] for one in file.contacts],
         )
-    lines.append("")
-    lines.extend(banner("rigs"))
+    sheet.section("rigs")
     if not file.rigs:
-        lines.append("none on file")
+        sheet.note("none on file")
     else:
-        lines.extend(
-            table(
-                ["reference", "name", "axles", "gross", "wheelbase"],
+        sheet.rows(
+            ["reference", "name", "axles", "gross", "wheelbase"],
+            [
                 [
-                    [
-                        str(one.reference),
-                        str(one.config.name),
-                        str(one.config.count),
-                        format_weight(one.config.gross),
-                        format_length(one.config.wheelbase),
-                    ]
-                    for one in file.rigs
-                ],
-                aligns=[LEFT, LEFT, RIGHT, RIGHT, RIGHT],
-            )
-        )
-    lines.append("")
-    lines.extend(banner("permits"))
-    if not file.permits:
-        lines.append("none issued")
-    else:
-        lines.extend(
-            table(
-                ["number", "good", "state", "fee"],
-                [
-                    [str(one.number), str(one.span), str(one.state), format_money(one.fee)]
-                    for one in file.permits[-RECENT:]
-                ],
-                aligns=[LEFT, LEFT, LEFT, RIGHT],
-            )
-        )
-        lines.append("")
-        lines.extend(
-            pairs(
-                [
-                    ("issued", str(len(file.permits))),
-                    ("still live", str(len(file.live_permits))),
-                    ("voided", str(file.voided)),
-                    ("charged", format_money(file.spent)),
+                    str(one.reference),
+                    str(one.config.name),
+                    str(one.config.count),
+                    format_weight(one.config.gross),
+                    format_length(one.config.wheelbase),
                 ]
-            )
+                for one in file.rigs
+            ],
+            aligns=[LEFT, LEFT, RIGHT, RIGHT, RIGHT],
+        )
+    sheet.section("permits")
+    if not file.permits:
+        sheet.note("none issued")
+    else:
+        sheet.rows(
+            ["number", "good", "state", "fee"],
+            [
+                [str(one.number), str(one.span), str(one.state), format_money(one.fee)]
+                for one in file.permits[-RECENT:]
+            ],
+            aligns=[LEFT, LEFT, LEFT, RIGHT],
+        )
+        sheet.summary(
+            [
+                ("issued", str(len(file.permits))),
+                ("still live", str(len(file.live_permits))),
+                ("voided", str(file.voided)),
+                ("charged", format_money(file.spent)),
+            ]
         )
     if file.events:
-        lines.append("")
-        lines.extend(banner("recent activity"))
-        lines.extend(
-            table(
-                ["day", "subject", "what", "detail"],
-                [
-                    [format_day(e.day), e.subject, str(e.kind), e.detail or "-"]
-                    for e in file.events[-RECENT:]
-                ],
-            )
+        sheet.section("recent activity").rows(
+            ["day", "subject", "what", "detail"],
+            [
+                [format_day(e.day), e.subject, str(e.kind), e.detail or "-"]
+                for e in file.events[-RECENT:]
+            ],
         )
-    return lines
+    return sheet.done()
