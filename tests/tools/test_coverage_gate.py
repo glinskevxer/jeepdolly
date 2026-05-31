@@ -85,3 +85,45 @@ def test_main_on_an_empty_data_file_passes(tmp_path, capsys):
     empty.write_bytes(b"")
     assert main(["--data", str(empty), "--floor", "0", "--file-floor", "0"]) == 0
     assert "coverage" in capsys.readouterr().out
+
+
+def test_measure_reads_a_real_coverage_run(tmp_path):
+    """Run a scrap of code under coverage and read the file back."""
+    import subprocess
+    import sys
+
+    module = tmp_path / "scrap.py"
+    module.write_text(
+        "def used():\n    return 1\n\n\ndef unused():\n    return 2\n\n\nused()\n",
+        encoding="utf-8",
+    )
+    data = tmp_path / ".coverage"
+    subprocess.run(
+        [sys.executable, "-m", "coverage", "run", f"--data-file={data}", str(module)],
+        check=True,
+        cwd=tmp_path,
+    )
+    from jeepdolly.tools.coverage_gate import measure
+
+    found = measure(data)
+    assert len(found) == 1
+    assert found[0].name.endswith("scrap.py")
+    assert 0 < found[0].percent < 100
+    assert found[0].missing >= 1
+
+
+def test_a_measured_run_can_be_gated(tmp_path):
+    import subprocess
+    import sys
+
+    module = tmp_path / "scrap.py"
+    module.write_text("def unused():\n    return 2\n\n\nprint(1)\n", encoding="utf-8")
+    data = tmp_path / ".coverage"
+    subprocess.run(
+        [sys.executable, "-m", "coverage", "run", f"--data-file={data}", str(module)],
+        check=True,
+        cwd=tmp_path,
+    )
+    from jeepdolly.tools.coverage_gate import main
+
+    assert main(["--data", str(data), "--floor", "99", "--file-floor", "99"]) == 1

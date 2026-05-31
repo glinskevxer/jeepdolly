@@ -69,3 +69,22 @@ def test_every_package_of_the_source_tree_is_claimed():
 @pytest.mark.parametrize("prefix", sorted(LAYERS))
 def test_every_claimed_prefix_starts_with_the_package(prefix):
     assert prefix.startswith("jeepdolly.")
+
+
+def test_a_module_with_no_layer_is_reported(monkeypatch):
+    from jeepdolly.tools import check_layers
+
+    def nowhere(module: str) -> None:
+        """A table that claims no layer for anything."""
+        assert module.startswith("jeepdolly")
+        return
+
+    monkeypatch.setattr(check_layers, "layer_of", nowhere)
+    found = check_layers.problems()
+    assert found
+    assert all("no layer is claimed" in line for line in found)
+
+
+def test_an_import_of_something_outside_the_package_is_ignored():
+    assert layer_of("sqlite3") is None
+    assert layer_of("collections.abc") is None

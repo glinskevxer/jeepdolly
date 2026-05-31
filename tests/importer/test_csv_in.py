@@ -285,3 +285,27 @@ def test_a_file_with_only_the_columns_it_needs_loads(office, tmp_path):
         "code,name,county\nJCT-A,a,Missoula\n", encoding="utf-8"
     )
     assert load_all(office, tmp_path).nodes == 1
+
+
+def test_a_structure_row_missing_a_column_names_its_line(office, tmp_path):
+    path = tmp_path / "structures.csv"
+    path.write_text("segment,name\nSEG-AB,x\n", encoding="utf-8")
+    with pytest.raises(BadValueError, match="structures.csv:2"):
+        load_structures(office, path)
+
+
+def test_a_structure_row_with_a_bad_kind_names_its_line(office, folder):
+    load_nodes(office, folder / FILES["nodes"])
+    load_segments(office, folder / FILES["segments"])
+    path = folder / FILES["structures"]
+    path.write_text("segment,name,kind,milepost\nSEG-BC,x,footbridge,1.00\n", encoding="utf-8")
+    with pytest.raises(BadValueError, match="structures.csv:2"):
+        load_structures(office, path)
+
+
+def test_a_segment_row_missing_a_column_names_its_line(office, folder):
+    load_nodes(office, folder / FILES["nodes"])
+    path = folder / FILES["segments"]
+    path.write_text("code,start,end\nSEG-AB,JCT-A,JCT-B\n", encoding="utf-8")
+    with pytest.raises(BadValueError, match="segments.csv:2"):
+        load_segments(office, path)
