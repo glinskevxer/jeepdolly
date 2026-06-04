@@ -26,7 +26,7 @@ without a map and without a clock.
 
 | layer | what is there | may reach |
 | --- | --- | --- |
-| units, errors | inches, pounds, cents, days, shares | nothing |
+| units, errors | inches, pounds, cents, miles, days, shares | nothing |
 | ids | codes and office reference numbers | units |
 | limits.finding | the vocabulary every check answers in | units, ids |
 | rig, party | axles, arrangements, loads, carriers | above |
@@ -38,6 +38,7 @@ without a map and without a clock.
 | permit.application, billing | requests and money | above |
 | permit.decision, permit.review | the three answers | above |
 | permit.permit | the issued permit | above |
+| permit.renewal | next year's application | above |
 | store | the sqlite file | above |
 | permit.desk | the counter | above |
 | report, importer, invariants | paperwork | above |
@@ -98,13 +99,51 @@ Kept because the reason is more useful than the rule.
 
 ## The checks
 
-Twelve of them, run by the build, each of which exists because something it now
-catches got past review at least once. `tools/check_failures` feeds every one of
-them a made up finding, because a check that has only ever passed has not been
-seen working.
+Eighteen of them, run by the build on both interpreters. Each exists because
+something it now catches got past review at least once.
+
+| check | what it refuses |
+| --- | --- |
+| `check_layers` | an import that reaches up a layer |
+| `check_exports` | a public name outside `__all__`, or an `__all__` naming nothing |
+| `check_docstrings` | a module or public definition with nothing said about it |
+| `check_sql` | a value formatted into a query |
+| `check_boundaries` | `sqlite3.connect`, `datetime.now`, `print` or `open` out of place |
+| `check_naming` | a test name that says too little |
+| `check_fixtures` | a fixture that opens a connection and never closes it |
+| `check_migrations` | an applied migration that has been edited |
+| `check_todo` | an unfinished note, or a test somebody turned off |
+| `check_dataclasses` | a record that is not frozen or does not declare slots |
+| `check_indexes` | a foreign key column with nothing indexing it |
+| `check_pins` | a loose requirement, or an install that skips the constraints |
+| `check_links` | a design document reference to a module that is gone |
+| `check_commands` | a command the suite or the walk script never reaches |
+| `check_readme` | a README example that would not run |
+| `check_version` | the two version numbers drifting apart |
+| `check_help` | a help string that is not a printable sentence |
+| `check_docs` | a generated document that is out of date |
+
+Two test files hold them to their own standard. `tests/tools/test_check_failures`
+hands every check a made up finding and asserts it reports and exits non zero.
+`tests/tools/test_check_findings` plants a defect of the exact shape each one is
+for, in a temporary tree, and asserts the check names it. A check that has only
+ever passed has not been seen working.
+
+## The suite
+
+About twenty seven hundred tests, green on 3.12 and 3.13. The command line tests
+build their stocked office once for the session and copy it per test through
+sqlite's own backup, which halved the suite's running time and is the only piece
+of test machinery here worth knowing about.
+
+`tests/test_season.py` is the one integration test: a year at the counter, run
+through the package rather than the command line, in one long function. The order
+is the point and splitting it into fixtures would hide the coupling it is there to
+exercise. `scripts/walk.sh` is the same thing again through an *installed* copy,
+driven from a shell, and the build runs it on both interpreters.
 
 ## Where to start reading
 
 `units/mass.py` for the shape of a value type, `limits/bridge.py` for the
-arithmetic the whole office turns on, and `permit/desk.py` for how it all joins
-up.
+arithmetic the whole office turns on, `rig/spread.py` for the search the package
+is named after, and `permit/desk.py` for how it all joins up.
