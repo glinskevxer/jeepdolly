@@ -190,3 +190,51 @@ def test_the_state_limits_forgive_more_than_the_interstate_ones(with_carrier):
     federal = with_carrier("rig", "advise", "R-00001").output
     state = with_carrier("rig", "advise", "R-00001", "--class", "state").output
     assert federal != state
+
+
+def test_advise_offers_no_second_dolly_for_a_rig_one_cannot_fix(with_carrier):
+    with_carrier(
+        "rig",
+        "build",
+        "--carrier",
+        "VANCE",
+        "--name",
+        "VHEAVY",
+        "--axle",
+        "12000,2,11,0",
+        "--axle",
+        "26000,4,11,15",
+        "--axle",
+        "26000,4,11,4",
+        "--axle",
+        "26000,4,11,30",
+        "--axle",
+        "26000,4,11,4",
+    )
+    output = with_carrier("rig", "advise", "R-00001", "--count", "1").output
+    assert "over" in output
+    assert "then" not in output
+
+
+def test_advise_offers_no_second_dolly_when_one_clears(with_carrier):
+    with_carrier(
+        "rig",
+        "build",
+        "--carrier",
+        "VANCE",
+        "--name",
+        "MILD",
+        "--axle",
+        "12000,2,11,0",
+        "--axle",
+        "21000,4,11,15",
+        "--axle",
+        "21000,4,11,4",
+        "--axle",
+        "17000,4,11,30",
+        "--axle",
+        "17000,4,11,4",
+    )
+    output = with_carrier("rig", "advise", "R-00001", "--count", "1").output
+    assert "clears" in output
+    assert "then" not in output

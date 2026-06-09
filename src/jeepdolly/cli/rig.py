@@ -8,7 +8,7 @@ from jeepdolly.cli.ask import day_or_today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
-from jeepdolly.rig.spread import spread_score, suggest
+from jeepdolly.rig.spread import pairs, spread_score
 from jeepdolly.roadway.segment import RoadClass, statute_for
 from jeepdolly.units.clock import format_day
 from jeepdolly.units.length import feet, format_length, inches
@@ -121,8 +121,10 @@ def advise(session: Session, reference: str, road_class: str, count: int) -> Non
         click.echo(f"{filed.reference} is already under every axle limit on {road_class}")
         return
     click.echo(f"{filed.reference} is {format_weight(pounds(worst))} over on {over} rules")
-    for option in suggest(filed.config, statute, limit=count):
-        click.echo(f"  {option}")
+    for first, second in pairs(filed.config, statute, limit=count):
+        click.echo(f"  {first}")
+        if second is not None:
+            click.echo(f"    then {second}")
 
 
 @rig.command("list")

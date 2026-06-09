@@ -219,3 +219,66 @@ def test_a_suggestion_orders_by_its_overage():
 
 def test_a_rig_already_legal_still_gets_options():
     assert spread_options(light())
+
+
+def test_a_clearing_arrangement_is_offered_on_its_own():
+    from jeepdolly.rig.spread import pairs
+
+    found = pairs(clearable(), limit=1)
+    assert found[0][0].clears
+    assert found[0][1] is None
+
+
+def test_a_second_dolly_is_offered_only_when_it_helps():
+    from jeepdolly.rig.spread import pairs
+
+    for first, second in pairs(heavy(), limit=3):
+        if second is not None:
+            assert second.excess < first.excess
+
+
+def test_a_second_dolly_does_not_help_the_office_catalogue():
+    """Measured, and stated in the module docstring.
+
+    Swept over five axle rigs from eighteen to twenty seven thousand pounds an
+    axle, no second dolly leaves the rig less over than the first one did. That
+    falls out of the donor rule rather than out of the search, and this is here
+    so that a change to either is noticed.
+
+    The steps are coarse on purpose. The finer sweep that was run once by hand
+    took forty seconds and found the same thing, and a forty second test is one
+    somebody eventually stops running.
+    """
+    from jeepdolly.rig.spread import pairs
+
+    for drives in range(18000, 27001, 3000):
+        for trailer in range(18000, 27001, 4500):
+            made = rig(
+                "SWEEP",
+                [steer(), drive(drives), drive(drives), drive(trailer), drive(trailer)],
+                [feet(15), feet(4), feet(30), feet(4)],
+            )
+            for _, second in pairs(made, limit=1):
+                assert second is None
+
+
+def test_the_pairs_list_is_as_long_as_asked_for():
+    from jeepdolly.rig.spread import pairs
+
+    assert len(pairs(heavy(), limit=2)) == 2
+
+
+def test_every_pair_leads_with_a_single_dolly():
+    from jeepdolly.rig.spread import pairs
+
+    for first, _ in pairs(heavy(), limit=3):
+        assert first.made.count > 5
+
+
+def test_the_pair_search_answers_the_same_way_twice():
+    from jeepdolly.rig.spread import pairs
+
+    first = [(a.name, b.name if b else None) for a, b in pairs(heavy(), limit=3)]
+    for _ in range(3):
+        again = [(a.name, b.name if b else None) for a, b in pairs(heavy(), limit=3)]
+        assert again == first

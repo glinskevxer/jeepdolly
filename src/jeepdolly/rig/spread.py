@@ -11,6 +11,20 @@ and see which combination leaves the fewest pounds over. It is a small brute
 force and it stays small because the list is short and the transfer steps are
 coarse. Two thousand pound steps are what a carrier can actually load to.
 
+``pairs`` runs the search a second time over the arrangement the first one
+found, which is how a jeep and a booster together get considered without the
+search becoming a search over pairs of everything. It answers the question in the
+order a carrier asks it: fit a jeep, then ask whether a booster finishes the job.
+
+Worth knowing before reaching for it: on the office's own catalogue a second
+dolly almost never helps. Swept over every five axle rig from eighteen to twenty
+seven thousand pounds an axle, in five hundred pound steps, there was no case
+where adding a second dolly to the best single arrangement left the rig less over
+than the first one did. That is not a bug in the search, it is what the donor rule
+means: a dolly relieves everything ahead of it, so the first one has already taken
+what there was to take. The office still asks, because the sweep is of one
+catalogue and one rig shape, and the answer being no is worth printing.
+
 Nothing here decides anything. It hands back an ordered list of suggestions and
 the clerk reads the top one out.
 """
@@ -37,6 +51,7 @@ __all__ = [
     "Suggestion",
     "already_legal",
     "best",
+    "pairs",
     "spread_options",
     "spread_score",
     "suggest",
@@ -226,6 +241,32 @@ def suggest(
         out.append(option)
         if len(out) == limit:
             break
+    return out
+
+
+def pairs(
+    config: Configuration,
+    statute: Statute = INTERSTATE,
+    catalogue: tuple[tuple[str, Dolly], ...] = CATALOGUE,
+    limit: int = 3,
+) -> list[tuple[Suggestion, Suggestion | None]]:
+    """The best few arrangements, each with a second dolly on top if it helps.
+
+    The second suggestion is ``None`` where nothing more helps, which is the
+    common case and the one the clerk wants to see plainly: adding a booster to
+    a rig a jeep already fixed costs the carrier a vehicle for nothing.
+    """
+    out: list[tuple[Suggestion, Suggestion | None]] = []
+    for first in suggest(config, statute, catalogue, limit):
+        if first.clears:
+            out.append((first, None))
+            continue
+        second = None
+        for option in spread_options(first.made, statute, catalogue):
+            if option.excess < first.excess:
+                second = option
+                break
+        out.append((first, second))
     return out
 
 
