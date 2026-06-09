@@ -89,7 +89,7 @@ def apply(session: Session, /, **given: str) -> None:
             origin=given["origin"] or None,  # type: ignore[arg-type]
             destination=given["destination"] or None,  # type: ignore[arg-type]
         )
-        made = Desk.at(office).file(application)
+        made = Desk.at(office, clerk=session.clerk).file(application)
     click.echo(f"application {made.key}: {made.application}")
 
 
@@ -100,7 +100,7 @@ def apply(session: Session, /, **given: str) -> None:
 def quote(session: Session, key: int, on: str) -> None:
     """Price an application without issuing anything."""
     with office_of(session) as office:
-        desk = Desk.at(office)
+        desk = Desk.at(office, clerk=session.clerk)
         seen, made = desk.decide(key, parse_day(on) if on else today())
         if seen.route is not None:
             codes = " ".join(str(s.code) for s in seen.route.segments)
@@ -125,7 +125,7 @@ def quote(session: Session, key: int, on: str) -> None:
 def advise(session: Session, key: int) -> None:
     """Say what would have to change to get an application through."""
     with office_of(session) as office:
-        seen = Desk.at(office).assess(key)
+        seen = Desk.at(office, clerk=session.clerk).assess(key)
         remedies = remedies_for(Assessment(findings=seen.findings), INTERSTATE)
     if not remedies:
         click.echo("nothing has to change")
@@ -141,7 +141,7 @@ def advise(session: Session, key: int) -> None:
 def issue_one(session: Session, key: int, on: str) -> None:
     """Decide an application and write the permit."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).issue(key, parse_day(on) if on else today())
+        made = Desk.at(office, clerk=session.clerk).issue(key, parse_day(on) if on else today())
     click.echo(f"{made.number} issued, {format_money(made.fee)}")
 
 
@@ -153,7 +153,7 @@ def issue_one(session: Session, key: int, on: str) -> None:
 def renew_one(session: Session, number: str, on: str, first: str) -> None:
     """File the application that renews a permit."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).renew(
+        made = Desk.at(office, clerk=session.clerk).renew(
             number, day_or_today(on), parse_day(first) if first else None
         )
     click.echo(f"application {made.key}: {made.application}")
@@ -186,7 +186,7 @@ def show(session: Session, number: str) -> None:
 def void(session: Session, number: str, reason: str, on: str, no_refund: bool) -> None:
     """Void an issued permit and refund what was charged for it."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).void(
+        made = Desk.at(office, clerk=session.clerk).void(
             number, reason, parse_day(on) if on else today(), refund=not no_refund
         )
     click.echo(f"{made.number} void: {made.reason}")
@@ -199,7 +199,7 @@ def void(session: Session, number: str, reason: str, on: str, no_refund: bool) -
 def extend(session: Session, number: str, last: str) -> None:
     """Push a permit's last day back."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).extend(number, parse_day(last))
+        made = Desk.at(office, clerk=session.clerk).extend(number, parse_day(last))
     click.echo(f"{made.number} now good to {format_day(made.span.last)}")
 
 

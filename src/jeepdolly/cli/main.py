@@ -36,11 +36,17 @@ __all__ = ["main"]
     help="The office file to work on.",
 )
 @click.option("--debug", is_flag=True, help="Show the traceback instead of one line.")
+@click.option(
+    "--clerk",
+    default="",
+    envvar="JEEPDOLLY_CLERK",
+    help="Who is at the counter, for the journal.",
+)
 @click.version_option(__version__)
 @click.pass_context
-def main(ctx: click.Context, path: str, debug: bool) -> None:
+def main(ctx: click.Context, path: str, debug: bool, clerk: str) -> None:
     """Oversize and overweight permit records."""
-    ctx.obj = Session(path=Path(path), debug=debug)
+    ctx.obj = Session(path=Path(path), debug=debug, clerk=clerk)
 
 
 @main.command("init")
@@ -114,6 +120,7 @@ def status(session: Session) -> None:
         click.echo(f"seasons {seasons}")
         click.echo(f"embargoes {embargoes}")
         click.echo(f"journal {office.history.count()}")
+        click.echo(f"clerk {session.clerk or 'not signed on'}")
 
 
 main.add_command(carrier)

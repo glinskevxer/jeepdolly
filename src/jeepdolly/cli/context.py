@@ -27,12 +27,28 @@ __all__ = ["DEFAULT_FILE", "Session", "office_of", "reporting"]
 DEFAULT_FILE = Path("permits.sqlite3")
 
 
+#: The most a clerk's sign on may be.
+MAX_CLERK = 30
+
+
 @dataclass(slots=True)
 class Session:
-    """The state a command inherits from the top level group."""
+    """The state a command inherits from the top level group.
+
+    ``clerk`` is whoever is at the counter. It reaches the journal and nothing
+    else, and it is allowed to be blank because the office ran for a year before
+    anybody was asked to sign on.
+    """
 
     path: Path
     debug: bool = False
+    clerk: str = ""
+
+    def __post_init__(self) -> None:
+        tidy = " ".join(str(self.clerk).split())
+        if len(tidy) > MAX_CLERK:
+            raise click.BadParameter(f"a sign on is at most {MAX_CLERK} characters")
+        self.clerk = tidy
 
 
 @contextmanager

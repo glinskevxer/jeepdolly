@@ -25,7 +25,9 @@ def review() -> None:
 def open_one(session: Session, application: int, on: str) -> None:
     """Put a referred application on the engineer's list."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).refer(application, parse_day(on) if on else today())
+        made = Desk.at(office, clerk=session.clerk).refer(
+            application, parse_day(on) if on else today()
+        )
     click.echo(str(made))
 
 
@@ -45,7 +47,7 @@ def approve(
 ) -> None:
     """Approve a review with the engineer's conditions."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).approve(
+        made = Desk.at(office, clerk=session.clerk).approve(
             reference, engineer, parse_day(on) if on else today(), conditions
         )
     click.echo(str(made))
@@ -62,7 +64,7 @@ def approve(
 def refuse(session: Session, reference: str, engineer: str, note: str, on: str) -> None:
     """Refuse a review with the engineer's reason."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office).refuse(
+        made = Desk.at(office, clerk=session.clerk).refuse(
             reference, engineer, parse_day(on) if on else today(), note
         )
     click.echo(f"{made} because {made.note}")

@@ -40,18 +40,19 @@ def show(session: Session, about: str, kind: str, first: str, last: str) -> None
         lines = banner("office journal")
         lines.extend(
             table(
-                ["no", "day", "subject", "what", "detail"],
+                ["no", "day", "subject", "what", "clerk", "detail"],
                 [
                     [
                         str(one.sequence),
                         format_day(one.day),
                         one.subject,
                         str(one.kind),
+                        one.clerk or "-",
                         one.detail or "-",
                     ]
                     for one in found
                 ],
-                aligns=[RIGHT, LEFT, LEFT, LEFT, LEFT],
+                aligns=[RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT],
             )
         )
     for line in lines:
