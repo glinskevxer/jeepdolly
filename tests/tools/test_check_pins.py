@@ -12,7 +12,9 @@ from jeepdolly.tools.check_pins import (
 
 
 def a_project(
-    tmp_path, constraints: str, workflow: str = "python -m pip install -c constraints.txt x"
+    tmp_path,
+    constraints: str,
+    workflow: str = "python -m pip install -c constraints.txt click coverage",
 ) -> None:
     """A pretend project tree with the three files the check reads."""
     (tmp_path / CONSTRAINTS).write_text(constraints, encoding="utf-8")
@@ -23,7 +25,11 @@ def a_project(
     )
     made = tmp_path / WORKFLOW
     made.parent.mkdir(parents=True, exist_ok=True)
-    made.write_text(f"steps:\n  - run: {workflow}\n", encoding="utf-8")
+    made.write_text(
+        f"jobs:\n  lint:\n    steps:\n      - run: {workflow}\n"
+        "  tests:\n    steps:\n      - run: python -m pytest\n",
+        encoding="utf-8",
+    )
 
 
 def test_the_project_pins_everything():
@@ -86,7 +92,11 @@ def test_a_repeated_name_is_reported(tmp_path):
 
 
 def test_an_install_without_the_constraints_is_reported(tmp_path):
-    a_project(tmp_path, "click==8.1.8\nhatchling==1.27.0\n", workflow="python -m pip install x")
+    a_project(
+        tmp_path,
+        "click==8.1.8\nhatchling==1.27.0\n",
+        workflow="python -m pip install click coverage",
+    )
     found = problems(tmp_path)
     assert any("installs without the constraints file" in line for line in found)
 
@@ -115,3 +125,63 @@ def test_a_clean_project_reports_nothing(tmp_path):
 @pytest.mark.parametrize("name", ["click", "pytest", "ruff", "mypy", "coverage"])
 def test_the_tools_the_build_runs_are_pinned(name):
     assert name in pins()
+
+
+def test_the_third_party_imports_are_found():
+    from jeepdolly.tools.check_pins import imported
+
+    assert imported() == {"click", "coverage"}
+
+
+def test_the_standard_library_is_not_counted_as_third_party():
+    from jeepdolly.tools.check_pins import imported
+
+    found = imported()
+    for name in ("sqlite3", "datetime", "pathlib", "tomllib", "csv"):
+        assert name not in found
+
+
+def test_the_package_itself_is_not_counted_as_third_party():
+    from jeepdolly.tools.check_pins import imported
+
+    assert "jeepdolly" not in imported()
+
+
+def test_the_lint_job_installs_everything_it_type_checks():
+    from jeepdolly.tools.check_pins import WORKFLOW, imported
+    from jeepdolly.tools.walk import repo_root
+
+    text = (repo_root() / WORKFLOW).read_text(encoding="utf-8")
+    lint = text[text.index("  lint:") : text.index("  tests:")]
+    installs = "\n".join(line for line in lint.splitlines() if "pip install" in line)
+    for name in imported():
+        assert name in installs, name
+
+
+def test_a_lint_job_missing_a_tool_is_reported(tmp_path):
+    from jeepdolly.tools.check_pins import WORKFLOW, problems
+
+    a_project(tmp_path, "click==8.1.8\nhatchling==1.27.0\n")
+    made = tmp_path / WORKFLOW
+    made.write_text(
+        "jobs:\n  lint:\n    steps:\n"
+        "      - run: python -m pip install -c constraints.txt ruff mypy\n"
+        "  tests:\n    steps:\n      - run: python -m pytest\n",
+        encoding="utf-8",
+    )
+    found = problems(tmp_path)
+    assert any("without installing it" in line for line in found)
+
+
+def test_a_lint_job_that_installs_everything_reports_nothing(tmp_path):
+    from jeepdolly.tools.check_pins import WORKFLOW, problems
+
+    a_project(tmp_path, "click==8.1.8\nhatchling==1.27.0\n")
+    made = tmp_path / WORKFLOW
+    made.write_text(
+        "jobs:\n  lint:\n    steps:\n"
+        "      - run: python -m pip install -c constraints.txt ruff mypy click coverage\n"
+        "  tests:\n    steps:\n      - run: python -m pytest\n",
+        encoding="utf-8",
+    )
+    assert problems(tmp_path) == []

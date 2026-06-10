@@ -6,10 +6,17 @@ package without the constraints file brings a newer ``packaging`` and a newer
 ``pluggy``, and the 3.13 leg of the build starts reporting warnings that have
 nothing to do with this code.
 
-So three things are checked. Every requirement is pinned with ``==`` rather than
-a floor. Every direct dependency of the package and of the build appears in the
-constraints file. And every place the build installs anything passes
+So four things are checked. Every requirement is pinned with ``==`` rather than a
+floor. Every direct dependency of the package and of the build appears in the
+constraints file. Every place the build installs anything passes
 ``-c constraints.txt``, because a pinned file nobody points at is decoration.
+
+And every third party module the package imports is installed in the job that
+type checks it. That last one was added after a green local run and a red build:
+``tools/coverage_gate.py`` imports ``coverage``, the lint job did not install it,
+and mypy failed on a machine where the developer's own environment had it. The
+package's declared dependencies were fine; what was missing was a tool the checks
+themselves use.
 
 Sorting is checked too, so that adding a line produces a one line diff.
 """
@@ -23,7 +30,16 @@ from pathlib import Path
 
 from jeepdolly.tools.walk import repo_root
 
-__all__ = ["CONSTRAINTS", "PYPROJECT", "WORKFLOW", "declared", "main", "pins", "problems"]
+__all__ = [
+    "CONSTRAINTS",
+    "PYPROJECT",
+    "WORKFLOW",
+    "declared",
+    "imported",
+    "main",
+    "pins",
+    "problems",
+]
 
 CONSTRAINTS = "constraints.txt"
 PYPROJECT = "pyproject.toml"
@@ -103,7 +119,55 @@ def problems(root: Path | None = None) -> list[str]:
     if len(set(order)) != len(order):
         found.append(f"{CONSTRAINTS} names something twice")
     found.extend(_workflow_problems(here))
+    found.extend(_toolchain_problems(here))
     return found
+
+
+def imported() -> set[str]:
+    """Every third party top level module the package imports.
+
+    Standard library modules are left out by asking ``sys.stdlib_module_names``
+    rather than by keeping a list, which would go stale one interpreter later.
+    """
+    from jeepdolly.tools.walk import imports_of, parse, source_files
+
+    found: set[str] = set()
+    for path in source_files():
+        for name in imports_of(parse(path)):
+            head = name.split(".")[0]
+            if head in sys.stdlib_module_names or head == "jeepdolly":
+                continue
+            found.add(_normal(head))
+    return found
+
+
+def _lint_job(text: str) -> str:
+    """The lint job's own block of the workflow.
+
+    A workflow without the two markers is taken whole. Narrowing to a block that
+    is not there would either raise or, worse, silently check nothing.
+    """
+    if "  lint:" not in text or "  tests:" not in text:
+        return text
+    return text[text.index("  lint:") : text.index("  tests:")]
+
+
+def _toolchain_problems(here: Path) -> list[str]:
+    """Every module the checks import that the lint job does not install."""
+    workflow = here / WORKFLOW
+    if not workflow.exists():
+        return []
+    installs = "\n".join(
+        line
+        for line in _lint_job(workflow.read_text(encoding="utf-8")).splitlines()
+        if "pip install" in line
+    )
+    words = {_normal(word) for word in installs.replace("==", " ").split()}
+    return [
+        f"{WORKFLOW} type checks code that imports {name} without installing it"
+        for name in sorted(imported())
+        if name not in words
+    ]
 
 
 def _workflow_problems(here: Path) -> list[str]:

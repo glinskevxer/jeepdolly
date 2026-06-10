@@ -95,3 +95,25 @@ def test_the_build_names_every_job_it_runs():
     text = workflow()
     for job in ("lint:", "tests:", "coverage:", "installed:", "package:", "walk_on:"):
         assert f"  {job}" in text
+
+
+def test_the_lint_job_installs_the_tools_the_checks_import():
+    from jeepdolly.tools.check_pins import imported
+
+    text = workflow()
+    lint = text[text.index("  lint:") : text.index("  tests:")]
+    installs = "\n".join(line for line in lint.splitlines() if "pip install" in line)
+    for name in sorted(imported()):
+        assert name in installs, name
+
+
+def test_the_lint_job_installs_coverage():
+    text = workflow()
+    lint = text[text.index("  lint:") : text.index("  tests:")]
+    assert "coverage" in lint
+
+
+def test_every_job_that_type_checks_also_installs_the_package():
+    text = workflow()
+    lint = text[text.index("  lint:") : text.index("  tests:")]
+    assert "pip install -e ." in lint
