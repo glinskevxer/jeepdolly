@@ -16,11 +16,13 @@ package, plus the ideas listed by hand at the end of that file.
 | approved | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | booster | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
 | bridge | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
+| cargo | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | charge | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
 | charged | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | culvert | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | deposit | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
 | dispatch | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
+| escort service | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | extended | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | filed | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | front | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
@@ -39,6 +41,7 @@ package, plus the ideas listed by hand at the end of that file.
 | owner | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | permit | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | police | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
+| public liability | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | put wider rubber on | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | quoted | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | rear | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
@@ -56,6 +59,7 @@ package, plus the ideas listed by hand at the end of that file.
 | state | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | superload | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
 | superseded | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
+| surety bond | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | take it to engineering | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | take the load apart | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | trip | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
