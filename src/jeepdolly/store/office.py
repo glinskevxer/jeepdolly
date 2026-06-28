@@ -33,6 +33,7 @@ from jeepdolly.store.reviews import ReviewStore
 from jeepdolly.store.rigs import RigStore
 from jeepdolly.store.roadway import RoadwayStore
 from jeepdolly.store.sqlite import MEMORY, opened, writing
+from jeepdolly.store.surety import SuretyStore
 
 __all__ = ["Office", "create", "opened_new_office", "opened_office"]
 
@@ -54,6 +55,7 @@ class Office:
         self.almanac = AlmanacStore(connection)
         self.history = HistoryStore(connection)
         self.contacts = ContactStore(connection)
+        self.surety = SuretyStore(connection)
 
     @property
     def version(self) -> int:

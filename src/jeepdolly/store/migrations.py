@@ -426,6 +426,28 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX segment_by_restriction ON segment (max_width, max_height)",
         ),
     ),
+    Migration(
+        number=14,
+        name="bonds and policies on file",
+        statements=(
+            """
+            CREATE TABLE certificate (
+                carrier_code  TEXT NOT NULL REFERENCES carrier (code) ON DELETE CASCADE,
+                cover         TEXT NOT NULL
+                              CHECK (cover IN ('surety bond', 'public liability',
+                                               'cargo', 'escort service')),
+                insurer       TEXT NOT NULL CHECK (insurer <> ''),
+                policy        TEXT NOT NULL CHECK (policy <> ''),
+                amount        INTEGER NOT NULL CHECK (amount > 0),
+                first_day     TEXT NOT NULL,
+                last_day      TEXT NOT NULL CHECK (last_day >= first_day),
+                PRIMARY KEY (carrier_code, cover, policy)
+            )
+            """,
+            "CREATE INDEX certificate_by_carrier ON certificate (carrier_code, cover)",
+            "CREATE INDEX certificate_by_expiry ON certificate (last_day)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

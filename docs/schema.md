@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 13.
+Schema version 14.
 
 ## account_entry
 
@@ -54,6 +54,20 @@ Indexes: `application_by_carrier`, `application_by_day`, `application_by_destina
 | active | INTEGER | not null, default 1 |
 
 Indexes: `carrier_by_name`
+
+## certificate
+
+| column | type | constraints |
+| --- | --- | --- |
+| carrier_code | TEXT | primary key, not null |
+| cover | TEXT | primary key, not null |
+| insurer | TEXT | not null |
+| policy | TEXT | primary key, not null |
+| amount | INTEGER | not null |
+| first_day | TEXT | not null |
+| last_day | TEXT | not null |
+
+Indexes: `certificate_by_carrier`, `certificate_by_expiry`
 
 ## contact
 
