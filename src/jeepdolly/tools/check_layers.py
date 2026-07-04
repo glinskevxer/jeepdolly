@@ -44,6 +44,7 @@ LAYERS: dict[str, int] = {
     "jeepdolly.permit.decision": 10,
     "jeepdolly.permit.permit": 11,
     "jeepdolly.permit.renewal": 12,
+    "jeepdolly.permit.amendment": 12,
     "jeepdolly.store": 12,
     "jeepdolly.permit.desk": 13,
     "jeepdolly.invariants": 14,

@@ -20,6 +20,7 @@ package, plus the ideas listed by hand at the end of that file.
 | charge | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
 | charged | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | culvert | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
+| dates | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
 | deposit | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
 | dispatch | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | escort service | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
@@ -32,6 +33,7 @@ package, plus the ideas listed by hand at the end of that file.
 | issue | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
 | issued | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | jeep | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
+| load | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
 | loaded | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | local | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | note | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
@@ -53,6 +55,8 @@ package, plus the ideas listed by hand at the end of that file.
 | refuse | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
 | refused | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | refused | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
+| rig | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
+| route | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
 | safety | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | shed weight | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | spread the axles | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
