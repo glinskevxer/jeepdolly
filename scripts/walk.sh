@@ -45,6 +45,21 @@ run carrier contacts VANCE
 run carrier primary VANCE --role accounts
 run carrier ring 406-555-0142
 
+echo "== the paper a carrier has lodged =="
+run carrier lodge VANCE --cover "surety bond" --insurer "Cascade Surety" \
+  --policy SB-4471 --amount 250000 --from 2025-01-01 --to 2025-12-31
+run carrier lodge VANCE --cover "public liability" --insurer "Bitterroot Mutual" \
+  --policy PL-88120 --amount 5000000 --from 2025-01-01 --to 2025-12-31
+run carrier lodge VANCE --cover cargo --insurer "Bitterroot Mutual" \
+  --policy CG-88121 --amount 250000 --from 2025-01-01 --to 2025-12-31
+run carrier lodge SUMMIT --cover "surety bond" --insurer "Cascade Surety" \
+  --policy SB-5510 --amount 50000 --from 2025-01-01 --to 2025-07-31
+run carrier paper VANCE --on 2025-07-03
+run carrier cover VANCE --kind superload --on 2025-07-03
+# Summit holds a bond and nothing else, so this one is meant to come back short.
+run carrier cover SUMMIT --on 2025-07-03 || echo "summit is short, as expected"
+run carrier chase --within 120 --on 2025-07-03
+
 echo "== bulk loading a feed =="
 feed="$work/feed"
 mkdir -p "$feed"

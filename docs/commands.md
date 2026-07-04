@@ -124,6 +124,15 @@ Put a new carrier on file.
 | `--usdot` | required option | The federal number. |
 | `--state` | required option | Two letter home state. |
 
+### `jeepdolly carrier chase`
+
+Print the certificate chase list across every carrier.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--within` | option | How many days ahead to look. |
+| `--on` | option | The day to read the file as at, default today. |
+
 ### `jeepdolly carrier contact`
 
 Record who to ring at a carrier.
@@ -145,6 +154,17 @@ List everyone the office has a number for at a carrier.
 | --- | --- | --- |
 | `code` | argument |  |
 
+### `jeepdolly carrier cover`
+
+Say whether a carrier is clear to be issued a permit.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+| `--kind` | option | Which sort of permit to check against. |
+| `--escorted` | flag | Price in the escort cover as well. |
+| `--on` | option | The day to read the file as at, default today. |
+
 ### `jeepdolly carrier list`
 
 List carriers, active ones by default.
@@ -152,6 +172,29 @@ List carriers, active ones by default.
 | name | kind | what it is for |
 | --- | --- | --- |
 | `--all` | flag | Include retired carriers. |
+
+### `jeepdolly carrier lodge`
+
+Put a bond or a policy on file against a carrier.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+| `--cover` | required option | What the certificate covers. |
+| `--insurer` | required option | Who wrote the policy. |
+| `--policy` | required option | The insurer's own number for it. |
+| `--amount` | required option | Face amount, like 100000 or $1,000,000. |
+| `--from` | required option | First day it is good. |
+| `--to` | required option | Last day it is good. |
+
+### `jeepdolly carrier paper`
+
+List what a carrier has lodged, and what is good today.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `code` | argument |  |
+| `--on` | option | The day to read the file as at, default today. |
 
 ### `jeepdolly carrier primary`
 
