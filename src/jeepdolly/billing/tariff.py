@@ -119,6 +119,7 @@ class Tariff:
     per_escort: Money
     per_foot_over_width: Money
     per_foot_over_height: Money
+    amendment_fee: Money
     overweight_bands: tuple[Band, ...]
 
     def __post_init__(self) -> None:
@@ -132,6 +133,7 @@ class Tariff:
             "per_escort",
             "per_foot_over_width",
             "per_foot_over_height",
+            "amendment_fee",
         ):
             value = cents(int(getattr(self, field)))
             if int(value) < 0:
@@ -177,6 +179,7 @@ SCHEDULE = Tariff(
     per_escort=cents(1500),
     per_foot_over_width=cents(1000),
     per_foot_over_height=cents(1500),
+    amendment_fee=cents(3500),
     overweight_bands=(
         Band(upper=10, rate=cents(500)),
         Band(upper=25, rate=cents(800)),

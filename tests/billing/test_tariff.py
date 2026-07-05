@@ -188,6 +188,7 @@ def test_a_tariff_refuses_a_negative_rate():
             per_escort=cents(1),
             per_foot_over_width=cents(1),
             per_foot_over_height=cents(1),
+            amendment_fee=cents(1),
             overweight_bands=BANDS,
         )
 
@@ -203,6 +204,7 @@ def test_a_tariff_refuses_a_broken_band_table():
             per_escort=cents(1),
             per_foot_over_width=cents(1),
             per_foot_over_height=cents(1),
+            amendment_fee=cents(1),
             overweight_bands=(Band(upper=10, rate=cents(1)),),
         )
 
@@ -218,6 +220,7 @@ def test_a_tariff_refuses_an_empty_name():
             per_escort=cents(1),
             per_foot_over_width=cents(1),
             per_foot_over_height=cents(1),
+            amendment_fee=cents(1),
             overweight_bands=BANDS,
         )
 
