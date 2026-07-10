@@ -266,27 +266,93 @@ def test_extending_is_kept_in_the_file(desk):
     assert desk.office.permits.get(str(permit.number)).span.last == dt.date(2025, 6, 22)
 
 
-def test_amending_writes_a_new_permit(desk):
+def test_amending_keeps_the_permit_number(desk):
     filed = desk.file(an_application())
     old = desk.issue(filed.key, DECIDED)
-    new = desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
-    assert new.number == "P-000002"
+    made = desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    assert made.number == old.number
 
 
-def test_amending_supersedes_the_old_permit(desk):
+def test_amending_leaves_the_permit_active(desk):
     filed = desk.file(an_application())
     old = desk.issue(filed.key, DECIDED)
-    new = desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
-    read = desk.office.permits.get(str(old.number))
-    assert read.state is State.SUPERSEDED
-    assert read.replaced_by == new.number
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    assert desk.office.permits.get(str(old.number)).state is State.ACTIVE
 
 
-def test_amending_prices_the_new_permit_from_scratch(desk):
+def test_amending_nothing_supersedes_nothing(desk):
     filed = desk.file(an_application())
     old = desk.issue(filed.key, DECIDED)
-    new = desk.amend(str(old.number), an_application(load=a_load(width=feet(15))), DECIDED)
-    assert int(new.fee) != int(old.fee)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    assert desk.office.permits.get(str(old.number)).replaced_by is None
+
+
+def test_the_permit_reads_back_what_the_amendment_says(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    wider = an_application(load=a_load(width=feet(13)))
+    desk.amend(str(old.number), wider, DECIDED)
+    assert desk.current(str(old.number)).load.width == feet(13)
+
+
+def test_an_unamended_permit_reads_back_as_issued(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    assert desk.current(str(old.number)) == old.application
+
+
+def test_a_costlier_amendment_is_charged_to_the_account(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(15))), DECIDED)
+    entries = desk.office.accounts.account(old.carrier).entries
+    assert any(e.reference == str(old.number) and e.note == "amendment" for e in entries)
+
+
+def test_the_permits_own_fee_is_left_alone_by_an_amendment(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(15))), DECIDED)
+    assert int(desk.office.permits.get(str(old.number)).fee) == int(old.fee)
+
+
+def test_moving_the_dates_moves_the_permits_own_span(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    longer = DaySpan(old.span.first, old.span.last + dt.timedelta(days=2))
+    desk.amend(str(old.number), an_application(span=longer), DECIDED)
+    assert desk.office.permits.get(str(old.number)).span == longer
+
+
+def test_a_clerical_amendment_charges_the_handling_fee(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    longer = DaySpan(old.span.first, old.span.last + dt.timedelta(days=2))
+    made = desk.amend(str(old.number), an_application(span=longer), DECIDED)
+    assert int(made.charged) == int(desk.tariff.amendment_fee)
+
+
+def test_the_amendment_is_on_the_permits_chain(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    assert len(desk.office.amendments.for_permit(str(old.number))) == 1
+
+
+def test_two_amendments_both_stay_on_the_chain(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(14))), DECIDED)
+    assert len(desk.office.amendments.for_permit(str(old.number))) == 2
+
+
+def test_an_amendment_note_is_kept(desk):
+    filed = desk.file(an_application())
+    old = desk.issue(filed.key, DECIDED)
+    wider = an_application(load=a_load(width=feet(13)))
+    made = desk.amend(str(old.number), wider, DECIDED, note="wrong width taken")
+    assert made.amendment.note == "wrong width taken"
 
 
 def test_amending_a_void_permit_is_refused(desk):
@@ -475,9 +541,9 @@ def test_extending_a_permit_is_journalled(desk):
 def test_amending_a_permit_is_journalled(desk):
     filed = desk.file(an_application())
     old = desk.issue(filed.key, DECIDED)
-    new = desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
+    desk.amend(str(old.number), an_application(load=a_load(width=feet(13))), DECIDED)
     entries = desk.office.history.about(str(old.number))
-    assert any(str(new.number) in e.detail for e in entries)
+    assert any("amended" in e.detail for e in entries)
 
 
 def test_referring_and_approving_are_journalled(desk):

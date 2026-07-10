@@ -12,6 +12,13 @@ disagree in three interesting ways.
   saying so. That one is only a paperwork gap, but it is the gap an auditor asks
   about.
 
+An amended permit is charged twice against the same number, once at issue and
+once for the amendment, and the permit itself still reads at what it was issued
+for. So the audit is told what each number has been amended by and compares the
+account against the fee plus that, rather than against the fee. Leaving it out
+made every amended permit look overcharged by exactly the amendment, which is a
+report nobody reads twice.
+
 None of these is fixed here. The audit reports and the clerk decides, because
 every automatic fix for these is worse than the problem.
 """
@@ -83,8 +90,19 @@ def _refund_references(account: Account) -> set[str]:
     return {entry.reference for entry in account.of_kind(EntryKind.REFUND) if entry.reference}
 
 
-def audit(carrier: str, permits: list[Permit], account: Account, journal: list[Event]) -> Audit:
-    """Check one carrier's permits, account and journal against each other."""
+def audit(
+    carrier: str,
+    permits: list[Permit],
+    account: Account,
+    journal: list[Event],
+    amended: dict[str, Money] | None = None,
+) -> Audit:
+    """Check one carrier's permits, account and journal against each other.
+
+    ``amended`` is what each permit number has been charged on top of its fee by
+    amendments, and may be negative where an amendment gave money back.
+    """
+    moved = amended or {}
     mine = [p for p in permits if p.carrier == carrier]
     charges = _charge_references(account)
     refunds = _refund_references(account)
@@ -100,14 +118,15 @@ def audit(carrier: str, permits: list[Permit], account: Account, journal: list[E
             if number not in logged:
                 findings.append(Finding(number, "voided with no journal line"))
             continue
+        due = cents(int(permit.fee) + int(moved.get(number, ZERO)))
         if number not in charges:
-            findings.append(Finding(number, "issued and never charged", permit.fee))
-        elif int(charges[number]) != int(permit.fee):
+            findings.append(Finding(number, "issued and never charged", due))
+        elif int(charges[number]) != int(due):
             findings.append(
                 Finding(
                     number,
                     f"charged {format_money(charges[number])} against a fee of",
-                    permit.fee,
+                    due,
                 )
             )
 
@@ -116,7 +135,11 @@ def audit(carrier: str, permits: list[Permit], account: Account, journal: list[E
             Finding(number, "charged against no permit of this carrier", charges[number])
         )
 
-    owed = total(p.fee for p in mine if p.state is not State.VOID)
+    owed = total(
+        cents(int(p.fee) + int(moved.get(str(p.number), ZERO)))
+        for p in mine
+        if p.state is not State.VOID
+    )
     charged = total(charges.values())
     return Audit(carrier=carrier, findings=tuple(findings), charged=charged, owed=owed)
 

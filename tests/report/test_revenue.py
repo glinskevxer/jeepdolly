@@ -42,13 +42,14 @@ def test_counted_drops_a_void_permit(desk, issued):
 
 
 def test_counted_keeps_a_superseded_permit(desk, issued):
-    desk.amend(str(issued.number), an_application(load=a_load()), DECIDED)
+    second = desk.issue(desk.file(an_application(load=a_load())).key, DECIDED)
+    desk.office.permits.save_state(issued.superseded_by(second.number))
     both = desk.office.permits.all()
     assert len(counted(both)) == 2
 
 
 def test_counted_is_in_number_order(desk, issued):
-    desk.amend(str(issued.number), an_application(), DECIDED)
+    desk.issue(desk.file(an_application()).key, DECIDED)
     numbers = [str(p.number) for p in counted(desk.office.permits.all())]
     assert numbers == sorted(numbers)
 

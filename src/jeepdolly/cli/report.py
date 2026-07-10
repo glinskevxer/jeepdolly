@@ -22,6 +22,7 @@ from jeepdolly.travel.schedule import plan_days
 from jeepdolly.units.clock import DaySpan, format_day, parse_day
 from jeepdolly.units.distance import format_distance
 from jeepdolly.units.length import feet, parse_length
+from jeepdolly.units.money import total
 
 __all__ = ["report"]
 
@@ -183,15 +184,24 @@ def audit_report(session: Session, carrier: str) -> None:
     with office_of(session) as office:
         wanted = [office.carriers.get(carrier)] if carrier else office.carriers.all()
         journal = office.history.all()
-        results = [
-            audit(
-                str(one.code),
-                office.permits.for_carrier(str(one.code)),
-                office.accounts.account(str(one.code)),
-                journal,
+        results = []
+        for one in wanted:
+            held = office.permits.for_carrier(str(one.code))
+            moved = {
+                str(permit.number): total(
+                    filed.charged for filed in office.amendments.for_permit(str(permit.number))
+                )
+                for permit in held
+            }
+            results.append(
+                audit(
+                    str(one.code),
+                    held,
+                    office.accounts.account(str(one.code)),
+                    journal,
+                    moved,
+                )
             )
-            for one in wanted
-        ]
         lines = audit_sheet(results)
     for line in lines:
         click.echo(line)

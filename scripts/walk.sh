@@ -175,6 +175,11 @@ run review list --all
 run account charge SUMMIT --permit P-000004 --on 2025-08-04
 
 echo "== amendments and voids =="
+run permit amendments P-000001
+run permit amend P-000001 --destination JCT-C --note "shipper moved the delivery" \
+  --on 2025-06-18
+run permit amend P-000001 --width 13ft --on 2025-06-18
+run permit amendments P-000001
 run permit extend P-000001 --last 2025-06-22
 run permit void P-000002 --reason "carrier cancelled the move" --on 2025-07-03
 run permit list

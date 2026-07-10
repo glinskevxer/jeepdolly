@@ -15,6 +15,10 @@ and not by the date.
 The charge is stored beside the row. It is worked out at the counter against the
 schedule of the day, and recomputing it later against today's schedule would
 quietly change what a carrier was billed two years ago.
+
+Filing the new application is the caller's job. The desk files it to assess and
+price it, and a store that filed its own copy would leave two of every amended
+application behind.
 """
 
 from __future__ import annotations
@@ -87,13 +91,19 @@ class AmendmentStore:
         )
         return self.applications.get(int(row["application_id"])).application
 
-    def add(self, amendment: Amendment, charged: Money) -> FiledAmendment:
-        """Write an amendment and the application it moves the permit onto."""
+    def add(self, amendment: Amendment, charged: Money, application_key: int) -> FiledAmendment:
+        """Write an amendment against an application that is already on file.
+
+        The key is passed in rather than filed here. The desk has to file the
+        new application anyway to assess and price it, and having the store file
+        a second copy left two identical applications behind every material
+        amendment, which the application count found and nothing else would have.
+        """
         number = str(amendment.number)
         found = maybe_one(self.connection, "SELECT 1 FROM permit WHERE number = ?", (number,))
         if found is None:
             raise NotFoundError("permit", number)
-        filed = self.applications.add(amendment.now)
+        filed = self.applications.get(int(application_key))
         cursor = self.connection.execute(
             "INSERT INTO amendment"
             " (permit_number, application_key, filed_on, note, changes, material, charged)"

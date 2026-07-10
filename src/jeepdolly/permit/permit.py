@@ -152,12 +152,31 @@ class Permit:
             replaced_by=serial(str(number)),
         )
 
+    def respanned(self, span: DaySpan) -> Permit:
+        """The same permit over different days, keeping its number and its fee.
+
+        The number is the point. The carrier has it on the escort boards and the
+        bridge people have it in their notification, so a change of dates that
+        produces a new number costs more phone calls than it saves.
+        """
+        if not self.live:
+            raise NotAllowedError("permit", str(self.state), "move the dates of")
+        if not isinstance(span, DaySpan):
+            raise BadValueError("span", span, "want a day span")
+        return Permit(
+            number=self.number,
+            decision=self.decision,
+            issued_on=self.issued_on,
+            span=span,
+            state=self.state,
+        )
+
     def extended(self, last: Day) -> Permit:
         """The same permit running a few days longer.
 
-        This is the one change made in place rather than by supersession. It
-        does not touch the fee, the route or the rig, so there is nothing on the
-        driver's copy that stops being true.
+        Capped, because an extension is meant to cover a load that did not get
+        away on the Friday. A carrier wanting another fortnight is applying for
+        a permit, and the cap is what keeps the two apart.
         """
         if not self.live:
             raise NotAllowedError("permit", str(self.state), "extend")
@@ -166,13 +185,7 @@ class Permit:
         added = (last - self.span.last).days
         if added > MAX_EXTENSION_DAYS:
             raise BadValueError("extension", added, f"more than {MAX_EXTENSION_DAYS} days")
-        return Permit(
-            number=self.number,
-            decision=self.decision,
-            issued_on=self.issued_on,
-            span=DaySpan(self.span.first, last),
-            state=self.state,
-        )
+        return self.respanned(DaySpan(self.span.first, last))
 
     def __str__(self) -> str:
         return f"{self.number} {self.carrier} {self.state} {self.span}"

@@ -24,6 +24,7 @@ import pytest
 
 from jeepdolly.almanac.season import Season
 from jeepdolly.party.carrier import Carrier
+from jeepdolly.permit.amendment import Change
 from jeepdolly.permit.application import Application, Kind
 from jeepdolly.permit.decision import Outcome
 from jeepdolly.permit.desk import Desk
@@ -41,7 +42,7 @@ from jeepdolly.units.clock import DaySpan
 from jeepdolly.units.distance import miles
 from jeepdolly.units.length import feet, feet_inches, inches
 from jeepdolly.units.mass import pounds
-from jeepdolly.units.money import cents
+from jeepdolly.units.money import cents, total
 
 SPRING = dt.date(2026, 3, 10)
 SUMMER = dt.date(2026, 7, 6)
@@ -229,13 +230,17 @@ def test_a_season_at_the_counter(desk):
     assert [f.detail for f in conditions] == ["walking pace over the bridge"]
     office.accounts.charge("VANCE", SUMMER, cleared.fee, str(cleared.number))
 
-    # An amendment supersedes a permit and prices the new one from scratch.
+    # An amendment keeps the number, reprices, and settles the difference on
+    # the account. The permit itself still stands at what it was issued for.
     amended = desk.amend(
         str(permit.number), an_application(load=a_load(width=feet(15))), SUMMER
     )
-    assert office.permits.get(str(permit.number)).state is State.SUPERSEDED
-    assert int(amended.fee) != int(permit.fee)
-    office.accounts.charge("VANCE", SUMMER, amended.fee, str(amended.number))
+    assert office.permits.get(str(permit.number)).state is State.ACTIVE
+    assert amended.number == permit.number
+    assert amended.changes == (Change.LOAD,)
+    assert int(office.permits.get(str(permit.number)).fee) == int(permit.fee)
+    assert desk.current(str(permit.number)).load.width == feet(15)
+    assert int(amended.charged) != 0
 
     # A void refunds the account and lands in the journal.
     before = office.accounts.balance("SUMMIT")
@@ -250,18 +255,25 @@ def test_a_season_at_the_counter(desk):
 
     # The permits, the accounts and the journal agree.
     for code in ("VANCE", "SUMMIT"):
+        moved = {
+            str(one.number): total(
+                filed.charged for filed in office.amendments.for_permit(str(one.number))
+            )
+            for one in office.permits.for_carrier(code)
+        }
         checked = audit(
             code,
             office.permits.for_carrier(code),
             office.accounts.account(code),
             office.history.all(),
+            moved,
         )
         assert checked.clean, checked.findings
 
     # The revenue return counts what was kept and not what was voided.
     every = office.permits.all()
-    assert len(every) == 5
-    assert len(counted(every)) == 4
+    assert len(every) == 4
+    assert len(counted(every)) == 3
     months = by_month(every)
     assert {one.key for one in months} == {"2026-03", "2026-07"}
     assert "revenue return" in "\n".join(revenue_sheet(every))

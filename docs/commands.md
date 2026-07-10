@@ -316,6 +316,34 @@ Say what would have to change to get an application through.
 | --- | --- | --- |
 | `key` | argument |  |
 
+### `jeepdolly permit amend`
+
+Change an issued permit without giving it a new number.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+| `--rig` | option | Move the permit onto another rig. |
+| `--description` | option | What is on the trailer. |
+| `--weight` | option | New load weight. |
+| `--width` | option | New load width. |
+| `--height` | option | New load height. |
+| `--length` | option | New deck length. |
+| `--first` | option | New first day. |
+| `--last` | option | New last day. |
+| `--origin` | option | New junction to start at. |
+| `--destination` | option | New junction to end at. |
+| `--note` | option | Why it was amended. |
+| `--on` | option | Day the amendment was taken. |
+
+### `jeepdolly permit amendments`
+
+List every amendment written against one permit, oldest first.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+
 ### `jeepdolly permit apply`
 
 Take an application at the counter.

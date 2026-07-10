@@ -17,7 +17,7 @@ from jeepdolly.units.clock import DaySpan, format_day, parse_day
 from jeepdolly.units.distance import format_distance
 from jeepdolly.units.length import parse_length
 from jeepdolly.units.mass import parse_weight
-from jeepdolly.units.money import format_money
+from jeepdolly.units.money import cents, format_money
 
 __all__ = ["permit"]
 
@@ -221,3 +221,80 @@ def listing(session: Session, carrier: str, on: str) -> None:
         return
     for one in found:
         click.echo(f"{one} {format_money(one.fee)}")
+
+
+def _amended(now: Application, given: dict[str, str]) -> Application:
+    """The current application with whatever the clerk typed swapped in.
+
+    Everything not named keeps what the permit already says. An amendment is
+    almost always one field, and making the clerk retype the load to change the
+    destination is how the destination gets changed along with the width.
+    """
+    load = Load(
+        description=given["description"] or now.load.description,
+        weight=parse_weight(given["weight"]) if given["weight"] else now.load.weight,
+        width=parse_length(given["width"]) if given["width"] else now.load.width,
+        height=parse_length(given["height"]) if given["height"] else now.load.height,
+        length=parse_length(given["length"]) if given["length"] else now.load.length,
+        front_overhang=now.load.front_overhang,
+        rear_overhang=now.load.rear_overhang,
+        divisible=now.load.divisible,
+        reason=now.load.reason,
+    )
+    span = DaySpan(
+        parse_day(given["first"]) if given["first"] else now.span.first,
+        parse_day(given["last"]) if given["last"] else now.span.last,
+    )
+    return Application(
+        carrier=now.carrier,
+        rig=given["rig"] or now.rig,  # type: ignore[arg-type]
+        load=load,
+        span=span,
+        filed_on=now.filed_on,
+        kind=now.kind,
+        origin=given["origin"] or now.origin,  # type: ignore[arg-type]
+        destination=given["destination"] or now.destination,  # type: ignore[arg-type]
+    )
+
+
+@permit.command("amend")
+@click.argument("number")
+@click.option("--rig", default="", help="Move the permit onto another rig.")
+@click.option("--description", default="", help="What is on the trailer.")
+@click.option("--weight", default="", help="New load weight.")
+@click.option("--width", default="", help="New load width.")
+@click.option("--height", default="", help="New load height.")
+@click.option("--length", default="", help="New deck length.")
+@click.option("--first", default="", help="New first day.")
+@click.option("--last", default="", help="New last day.")
+@click.option("--origin", default="", help="New junction to start at.")
+@click.option("--destination", default="", help="New junction to end at.")
+@click.option("--note", default="", help="Why it was amended.")
+@click.option("--on", default="", help="Day the amendment was taken.")
+@click.pass_obj
+def amend(session: Session, /, number: str, **given: str) -> None:
+    """Change an issued permit without giving it a new number."""
+    with office_of(session) as office, office.writing():
+        desk = Desk.at(office, clerk=session.clerk)
+        wanted = _amended(desk.current(number), given)
+        made = desk.amend(number, wanted, day_or_today(given["on"]), given["note"])
+    click.echo(str(made.amendment))
+    word = "refund" if int(made.charged) < 0 else "charged"
+    click.echo(f"{word} {format_money(cents(abs(int(made.charged))))}")
+
+
+@permit.command("amendments")
+@click.argument("number")
+@click.pass_obj
+def amendments(session: Session, number: str) -> None:
+    """List every amendment written against one permit, oldest first."""
+    with office_of(session) as office:
+        chain = office.amendments.for_permit(number)
+    if not chain:
+        click.echo(f"{number} has not been amended")
+        return
+    for one in chain:
+        line = f"{format_day(one.amendment.filed_on)} {one.amendment}"
+        click.echo(f"{line} {format_money(one.charged)}")
+        if one.amendment.note:
+            click.echo(f"  {one.amendment.note}")

@@ -4,13 +4,13 @@ import pytest
 
 from jeepdolly.errors import NotFoundError
 from jeepdolly.party.carrier import Carrier
-from jeepdolly.permit.amendment import Change, amend
+from jeepdolly.permit.amendment import Amendment, Change, amend
 from jeepdolly.permit.decision import decide
 from jeepdolly.permit.permit import Permit, issue
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
 from jeepdolly.roadway.node import Node
-from jeepdolly.store.amendments import AmendmentStore
+from jeepdolly.store.amendments import AmendmentStore, FiledAmendment
 from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.permits import PermitStore
 from jeepdolly.store.rigs import RigStore
@@ -58,6 +58,12 @@ def store(office, permits):
     return AmendmentStore(office)
 
 
+def _file(store: AmendmentStore, made: Amendment, charged: int = 0) -> FiledAmendment:
+    """File the amended application, then write the amendment against it."""
+    key = store.applications.add(made.now).key
+    return store.add(made, cents(charged), key)
+
+
 def a_permit(permits: PermitStore) -> Permit:
     """The one issued permit the fixture wrote."""
     return permits.get("P-000001")
@@ -70,7 +76,7 @@ def test_a_new_store_has_no_amendments(store):
 
 def test_an_amendment_round_trips(store, permits):
     made = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
-    store.add(made, cents(3500))
+    _file(store, made, 3500)
     found = store.for_permit("P-000001")
     assert len(found) == 1
     assert found[0].changes == (Change.RIG,)
@@ -78,13 +84,13 @@ def test_an_amendment_round_trips(store, permits):
 
 def test_the_charge_is_kept_beside_the_row(store, permits):
     made = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
-    store.add(made, cents(3500))
+    _file(store, made, 3500)
     assert int(store.for_permit("P-000001")[0].charged) == 3500
 
 
 def test_the_note_round_trips(store, permits):
     made = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED, note="swap")
-    store.add(made, cents(0))
+    _file(store, made)
     assert store.for_permit("P-000001")[0].amendment.note == "swap"
 
 
@@ -97,7 +103,7 @@ def test_an_amendment_against_an_unknown_permit_is_refused(store, permits):
         filed_on=made.filed_on,
     )
     with pytest.raises(NotFoundError):
-        store.add(ghost, cents(0))
+        store.add(ghost, cents(0), store.applications.add(ghost.now).key)
 
 
 def test_an_unamended_permit_reads_as_issued(store, permits):
@@ -110,13 +116,13 @@ def test_an_unamended_permit_has_no_latest(store):
 
 def test_the_current_wording_follows_the_last_amendment(store, permits):
     made = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
-    store.add(made, cents(0))
+    _file(store, made)
     assert store.current("P-000001").rig == "R-00002"
 
 
 def test_a_chain_reads_each_amendment_against_the_one_before(store, permits):
     first = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
-    store.add(first, cents(0))
+    _file(store, first)
     second_now = an_application(rig="R-00002", destination="JCT-C")
     permit = a_permit(permits)
     second = type(first)(
@@ -125,21 +131,21 @@ def test_a_chain_reads_each_amendment_against_the_one_before(store, permits):
         now=second_now,
         filed_on=DECIDED + dt.timedelta(days=1),
     )
-    store.add(second, cents(0))
+    _file(store, second)
     chain = store.for_permit("P-000001")
     assert [one.changes for one in chain] == [(Change.RIG,), (Change.ROUTE,)]
 
 
 def test_the_latest_amendment_is_the_end_of_the_chain(store, permits):
     first = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
-    store.add(first, cents(0))
+    _file(store, first)
     second = type(first)(
         number=a_permit(permits).number,
         was=first.now,
         now=an_application(rig="R-00002", destination="JCT-C"),
         filed_on=DECIDED + dt.timedelta(days=1),
     )
-    store.add(second, cents(0))
+    _file(store, second)
     latest = store.latest("P-000001")
     assert latest is not None
     assert latest.changes == (Change.ROUTE,)
@@ -147,22 +153,22 @@ def test_the_latest_amendment_is_the_end_of_the_chain(store, permits):
 
 def test_a_load_change_survives_the_round_trip(store, permits):
     heavy = an_application(load=a_load(weight=pounds(160000)))
-    store.add(amend(a_permit(permits), heavy, DECIDED), cents(0))
+    _file(store, amend(a_permit(permits), heavy, DECIDED))
     assert int(store.current("P-000001").load.weight) == 160000
 
 
 def test_a_date_change_survives_the_round_trip(store, permits):
-    store.add(amend(a_permit(permits), an_application(span=LONGER), DECIDED), cents(0))
+    _file(store, amend(a_permit(permits), an_application(span=LONGER), DECIDED))
     assert store.current("P-000001").span == LONGER
 
 
 def test_amendments_filed_on_a_day_come_back(store, permits):
-    store.add(amend(a_permit(permits), an_application(rig="R-00002"), DECIDED), cents(0))
+    _file(store, amend(a_permit(permits), an_application(rig="R-00002"), DECIDED))
     assert len(store.on_day(DECIDED)) == 1
 
 
 def test_amendments_filed_on_another_day_do_not(store, permits):
-    store.add(amend(a_permit(permits), an_application(rig="R-00002"), DECIDED), cents(0))
+    _file(store, amend(a_permit(permits), an_application(rig="R-00002"), DECIDED))
     assert store.on_day(DECIDED + dt.timedelta(days=1)) == []
 
 
@@ -173,24 +179,24 @@ def test_reading_an_unknown_permits_amendments_raises(store):
 
 def test_two_amendments_count_as_two(store, permits):
     first = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
-    store.add(first, cents(0))
+    _file(store, first)
     second = type(first)(
         number=a_permit(permits).number,
         was=first.now,
         now=an_application(rig="R-00002", destination="JCT-C"),
         filed_on=DECIDED,
     )
-    store.add(second, cents(0))
+    _file(store, second)
     assert store.count() == 2
 
 
 def test_a_filed_amendment_prints_its_key(store, permits):
-    made = store.add(amend(a_permit(permits), an_application(rig="R-00002"), DECIDED), cents(0))
+    made = _file(store, amend(a_permit(permits), an_application(rig="R-00002"), DECIDED))
     assert "FiledAmendment" in repr(made)
 
 
 def test_two_filed_amendments_read_back_equal(store, permits):
-    store.add(amend(a_permit(permits), an_application(rig="R-00002"), DECIDED), cents(0))
+    _file(store, amend(a_permit(permits), an_application(rig="R-00002"), DECIDED))
     once = store.for_permit("P-000001")
     twice = store.for_permit("P-000001")
     assert once == twice

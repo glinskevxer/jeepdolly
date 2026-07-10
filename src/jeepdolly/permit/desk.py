@@ -27,11 +27,13 @@ from dataclasses import dataclass, field
 from jeepdolly.almanac.embargo import EmbargoBook
 from jeepdolly.almanac.season import SeasonBook
 from jeepdolly.billing.account import EntryKind
+from jeepdolly.billing.reprice import Reprice, reprice
 from jeepdolly.billing.tariff import SCHEDULE, Tariff
 from jeepdolly.errors import ConflictError, NotAllowedError, NotFoundError
 from jeepdolly.limits.assess import assess
 from jeepdolly.limits.dimension import LEGAL, SizeRule
 from jeepdolly.limits.finding import Finding, Severity
+from jeepdolly.permit.amendment import Amendment, amend
 from jeepdolly.permit.application import Application
 from jeepdolly.permit.decision import Decision, Outcome, decide
 from jeepdolly.permit.permit import Permit, issue
@@ -41,6 +43,7 @@ from jeepdolly.rig.config import Configuration
 from jeepdolly.route.clear import RouteReport, walk
 from jeepdolly.route.plan import Route
 from jeepdolly.route.search import clearing, shortest
+from jeepdolly.store.amendments import FiledAmendment
 from jeepdolly.store.applications import FiledApplication
 from jeepdolly.store.history import EventKind
 from jeepdolly.store.office import Office
@@ -49,7 +52,7 @@ from jeepdolly.travel.escort import EscortSchedule
 from jeepdolly.units.clock import Day
 from jeepdolly.units.distance import Miles
 from jeepdolly.units.mass import NO_WEIGHT
-from jeepdolly.units.money import format_money
+from jeepdolly.units.money import cents, format_money
 
 __all__ = ["Assessed", "Desk"]
 
@@ -337,21 +340,60 @@ class Desk:
         self.note(last, EventKind.EXTENDED, str(longer.number), f"good to {longer.span.last}")
         return longer
 
-    def amend(self, number: str, application: Application, on: Day) -> Permit:
-        """Replace a permit with a fresh one and mark the old one superseded.
+    def amend(
+        self, number: str, application: Application, on: Day, note: str = ""
+    ) -> FiledAmendment:
+        """Change an issued permit in place, keeping its number.
 
-        The new permit is decided from scratch. Nothing is carried over from the
-        old one, including its fee, because an amendment that changed the rig
-        and kept the fee is the shape of a costly mistake.
+        This used to void the permit and write a new one, which was tidy in the
+        file and wrong at the roadside. The carrier has the old number painted
+        on the escort boards and the bridge owners have it in their notification,
+        so a supersession that landed the morning of the move read to enforcement
+        as a permit that had been pulled.
+
+        What the permit was issued at stays on the permit. The difference goes on
+        the account against the same number, so the fee ledger still adds up and
+        the original invoice is still the invoice that was paid.
         """
-        old = self.office.permits.get(number)
-        if not old.live:
-            raise NotAllowedError("permit", str(old.state), "amend")
-        filed = self.file(application)
-        new = self.issue(filed.key, on)
-        self.office.permits.save_state(old.superseded_by(new.number))
-        self.note(on, EventKind.AMENDED, str(old.number), f"replaced by {new.number}")
-        return new
+        permit = self.office.permits.get(number)
+        made = amend(permit, application, on, note)
+        wanted = self.file(made.now)
+        settled = self._settle(permit, made, wanted.key, on)
+        filed = self.office.amendments.add(made, settled.due, wanted.key)
+        if made.now.span != permit.span:
+            self.office.permits.save_state(permit.respanned(made.now.span))
+        self.note(on, EventKind.AMENDED, str(permit.number), str(made))
+        if int(settled.due) != 0:
+            self._post_amendment(permit, settled, on)
+        return filed
+
+    def _settle(self, permit: Permit, made: Amendment, key: int, on: Day) -> Reprice:
+        """Work out what one amendment costs, repricing it if it has to be."""
+        was_invoice = permit.decision.invoice
+        assert was_invoice is not None
+        if not made.material:
+            return reprice(made.was, made.now, was_invoice, was_invoice, False, self.tariff)
+        _, decision = self.decide(key, on)
+        now_invoice = decision.invoice
+        if now_invoice is None:
+            raise NotAllowedError("permit", "no longer issuable", "amend onto")
+        return reprice(made.was, made.now, was_invoice, now_invoice, True, self.tariff)
+
+    def _post_amendment(self, permit: Permit, settled: Reprice, on: Day) -> None:
+        """Put the amendment's charge or refund on the carrier's account."""
+        owed = int(settled.due)
+        self.office.accounts.post(
+            carrier=permit.carrier,
+            day=on,
+            kind=EntryKind.REFUND if owed < 0 else EntryKind.CHARGE,
+            amount=cents(abs(owed)),
+            reference=str(permit.number),
+            note="amendment",
+        )
+
+    def current(self, number: str) -> Application:
+        """What an issued permit says now, after every amendment against it."""
+        return self.office.amendments.current(number)
 
     def renew(self, number: str, on: Day, first: Day | None = None) -> FiledApplication:
         """File the application that renews a permit, without deciding it.
