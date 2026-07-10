@@ -22,6 +22,7 @@ from pathlib import Path
 from jeepdolly.errors import ConflictError, NotFoundError
 from jeepdolly.store.accounts import AccountStore
 from jeepdolly.store.almanac import AlmanacStore
+from jeepdolly.store.amendments import AmendmentStore
 from jeepdolly.store.applications import ApplicationStore
 from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.contacts import ContactStore
@@ -56,6 +57,7 @@ class Office:
         self.history = HistoryStore(connection)
         self.contacts = ContactStore(connection)
         self.surety = SuretyStore(connection)
+        self.amendments = AmendmentStore(connection)
 
     @property
     def version(self) -> int:

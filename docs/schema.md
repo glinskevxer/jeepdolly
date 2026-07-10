@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 14.
+Schema version 15.
 
 ## account_entry
 
@@ -25,6 +25,21 @@ Indexes: `account_by_day`
 | --- | --- | --- |
 | carrier_code | TEXT | primary key |
 | floor | INTEGER | not null |
+
+## amendment
+
+| column | type | constraints |
+| --- | --- | --- |
+| id | INTEGER | primary key |
+| permit_number | TEXT | not null |
+| application_key | INTEGER | not null |
+| filed_on | TEXT | not null |
+| note | TEXT | not null, default '' |
+| changes | TEXT | not null |
+| material | INTEGER | not null |
+| charged | INTEGER | not null |
+
+Indexes: `amendment_by_application`, `amendment_by_day`, `amendment_by_permit`
 
 ## application
 

@@ -448,6 +448,27 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX certificate_by_expiry ON certificate (last_day)",
         ),
     ),
+    Migration(
+        number=15,
+        name="amendments against issued permits",
+        statements=(
+            """
+            CREATE TABLE amendment (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                permit_number   TEXT NOT NULL REFERENCES permit (number),
+                application_key INTEGER NOT NULL REFERENCES application (id),
+                filed_on        TEXT NOT NULL,
+                note            TEXT NOT NULL DEFAULT '',
+                changes         TEXT NOT NULL CHECK (changes <> ''),
+                material        INTEGER NOT NULL CHECK (material IN (0, 1)),
+                charged         INTEGER NOT NULL
+            )
+            """,
+            "CREATE INDEX amendment_by_permit ON amendment (permit_number, filed_on)",
+            "CREATE INDEX amendment_by_application ON amendment (application_key)",
+            "CREATE INDEX amendment_by_day ON amendment (filed_on)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.
