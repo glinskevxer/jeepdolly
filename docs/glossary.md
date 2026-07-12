@@ -17,6 +17,7 @@ package, plus the ideas listed by hand at the end of that file.
 | booster | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
 | bridge | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | cargo | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
+| carrier cancelled | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | charge | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
 | charged | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | culvert | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
@@ -34,10 +35,13 @@ package, plus the ideas listed by hand at the end of that file.
 | issued | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | jeep | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
 | load | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
+| load was not as declared | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | loaded | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | local | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
+| move was unsafe | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | note | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | nothing will fix this | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
+| office error | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | open | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | overhead | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | owner | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
@@ -56,7 +60,9 @@ package, plus the ideas listed by hand at the end of that file.
 | refused | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | refused | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 | rig | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
+| rig failed inspection | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | route | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
+| route closed | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | safety | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | shed weight | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | spread the axles | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
