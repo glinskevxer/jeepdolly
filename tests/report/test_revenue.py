@@ -1,6 +1,7 @@
 import datetime as dt
 
 from jeepdolly.billing.account import Account, Entry, EntryKind
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.revenue import (
     by_carrier,
     by_code,
@@ -37,7 +38,7 @@ def test_counted_keeps_an_active_permit(issued):
 
 
 def test_counted_drops_a_void_permit(desk, issued):
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     assert counted([gone]) == []
 
 
@@ -148,7 +149,7 @@ def test_the_sheet_totals_the_take(issued):
 
 
 def test_the_sheet_counts_the_voided(desk, issued):
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     printed = text(revenue_sheet([gone]))
     assert "nothing to report" in printed
 

@@ -31,6 +31,7 @@ from jeepdolly.store.loads import LoadStore
 from jeepdolly.store.migrations import LATEST, migrate, version
 from jeepdolly.store.permits import PermitStore
 from jeepdolly.store.reviews import ReviewStore
+from jeepdolly.store.revocations import RevocationStore
 from jeepdolly.store.rigs import RigStore
 from jeepdolly.store.roadway import RoadwayStore
 from jeepdolly.store.sqlite import MEMORY, opened, writing
@@ -58,6 +59,7 @@ class Office:
         self.contacts = ContactStore(connection)
         self.surety = SuretyStore(connection)
         self.amendments = AmendmentStore(connection)
+        self.revocations = RevocationStore(connection)
 
     @property
     def version(self) -> int:

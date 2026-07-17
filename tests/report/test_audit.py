@@ -1,4 +1,5 @@
 from jeepdolly.billing.account import Account, Entry, EntryKind
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.audit import Audit, Finding, audit, audit_sheet
 from jeepdolly.store.history import Event, EventKind
 from jeepdolly.units.money import cents
@@ -78,7 +79,7 @@ def test_a_voided_and_refunded_permit_audits_clean(desk, issued):
 
     desk.office.accounts.deposit("VANCE", DECIDED, money(100000))
     desk.office.accounts.charge("VANCE", DECIDED, issued.fee, str(issued.number))
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     got = audit(
         "VANCE",
         [gone],

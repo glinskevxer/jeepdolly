@@ -1,5 +1,6 @@
 import datetime as dt
 
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.permit import conditions, fee_table, permit_sheet, route_sheet
 from jeepdolly.route.search import clearing
 from jeepdolly.units.length import feet
@@ -68,7 +69,7 @@ def test_the_fee_table_adds_up(issued):
 
 
 def test_a_void_permit_says_it_is_not_valid(desk, issued):
-    gone = desk.void(str(issued.number), "carrier cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     printed = text(permit_sheet(gone))
     assert "NOT VALID" in printed
     assert "carrier cancelled" in printed

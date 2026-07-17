@@ -49,7 +49,9 @@ def test_the_clerk_reaches_the_journal(signed_on):
 def test_every_line_of_a_run_names_the_clerk(signed_on):
     apply_one(signed_on)
     signed_on("permit", "issue", "1", "--on", "2025-06-17")
-    signed_on("permit", "void", "P-000001", "--reason", "cancelled", "--on", "2025-06-18")
+    signed_on(
+        "permit", "void", "P-000001", "--cause", "carrier cancelled", "--on", "2025-06-18"
+    )
     output = signed_on("history", "show").output
     assert output.count("jhalloran") >= 3
 

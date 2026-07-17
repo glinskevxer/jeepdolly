@@ -29,6 +29,7 @@ from jeepdolly.permit.application import Application, Kind
 from jeepdolly.permit.decision import Outcome
 from jeepdolly.permit.desk import Desk
 from jeepdolly.permit.permit import State
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.audit import audit
 from jeepdolly.report.revenue import by_month, counted, revenue_sheet
 from jeepdolly.rig.axle import Axle
@@ -244,9 +245,9 @@ def test_a_season_at_the_counter(desk):
 
     # A void refunds the account and lands in the journal.
     before = office.accounts.balance("SUMMIT")
-    desk.void(str(summit.number), "carrier cancelled the move", SUMMER)
+    desk.void(str(summit.number), Cause.CANCELLED, SUMMER)
     after = office.accounts.balance("SUMMIT")
-    assert int(after) - int(before) == int(summit.fee)
+    assert int(after) - int(before) == int(summit.fee) - int(desk.tariff.trip_base)
     kinds = [str(e.kind) for e in office.history.about(str(summit.number))]
     assert kinds == ["issued", "voided", "refunded"]
 

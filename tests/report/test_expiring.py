@@ -3,6 +3,7 @@ import datetime as dt
 import pytest
 
 from jeepdolly.errors import BadValueError
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.expiring import SOON, Expiry, expired, expiring, expiry_sheet
 
 from .conftest import DECIDED, an_application
@@ -42,7 +43,7 @@ def test_a_permit_that_has_run_out_is_in_the_gone_list(issued):
 
 
 def test_a_void_permit_is_on_neither_list(desk, issued):
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     assert expiring([gone], INSIDE) == []
     assert expired([gone], AFTER) == []
 

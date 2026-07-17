@@ -8,6 +8,7 @@ from jeepdolly.permit.application import ANNUAL_DAYS, Application, Kind
 from jeepdolly.permit.decision import Outcome
 from jeepdolly.permit.desk import Desk
 from jeepdolly.permit.permit import State
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
 from jeepdolly.rig.load import Load
@@ -213,15 +214,15 @@ def test_voiding_refunds_a_charged_permit(desk):
     desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
     desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
     before = desk.office.accounts.balance("VANCE")
-    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     after = desk.office.accounts.balance("VANCE")
-    assert int(after) - int(before) == int(permit.fee)
+    assert int(after) - int(before) == int(permit.fee) - int(desk.tariff.trip_base)
 
 
 def test_voiding_an_uncharged_permit_refunds_nothing(desk):
     filed = desk.file(an_application())
     permit = desk.issue(filed.key, DECIDED)
-    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     assert int(desk.office.accounts.balance("VANCE")) == 0
 
 
@@ -233,9 +234,9 @@ def test_a_refund_is_posted_once_even_if_asked_twice(desk):
     permit = desk.issue(filed.key, DECIDED)
     desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
     desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
-    desk.void(str(permit.number), "cancelled", DECIDED)
+    desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     with pytest.raises(NotAllowedError):
-        desk.void(str(permit.number), "cancelled again", DECIDED)
+        desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     refunds = [e for e in desk.office.accounts.entries("VANCE") if str(e.kind) == "refund"]
     assert len(refunds) == 1
 
@@ -248,14 +249,14 @@ def test_voiding_may_be_told_not_to_refund(desk):
     desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
     desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
     before = desk.office.accounts.balance("VANCE")
-    desk.void(str(permit.number), "cancelled", DECIDED, refund=False)
+    desk.void(str(permit.number), Cause.FALSE_LOAD, DECIDED, "steel, not a transformer")
     assert desk.office.accounts.balance("VANCE") == before
 
 
 def test_voiding_is_kept_in_the_file(desk):
     filed = desk.file(an_application())
     permit = desk.issue(filed.key, DECIDED)
-    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     assert not desk.office.permits.get(str(permit.number)).live
 
 
@@ -358,7 +359,7 @@ def test_an_amendment_note_is_kept(desk):
 def test_amending_a_void_permit_is_refused(desk):
     filed = desk.file(an_application())
     old = desk.issue(filed.key, DECIDED)
-    desk.void(str(old.number), "cancelled", DECIDED)
+    desk.void(str(old.number), Cause.CANCELLED, DECIDED)
     with pytest.raises(NotAllowedError):
         desk.amend(str(old.number), an_application(), DECIDED)
 
@@ -517,7 +518,7 @@ def test_voiding_and_refunding_are_both_journalled(desk):
     permit = desk.issue(filed.key, DECIDED)
     desk.office.accounts.deposit("VANCE", DECIDED, cents(100000))
     desk.office.accounts.charge("VANCE", DECIDED, permit.fee, str(permit.number))
-    desk.void(str(permit.number), "carrier cancelled", DECIDED)
+    desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     kinds = [str(e.kind) for e in desk.office.history.about(str(permit.number))]
     assert kinds == ["issued", "voided", "refunded"]
 
@@ -525,7 +526,7 @@ def test_voiding_and_refunding_are_both_journalled(desk):
 def test_an_uncharged_void_writes_no_refund_line(desk):
     filed = desk.file(an_application())
     permit = desk.issue(filed.key, DECIDED)
-    desk.void(str(permit.number), "cancelled", DECIDED)
+    desk.void(str(permit.number), Cause.CANCELLED, DECIDED)
     kinds = [str(e.kind) for e in desk.office.history.about(str(permit.number))]
     assert kinds == ["issued", "voided"]
 

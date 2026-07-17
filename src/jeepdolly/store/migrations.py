@@ -469,6 +469,28 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX amendment_by_day ON amendment (filed_on)",
         ),
     ),
+    Migration(
+        number=16,
+        name="why a permit was pulled",
+        statements=(
+            """
+            CREATE TABLE revocation (
+                permit_number  TEXT PRIMARY KEY REFERENCES permit (number),
+                carrier_code   TEXT NOT NULL REFERENCES carrier (code),
+                cause          TEXT NOT NULL
+                               CHECK (cause IN ('carrier cancelled', 'office error',
+                                                'route closed', 'rig failed inspection',
+                                                'load was not as declared',
+                                                'move was unsafe')),
+                pulled_on      TEXT NOT NULL,
+                refunded       INTEGER NOT NULL CHECK (refunded >= 0),
+                detail         TEXT NOT NULL DEFAULT ''
+            )
+            """,
+            "CREATE INDEX revocation_by_carrier ON revocation (carrier_code, pulled_on)",
+            "CREATE INDEX revocation_by_cause ON revocation (cause, pulled_on)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

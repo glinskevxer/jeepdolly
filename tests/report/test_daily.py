@@ -3,6 +3,7 @@ import datetime as dt
 import pytest
 
 from jeepdolly.almanac.embargo import Embargo, EmbargoBook
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.daily import counties_of, day_sheet, movements
 from jeepdolly.roadway.node import Node
 from jeepdolly.units.clock import DaySpan, Window
@@ -41,7 +42,7 @@ def test_a_permit_not_good_today_is_left_off(desk, issued):
 
 
 def test_a_void_permit_is_left_off(desk, issued):
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     network = desk.office.roadway.network()
     assert movements([gone], MOVING, network, EMPTY) == []
 

@@ -12,6 +12,7 @@ from jeepdolly.limits.relief import remedies_for
 from jeepdolly.limits.statute import INTERSTATE
 from jeepdolly.permit.application import Application, Kind
 from jeepdolly.permit.desk import Desk
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.rig.load import NONDIVISIBLE_REASONS, Load
 from jeepdolly.units.clock import DaySpan, format_day, parse_day
 from jeepdolly.units.distance import format_distance
@@ -179,17 +180,25 @@ def show(session: Session, number: str) -> None:
 
 @permit.command("void")
 @click.argument("number")
-@click.option("--reason", required=True, help="Why the permit is being voided.")
+@click.option(
+    "--cause",
+    required=True,
+    type=click.Choice([str(c) for c in Cause]),
+    help="Why the permit is being pulled.",
+)
+@click.option("--detail", default="", help="What happened, for an at fault cause.")
 @click.option("--on", default="", help="Day the void is recorded.")
-@click.option("--no-refund", is_flag=True, help="Leave the account alone.")
 @click.pass_obj
-def void(session: Session, number: str, reason: str, on: str, no_refund: bool) -> None:
-    """Void an issued permit and refund what was charged for it."""
+def void(session: Session, number: str, cause: str, detail: str, on: str) -> None:
+    """Pull an issued permit and refund whatever the reason calls for."""
     with office_of(session) as office, office.writing():
-        made = Desk.at(office, clerk=session.clerk).void(
-            number, reason, parse_day(on) if on else today(), refund=not no_refund
-        )
-    click.echo(f"{made.number} void: {made.reason}")
+        desk = Desk.at(office, clerk=session.clerk)
+        made = desk.void(number, Cause(cause), day_or_today(on), detail)
+        back = office.revocations.get(str(made.number))
+    click.echo(f"{made.number} void: {back.cause}")
+    click.echo(f"refunded {format_money(back.refunded)}")
+    if back.blocks_until is not None:
+        click.echo(f"{made.carrier} cannot be issued anything to {back.blocks_until}")
 
 
 @permit.command("extend")

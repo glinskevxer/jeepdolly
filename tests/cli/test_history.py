@@ -11,7 +11,7 @@ def worked(stocked: Callable[..., Result]) -> Callable[..., Result]:
     """A stocked office that has issued and voided one permit."""
     apply_one(stocked)
     stocked("permit", "issue", "1", "--on", "2025-06-17")
-    stocked("permit", "void", "P-000001", "--reason", "carrier cancelled", "--on", "2025-06-18")
+    stocked("permit", "void", "P-000001", "--cause", "carrier cancelled", "--on", "2025-06-18")
     return stocked
 
 

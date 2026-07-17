@@ -1,4 +1,5 @@
 from jeepdolly.billing.account import Account, Entry, EntryKind
+from jeepdolly.permit.revoke import Cause
 from jeepdolly.report.carrier import RECENT, CarrierFile, carrier_sheet
 from jeepdolly.units.money import cents
 
@@ -68,14 +69,14 @@ def test_the_sheet_counts_the_live_permits(desk, issued):
 
 
 def test_a_void_permit_is_not_live(desk, issued):
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     made = a_file(desk, permits=[gone])
     assert made.live_permits == ()
     assert made.voided == 1
 
 
 def test_a_void_permit_is_not_counted_as_spent(desk, issued):
-    gone = desk.void(str(issued.number), "cancelled", DECIDED)
+    gone = desk.void(str(issued.number), Cause.CANCELLED, DECIDED)
     assert int(a_file(desk, permits=[gone]).spent) == 0
 
 

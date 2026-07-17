@@ -424,14 +424,14 @@ Print one permit.
 
 ### `jeepdolly permit void`
 
-Void an issued permit and refund what was charged for it.
+Pull an issued permit and refund whatever the reason calls for.
 
 | name | kind | what it is for |
 | --- | --- | --- |
 | `number` | argument |  |
-| `--reason` | required option | Why the permit is being voided. |
+| `--cause` | required option | Why the permit is being pulled. |
+| `--detail` | option | What happened, for an at fault cause. |
 | `--on` | option | Day the void is recorded. |
-| `--no-refund` | flag | Leave the account alone. |
 
 ### `jeepdolly report`
 

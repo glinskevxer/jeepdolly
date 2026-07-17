@@ -181,7 +181,9 @@ run permit amend P-000001 --destination JCT-C --note "shipper moved the delivery
 run permit amend P-000001 --width 13ft --on 2025-06-18
 run permit amendments P-000001
 run permit extend P-000001 --last 2025-06-22
-run permit void P-000002 --reason "carrier cancelled the move" --on 2025-07-03
+run permit void P-000002 --cause "carrier cancelled" --on 2025-07-03
+run permit void P-000004 --cause "load was not as declared" \
+  --detail "steel coil on the trailer, transformer on the application" --on 2025-08-05
 run permit list
 run permit list --carrier VANCE
 run permit list --on 2025-06-19

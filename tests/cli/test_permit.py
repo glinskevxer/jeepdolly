@@ -103,9 +103,9 @@ def test_void_marks_it_void(stocked):
     apply_one(stocked)
     stocked("permit", "issue", "1", "--on", "2025-06-17")
     result = stocked(
-        "permit", "void", "P-000001", "--reason", "cancelled", "--on", "2025-06-17"
+        "permit", "void", "P-000001", "--cause", "carrier cancelled", "--on", "2025-06-17"
     )
-    assert "void: cancelled" in result.output
+    assert "void: carrier cancelled" in result.output
 
 
 def test_void_needs_a_reason(stocked):

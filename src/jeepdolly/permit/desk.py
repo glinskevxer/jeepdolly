@@ -39,6 +39,7 @@ from jeepdolly.permit.decision import Decision, Outcome, decide
 from jeepdolly.permit.permit import Permit, issue
 from jeepdolly.permit.renewal import renew
 from jeepdolly.permit.review import Review, open_review
+from jeepdolly.permit.revoke import Cause, Revocation, revoke
 from jeepdolly.rig.config import Configuration
 from jeepdolly.route.clear import RouteReport, walk
 from jeepdolly.route.plan import Route
@@ -241,8 +242,19 @@ class Desk:
         A referred application may still be issued once an engineer has approved
         it. The engineer's conditions come through onto the permit as notes, so
         the driver's copy carries them and nothing has to be remembered.
+
+        A carrier sitting under an at fault revocation is refused here rather
+        than at the counter. The block runs for months and the clerk taking the
+        application is rarely the clerk who pulled the permit that caused it.
         """
         seen, made = self.decide(key, on)
+        holding = self.blocked(str(seen.application.carrier), on)
+        if holding is not None:
+            raise NotAllowedError(
+                "carrier",
+                f"blocked to {holding.blocks_until} for {holding.cause}",
+                "be issued a permit",
+            )
         if made.outcome is Outcome.REFER:
             approval = self.approval_for(key)
             if approval is None:
@@ -301,8 +313,13 @@ class Desk:
             cleared=True,
         )
 
-    def void(self, number: str, reason: str, on: Day, refund: bool = True) -> Permit:
-        """Void an issued permit and put the fee back on the account.
+    def void(self, number: str, cause: Cause, on: Day, detail: str = "") -> Permit:
+        """Pull an issued permit, and refund whatever the reason says to.
+
+        This used to take a sentence and a boolean. The sentence meant nothing to
+        anything downstream and the boolean was the clerk deciding the refund at
+        the counter, which is how two identical cancellations a week apart came
+        back at different figures.
 
         The refund is posted only if the fee was actually charged. A permit
         issued and never charged has nothing to give back, and posting a refund
@@ -310,19 +327,25 @@ class Desk:
         mistake the void report would not show.
         """
         permit = self.office.permits.get(number)
-        voided = self.office.permits.save_state(permit.voided(reason, on))
-        self.note(on, EventKind.VOIDED, str(voided.number), voided.reason)
-        if refund and self._was_charged(voided):
+        pulled, made = revoke(permit, cause, on, detail, self.tariff)
+        voided = self.office.permits.save_state(pulled)
+        self.office.revocations.add(made, voided.carrier)
+        self.note(on, EventKind.VOIDED, str(voided.number), str(made.cause))
+        if int(made.refunded) > 0 and self._was_charged(voided):
             self.office.accounts.post(
                 carrier=voided.carrier,
                 day=on,
                 kind=EntryKind.REFUND,
-                amount=voided.fee,
+                amount=made.refunded,
                 reference=str(voided.number),
-                note=f"void: {voided.reason}",
+                note=f"void: {made.cause}",
             )
-            self.note(on, EventKind.REFUNDED, str(voided.number), format_money(voided.fee))
+            self.note(on, EventKind.REFUNDED, str(voided.number), format_money(made.refunded))
         return voided
+
+    def blocked(self, carrier: str, on: Day) -> Revocation | None:
+        """Whatever is stopping this carrier being issued anything today."""
+        return self.office.revocations.blocking(carrier, on)
 
     def _was_charged(self, permit: Permit) -> bool:
         """Has this permit's fee already been charged to its carrier."""

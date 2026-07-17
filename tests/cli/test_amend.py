@@ -85,7 +85,7 @@ def test_amending_an_unknown_permit_fails(stocked):
 
 def test_amending_a_void_permit_fails(stocked):
     issued(stocked)
-    stocked("permit", "void", "P-000001", "--reason", "cancelled", "--on", "2025-06-18")
+    stocked("permit", "void", "P-000001", "--cause", "carrier cancelled", *ON)
     result = stocked(*AMEND, "--width", "13ft", *ON)
     assert result.exit_code != 0
 

@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 15.
+Schema version 16.
 
 ## account_entry
 
@@ -224,6 +224,19 @@ Indexes: `review_by_application`, `review_by_state`
 | review_reference | TEXT | primary key, not null |
 | position | INTEGER | primary key, not null |
 | text | TEXT | not null |
+
+## revocation
+
+| column | type | constraints |
+| --- | --- | --- |
+| permit_number | TEXT | primary key |
+| carrier_code | TEXT | not null |
+| cause | TEXT | not null |
+| pulled_on | TEXT | not null |
+| refunded | INTEGER | not null |
+| detail | TEXT | not null, default '' |
+
+Indexes: `revocation_by_carrier`, `revocation_by_cause`
 
 ## rig
 
