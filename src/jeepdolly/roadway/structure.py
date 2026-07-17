@@ -27,7 +27,20 @@ from jeepdolly.units.distance import Miles, hundredths
 from jeepdolly.units.length import Inches, format_length, inches
 from jeepdolly.units.mass import Pounds, format_weight, pounds
 
-__all__ = ["CARRYING_KINDS", "OVERHEAD_KINDS", "Structure", "StructureKind"]
+__all__ = [
+    "CARRYING_KINDS",
+    "MAX_NOTICE_DAYS",
+    "MAX_OWNER",
+    "OVERHEAD_KINDS",
+    "Structure",
+    "StructureKind",
+]
+
+#: Longer than any utility or railway name the office has had to file.
+MAX_OWNER = 60
+
+#: Nobody wants more than a quarter's warning of a load going under their wires.
+MAX_NOTICE_DAYS = 90
 
 
 class StructureKind(StrEnum):
@@ -63,6 +76,8 @@ class Structure:
     milepost: Miles
     clearance: Inches | None = None
     rating: Pounds | None = None
+    owner: str = ""
+    notice_days: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "reference", serial(str(self.reference)))
@@ -86,6 +101,26 @@ class Structure:
             raise BadValueError("rating", self.kind, "an overhead carries nothing")
         if self.kind in CARRYING_KINDS and self.clearance is not None:
             raise BadValueError("clearance", self.kind, "a bridge is not an overhead")
+        self._check_owner()
+
+    def _check_owner(self) -> None:
+        """Who owns it, and how much warning they want."""
+        if not isinstance(self.owner, str):
+            raise BadValueError("owner", self.owner, "want text")
+        object.__setattr__(self, "owner", " ".join(self.owner.split()))
+        if len(self.owner) > MAX_OWNER:
+            raise BadValueError("owner", self.owner, f"over {MAX_OWNER} characters")
+        if isinstance(self.notice_days, bool) or not isinstance(self.notice_days, int):
+            raise BadValueError("notice days", self.notice_days, "want a whole number")
+        if not 0 <= self.notice_days <= MAX_NOTICE_DAYS:
+            raise BadValueError("notice days", self.notice_days, f"want 0 to {MAX_NOTICE_DAYS}")
+        if self.notice_days and not self.owner:
+            raise BadValueError("notice days", self.notice_days, "nobody to give notice to")
+
+    @property
+    def wants_notice(self) -> bool:
+        """Does somebody have to be rung before a load goes past this."""
+        return bool(self.owner) and self.notice_days > 0
 
     @property
     def limits_height(self) -> bool:
