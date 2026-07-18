@@ -98,6 +98,8 @@ def add_segment(
 @click.option("--milepost", required=True, help="Where on the stretch it sits.")
 @click.option("--clearance", default="", help="Posted height, for an overhead.")
 @click.option("--rating", default="", help="Posted load, for a bridge.")
+@click.option("--owner", default="", help="Who to ring before a tall load goes past.")
+@click.option("--notice-days", default=0, type=int, help="How much warning they want.")
 @click.pass_obj
 def add_structure(
     session: Session,
@@ -107,6 +109,8 @@ def add_structure(
     milepost: str,
     clearance: str,
     rating: str,
+    owner: str,
+    notice_days: int,
 ) -> None:
     """Put something in the way on a stretch."""
     with office_of(session) as office, office.writing():
@@ -119,9 +123,33 @@ def add_structure(
                 milepost=parse_distance(milepost),
                 clearance=parse_length(clearance) if clearance else None,
                 rating=parse_weight(rating) if rating else None,
+                owner=owner,
+                notice_days=notice_days,
             )
         )
     click.echo(str(made))
+
+
+@road.command("owners")
+@click.option("--owner", default="", help="Just this one, with what they own listed.")
+@click.pass_obj
+def owners(session: Session, owner: str) -> None:
+    """List everyone who has to be told about a tall load."""
+    with office_of(session) as office:
+        if owner:
+            held = office.roadway.structures_by_owner(owner)
+            if not held:
+                click.echo(f"nothing on file owned by {owner}")
+                return
+            for one in held:
+                click.echo(f"{one.segment} {one.reference} {one.name}, {one.notice_days} days")
+            return
+        found = office.roadway.owners()
+    if not found:
+        click.echo("nobody on file owns anything overhead")
+        return
+    for name in found:
+        click.echo(name)
 
 
 @road.command("map")

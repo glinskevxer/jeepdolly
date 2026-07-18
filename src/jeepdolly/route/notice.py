@@ -26,6 +26,7 @@ office learned to do it this way.
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from jeepdolly.errors import BadValueError
@@ -90,7 +91,7 @@ class Notice:
 
 def notices_for(
     route: Route,
-    structures: dict[str, list[Structure]],
+    structures: Mapping[str, Sequence[Structure]],
     height: Inches,
     first_day: Day,
     margin: Inches = MARGIN,
@@ -98,7 +99,8 @@ def notices_for(
     """Every call that has to be made before this load travels this route.
 
     ``structures`` is keyed by segment code, which is how the network hands them
-    over. One notice per owner, at the earliest deadline any of their structures
+    over, and takes any mapping of sequences so the store's tuples go straight
+    in. One notice per owner, at the earliest deadline any of their structures
     puts on it, with the places listed in the order the rig meets them.
     """
     if not isinstance(route, Route):

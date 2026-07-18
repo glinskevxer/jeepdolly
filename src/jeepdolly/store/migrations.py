@@ -491,6 +491,16 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX revocation_by_cause ON revocation (cause, pulled_on)",
         ),
     ),
+    Migration(
+        number=17,
+        name="who owns what is overhead",
+        statements=(
+            "ALTER TABLE structure ADD COLUMN owner TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE structure ADD COLUMN notice_days INTEGER NOT NULL DEFAULT 0"
+            " CHECK (notice_days >= 0)",
+            "CREATE INDEX structure_by_owner ON structure (owner)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

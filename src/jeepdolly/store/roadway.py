@@ -75,6 +75,8 @@ def structure_from_row(row: sqlite3.Row) -> Structure:
         milepost=hundredths(int(row["milepost"])),
         clearance=None if clearance is None else inches(int(clearance)),
         rating=None if rating is None else pounds(int(rating)),
+        owner=row["owner"],
+        notice_days=int(row["notice_days"]),
     )
 
 
@@ -173,6 +175,8 @@ class StructureStore(Repository[Structure]):
         "milepost",
         "clearance",
         "rating",
+        "owner",
+        "notice_days",
     )
 
     def normalise(self, key: str) -> str:
@@ -193,6 +197,8 @@ class StructureStore(Repository[Structure]):
             int(item.milepost),
             None if item.clearance is None else int(item.clearance),
             None if item.rating is None else int(item.rating),
+            item.owner,
+            item.notice_days,
         )
 
     def key_of(self, item: Structure) -> str:
@@ -270,6 +276,27 @@ class RoadwayStore:
     def structures(self) -> list[Structure]:
         """Every structure, in reference order."""
         return self.structures_repo.all()
+
+    def owners(self) -> list[str]:
+        """Everyone the office has recorded as owning something overhead."""
+        return [
+            row["owner"]
+            for row in rows(
+                self.connection,
+                "SELECT DISTINCT owner FROM structure WHERE owner <> '' ORDER BY owner",
+            )
+        ]
+
+    def structures_by_owner(self, owner: str) -> list[Structure]:
+        """Everything one utility or railway owns, by stretch and milepost."""
+        return [
+            structure_from_row(row)
+            for row in rows(
+                self.connection,
+                "SELECT * FROM structure WHERE owner = ? ORDER BY segment_code, milepost",
+                (" ".join(str(owner).split()),),
+            )
+        ]
 
     def structures_on(self, key: str) -> list[Structure]:
         """Everything in the way on one stretch, by milepost."""

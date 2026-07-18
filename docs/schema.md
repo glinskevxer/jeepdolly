@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 16.
+Schema version 17.
 
 ## account_entry
 
@@ -317,5 +317,7 @@ Indexes: `segment_by_end`, `segment_by_restriction`, `segment_by_start`
 | milepost | INTEGER | not null |
 | clearance | INTEGER |  |
 | rating | INTEGER |  |
+| owner | TEXT | not null, default '' |
+| notice_days | INTEGER | not null, default 0 |
 
-Indexes: `structure_by_segment`
+Indexes: `structure_by_owner`, `structure_by_segment`

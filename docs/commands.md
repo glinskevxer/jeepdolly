@@ -483,6 +483,15 @@ List the permits about to run out, and the ones that already have.
 | `day` | argument |  |
 | `--within` | option | How many days ahead. |
 
+### `jeepdolly report notices`
+
+Print who has to be rung before one permit's load travels.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+| `--on` | option | Day the call sheet is being worked. |
+
 ### `jeepdolly report permit`
 
 Print one permit as it goes in the cab.
@@ -634,6 +643,14 @@ Put a junction on the map.
 | `--name` | required option | What the route sheet calls it. |
 | `--county` | required option | Which county it sits in. |
 
+### `jeepdolly road owners`
+
+List everyone who has to be told about a tall load.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--owner` | option | Just this one, with what they own listed. |
+
 ### `jeepdolly road segment`
 
 Put a stretch of road on the map.
@@ -663,6 +680,8 @@ Put something in the way on a stretch.
 | `--milepost` | required option | Where on the stretch it sits. |
 | `--clearance` | option | Posted height, for an overhead. |
 | `--rating` | option | Posted load, for a bridge. |
+| `--owner` | option | Who to ring before a tall load goes past. |
+| `--notice-days` | option | How much warning they want. |
 
 ### `jeepdolly status`
 

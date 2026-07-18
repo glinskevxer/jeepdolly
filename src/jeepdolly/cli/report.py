@@ -5,17 +5,20 @@ from __future__ import annotations
 import click
 
 from jeepdolly.almanac.embargo import EmbargoBook
+from jeepdolly.cli.ask import day_or_today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.audit import audit, audit_sheet
 from jeepdolly.report.carrier import CarrierFile, carrier_sheet
 from jeepdolly.report.daily import counties_of, day_sheet
 from jeepdolly.report.expiring import SOON, expiry_sheet
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
+from jeepdolly.report.notice import notice_sheet
 from jeepdolly.report.permit import permit_sheet, route_sheet
 from jeepdolly.report.revenue import revenue_sheet
 from jeepdolly.report.workload import workload_sheet
 from jeepdolly.rig.load import Load
 from jeepdolly.route.detour import detour_for
+from jeepdolly.route.notice import notices_for
 from jeepdolly.route.search import shortest
 from jeepdolly.route.stage import DEFAULT_SPEED, stage_run
 from jeepdolly.travel.schedule import plan_days
@@ -291,5 +294,32 @@ def revenue_report(session: Session, first: str, last: str) -> None:
     with office_of(session) as office:
         span = DaySpan(parse_day(first), parse_day(last)) if first and last else None
         lines = revenue_sheet(office.permits.all(), span)
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("notices")
+@click.argument("number")
+@click.option("--on", default="", help="Day the call sheet is being worked.")
+@click.pass_obj
+def notice_report(session: Session, number: str, on: str) -> None:
+    """Print who has to be rung before one permit's load travels."""
+    with office_of(session) as office:
+        permit = office.permits.get(number)
+        wanted = office.amendments.current(number)
+        network = office.roadway.network()
+        if wanted.origin is None or wanted.destination is None:
+            click.echo(f"{number} names no route, so nobody has to be told")
+            return
+        found = shortest(network, str(wanted.origin), str(wanted.destination))
+        if found is None:
+            click.echo(f"{number} has no route on the map any more")
+            return
+        held = {
+            str(leg.segment.code): network.structures_on(str(leg.segment.code))
+            for leg in found.legs
+        }
+        calls = notices_for(found, held, wanted.load.height, permit.span.first)
+        lines = notice_sheet(calls, day_or_today(on), number)
     for line in lines:
         click.echo(line)
