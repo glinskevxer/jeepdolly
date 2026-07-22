@@ -37,6 +37,7 @@ LAYERS: dict[str, int] = {
     "jeepdolly.almanac": 6,
     "jeepdolly.travel": 7,
     "jeepdolly.route": 8,
+    "jeepdolly.enforce": 9,
     "jeepdolly.permit": 9,
     "jeepdolly.permit.application": 9,
     "jeepdolly.billing": 9,

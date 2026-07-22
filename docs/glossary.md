@@ -14,6 +14,7 @@ package, plus the ideas listed by hand at the end of that file.
 | annual | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
 | approved | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | approved | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
+| axle over permit | What a weight ticket disagrees with the permit about. | `jeepdolly.enforce.ticket.Discrepancy` |
 | booster | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
 | bridge | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | cargo | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
@@ -23,17 +24,20 @@ package, plus the ideas listed by hand at the end of that file.
 | culvert | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | dates | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
 | deposit | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
+| different number of axles | What a weight ticket disagrees with the permit about. | `jeepdolly.enforce.ticket.Discrepancy` |
 | dispatch | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | escort service | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | extended | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | filed | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | front | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | go another way | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
+| gross over permit | What a weight ticket disagrees with the permit about. | `jeepdolly.enforce.ticket.Discrepancy` |
 | height pole | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
 | interstate | Which limit set a stretch of road runs under. | `jeepdolly.roadway.segment.RoadClass` |
 | issue | What the office is going to do about the application. | `jeepdolly.permit.decision.Outcome` |
 | issued | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | jeep | Which end of the rig the dolly bolts to. | `jeepdolly.rig.dolly.Hitch` |
+| lighter than permitted | What a weight ticket disagrees with the permit about. | `jeepdolly.enforce.ticket.Discrepancy` |
 | load | One thing about a permit that an amendment moved. | `jeepdolly.permit.amendment.Change` |
 | load was not as declared | Why a permit was pulled. | `jeepdolly.permit.revoke.Cause` |
 | loaded | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
