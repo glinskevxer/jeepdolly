@@ -46,6 +46,7 @@ class EventKind(StrEnum):
     CHARGED = "charged"
     REFUNDED = "refunded"
     LOADED = "loaded"
+    WEIGHED = "weighed"
 
 
 @dataclass(frozen=True, slots=True, order=True)

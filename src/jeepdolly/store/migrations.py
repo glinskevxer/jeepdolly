@@ -501,6 +501,47 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX structure_by_owner ON structure (owner)",
         ),
     ),
+    Migration(
+        number=18,
+        name="weight tickets and what they cost",
+        statements=(
+            """
+            CREATE TABLE ticket (
+                number         TEXT PRIMARY KEY,
+                permit_number  TEXT NOT NULL REFERENCES permit (number),
+                weighed_on     TEXT NOT NULL,
+                place          TEXT NOT NULL CHECK (place <> ''),
+                officer        TEXT NOT NULL CHECK (officer <> ''),
+                forgiven       INTEGER NOT NULL DEFAULT 0 CHECK (forgiven IN (0, 1))
+            )
+            """,
+            """
+            CREATE TABLE ticket_axle (
+                ticket_number  TEXT NOT NULL REFERENCES ticket (number) ON DELETE CASCADE,
+                position       INTEGER NOT NULL CHECK (position > 0),
+                weight         INTEGER NOT NULL CHECK (weight > 0),
+                PRIMARY KEY (ticket_number, position)
+            )
+            """,
+            """
+            CREATE TABLE violation (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticket_number  TEXT NOT NULL REFERENCES ticket (number) ON DELETE CASCADE,
+                permit_number  TEXT NOT NULL REFERENCES permit (number),
+                carrier_code   TEXT NOT NULL REFERENCES carrier (code),
+                found_on       TEXT NOT NULL,
+                kind           TEXT NOT NULL
+                               CHECK (kind IN ('gross over permit', 'axle over permit')),
+                over           INTEGER NOT NULL CHECK (over > 0),
+                penalty        INTEGER NOT NULL CHECK (penalty >= 0)
+            )
+            """,
+            "CREATE INDEX ticket_by_permit ON ticket (permit_number, weighed_on)",
+            "CREATE INDEX violation_by_carrier ON violation (carrier_code, found_on)",
+            "CREATE INDEX violation_by_ticket ON violation (ticket_number)",
+            "CREATE INDEX violation_by_permit ON violation (permit_number)",
+        ),
+    ),
 )
 
 #: The number the schema reaches when every migration has run.

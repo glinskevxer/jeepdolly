@@ -194,6 +194,17 @@ run permit list --carrier VANCE
 run permit list --on 2025-06-19
 run permit renew P-000003 --on 2026-07-15
 
+echo "== enforcement =="
+run enforce tickets P-000001
+run enforce weigh P-000001 --axle 12,000 --axle 17,000 --axle 17,000 --axle 17,000 \
+  --axle 17,000 --place "Bonner scales" --officer "Sgt Ramos" --on 2025-06-19
+run enforce weigh P-000003 --axle 20,000 --axle 25,000 --axle 25,000 --axle 25,000 \
+  --axle 25,000 --place "Clinton scales" --officer "Sgt Ramos" --on 2026-07-09
+run enforce tickets P-000001
+run enforce ticket WT-00002
+run enforce record VANCE
+run enforce record SUMMIT
+
 echo "== reports =="
 run report route --from JCT-A --to JCT-D
 run report detour --from JCT-A --to JCT-D --rig R-00001 --closed SEG-BD

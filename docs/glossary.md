@@ -80,6 +80,7 @@ package, plus the ideas listed by hand at the end of that file.
 | tunnel | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | void | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
 | voided | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
+| weighed | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
 | withdrawn | Where an engineering review has got to. | `jeepdolly.permit.review.ReviewState` |
 
 ## ideas

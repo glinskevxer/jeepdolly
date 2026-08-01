@@ -29,6 +29,8 @@ from jeepdolly.almanac.season import SeasonBook
 from jeepdolly.billing.account import EntryKind
 from jeepdolly.billing.reprice import Reprice, reprice
 from jeepdolly.billing.tariff import SCHEDULE, Tariff
+from jeepdolly.enforce.ticket import Ticket, check_ticket
+from jeepdolly.enforce.violation import Violation, violations_from
 from jeepdolly.errors import ConflictError, NotAllowedError, NotFoundError
 from jeepdolly.limits.assess import assess
 from jeepdolly.limits.dimension import LEGAL, SizeRule
@@ -52,7 +54,7 @@ from jeepdolly.travel.escort import ORDINARY as ORDINARY_ESCORTS
 from jeepdolly.travel.escort import EscortSchedule
 from jeepdolly.units.clock import Day
 from jeepdolly.units.distance import Miles
-from jeepdolly.units.mass import NO_WEIGHT
+from jeepdolly.units.mass import NO_WEIGHT, Pounds
 from jeepdolly.units.money import cents, format_money
 
 __all__ = ["Assessed", "Desk"]
@@ -342,6 +344,51 @@ class Desk:
             )
             self.note(on, EventKind.REFUNDED, str(voided.number), format_money(made.refunded))
         return voided
+
+    def weigh(
+        self, number: str, axles: tuple[Pounds, ...], on: Day, place: str, officer: str
+    ) -> tuple[Ticket, list[Violation]]:
+        """Take a weight ticket against a permit and price whatever it found.
+
+        The permit's own gross is what the rig is measured against, and the rig
+        it is compared to is the one the permit currently names rather than the
+        one it was issued against. A carrier that amended onto a heavier rig on
+        the Tuesday is weighed against the Tuesday rig on the Wednesday.
+
+        A permit amended on the day of the weighing forgives the repeat multiple.
+        Most of those are an amendment that never reached the driver, and the
+        office would rather charge the pounds than the pattern.
+        """
+        permit = self.office.permits.get(number)
+        wanted = self.office.amendments.current(number)
+        rig = self.office.rigs.get(str(wanted.rig))
+        ticket = Ticket(
+            number=self.office.enforcement.next_number(),
+            permit=permit.number,
+            weighed_on=on,
+            place=place,
+            officer=officer,
+            axles=axles,
+        )
+        chain = self.office.amendments.for_permit(number)
+        forgiven = any(one.amendment.filed_on == on for one in chain)
+        overages = check_ticket(ticket, rig.config, rig.config.gross)
+        history = self.office.enforcement.violations_of(permit.carrier)
+        found = violations_from(
+            overages, ticket.number, permit.number, permit.carrier, on, history, forgiven
+        )
+        self.office.enforcement.add(ticket, found, forgiven)
+        self.note(on, EventKind.WEIGHED, str(permit.number), str(ticket))
+        for one in found:
+            self.office.accounts.post(
+                carrier=permit.carrier,
+                day=on,
+                kind=EntryKind.CHARGE,
+                amount=one.penalty,
+                reference=str(ticket.number),
+                note=str(one.kind),
+            )
+        return ticket, found
 
     def blocked(self, carrier: str, on: Day) -> Revocation | None:
         """Whatever is stopping this carrier being issued anything today."""

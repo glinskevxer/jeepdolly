@@ -249,6 +249,46 @@ Show one carrier.
 
 Read the whole file back and say whether it holds together.
 
+### `jeepdolly enforce`
+
+Weigh a permitted rig and price what the scales found.
+
+### `jeepdolly enforce record`
+
+Print a carrier's violation record, oldest first.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `carrier` | argument |  |
+
+### `jeepdolly enforce ticket`
+
+Show one weight ticket, pad by pad.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+
+### `jeepdolly enforce tickets`
+
+List every weight ticket written against one permit.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+
+### `jeepdolly enforce weigh`
+
+Take a weight ticket against a permit.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `number` | argument |  |
+| `--axle` | required option | One pad weight, given once per axle in order. |
+| `--place` | required option | Where the rig was weighed. |
+| `--officer` | required option | Who weighed it. |
+| `--on` | option | Day it was weighed. |
+
 ### `jeepdolly history`
 
 Read the office journal.

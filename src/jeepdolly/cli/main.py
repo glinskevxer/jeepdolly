@@ -11,6 +11,7 @@ from jeepdolly.cli.account import account
 from jeepdolly.cli.almanac import almanac
 from jeepdolly.cli.carrier import carrier
 from jeepdolly.cli.context import DEFAULT_FILE, Session, reporting
+from jeepdolly.cli.enforce import enforce
 from jeepdolly.cli.history import history
 from jeepdolly.cli.office import office
 from jeepdolly.cli.permit import permit
@@ -132,4 +133,5 @@ main.add_command(report)
 main.add_command(review)
 main.add_command(almanac)
 main.add_command(history)
+main.add_command(enforce)
 main.add_command(office)

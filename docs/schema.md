@@ -3,7 +3,7 @@
 Generated from a freshly migrated file by `tools/schema_dump.py`.
 Run that with `--write` after adding a migration.
 
-Schema version 17.
+Schema version 18.
 
 ## account_entry
 
@@ -321,3 +321,39 @@ Indexes: `segment_by_end`, `segment_by_restriction`, `segment_by_start`
 | notice_days | INTEGER | not null, default 0 |
 
 Indexes: `structure_by_owner`, `structure_by_segment`
+
+## ticket
+
+| column | type | constraints |
+| --- | --- | --- |
+| number | TEXT | primary key |
+| permit_number | TEXT | not null |
+| weighed_on | TEXT | not null |
+| place | TEXT | not null |
+| officer | TEXT | not null |
+| forgiven | INTEGER | not null, default 0 |
+
+Indexes: `ticket_by_permit`
+
+## ticket_axle
+
+| column | type | constraints |
+| --- | --- | --- |
+| ticket_number | TEXT | primary key, not null |
+| position | INTEGER | primary key, not null |
+| weight | INTEGER | not null |
+
+## violation
+
+| column | type | constraints |
+| --- | --- | --- |
+| id | INTEGER | primary key |
+| ticket_number | TEXT | not null |
+| permit_number | TEXT | not null |
+| carrier_code | TEXT | not null |
+| found_on | TEXT | not null |
+| kind | TEXT | not null |
+| over | INTEGER | not null |
+| penalty | INTEGER | not null |
+
+Indexes: `violation_by_carrier`, `violation_by_permit`, `violation_by_ticket`

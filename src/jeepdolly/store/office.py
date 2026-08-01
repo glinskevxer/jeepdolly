@@ -26,6 +26,7 @@ from jeepdolly.store.amendments import AmendmentStore
 from jeepdolly.store.applications import ApplicationStore
 from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.contacts import ContactStore
+from jeepdolly.store.enforcement import EnforcementStore
 from jeepdolly.store.history import HistoryStore
 from jeepdolly.store.loads import LoadStore
 from jeepdolly.store.migrations import LATEST, migrate, version
@@ -60,6 +61,7 @@ class Office:
         self.surety = SuretyStore(connection)
         self.amendments = AmendmentStore(connection)
         self.revocations = RevocationStore(connection)
+        self.enforcement = EnforcementStore(connection)
 
     @property
     def version(self) -> int:
