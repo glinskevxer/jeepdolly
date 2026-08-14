@@ -161,3 +161,27 @@ def test_the_backup_of_a_copy_is_still_sound(stocked, tmp_path):
     runner.invoke(main, ["-f", str(first), "office", "backup", str(second)])
     output = runner.invoke(main, ["-f", str(second), "office", "sound"]).output
     assert "sound" in output
+
+
+def test_dump_writes_the_map_back_out(stocked, tmp_path):
+    out = tmp_path / "dumped"
+    result = stocked("dump", str(out))
+    assert result.exit_code == 0, result.output
+    assert (out / "nodes.csv").exists()
+
+
+def test_dump_says_what_it_wrote(stocked, tmp_path):
+    result = stocked("dump", str(tmp_path / "dumped"))
+    assert "junctions" in result.output
+
+
+def test_a_dump_loads_straight_back_into_a_fresh_office(stocked, tmp_path, runner):
+    from jeepdolly.cli.main import main
+
+    out = tmp_path / "dumped"
+    stocked("dump", str(out))
+    fresh = tmp_path / "fresh.sqlite3"
+    runner.invoke(main, ["-f", str(fresh), "init"])
+    result = runner.invoke(main, ["-f", str(fresh), "load", str(out)])
+    assert result.exit_code == 0, result.output
+    assert "1 carriers" in result.output

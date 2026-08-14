@@ -194,6 +194,11 @@ run permit list --carrier VANCE
 run permit list --on 2025-06-19
 run permit renew P-000003 --on 2026-07-15
 
+echo "== the map out and back in =="
+run dump "$work/out"
+jeepdolly -f "$work/again.sqlite3" init
+jeepdolly -f "$work/again.sqlite3" load "$work/out"
+
 echo "== enforcement =="
 run enforce tickets P-000001
 run enforce weigh P-000001 --axle 12,000 --axle 17,000 --axle 17,000 --axle 17,000 \

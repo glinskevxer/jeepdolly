@@ -249,6 +249,14 @@ Show one carrier.
 
 Read the whole file back and say whether it holds together.
 
+### `jeepdolly dump`
+
+Write the carriers and the map back out as csv files.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `folder` | argument |  |
+
 ### `jeepdolly enforce`
 
 Weigh a permitted rig and price what the scales found.

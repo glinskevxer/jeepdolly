@@ -20,6 +20,7 @@ from jeepdolly.cli.review import review
 from jeepdolly.cli.rig import rig
 from jeepdolly.cli.road import road
 from jeepdolly.importer.csv_in import load_all
+from jeepdolly.importer.csv_out import write_all
 from jeepdolly.store.migrations import LATEST
 from jeepdolly.store.office import create, opened_office
 
@@ -67,6 +68,16 @@ def load(session: Session, folder: str) -> None:
     with reporting(session), opened_office(session.path) as office:
         got = load_all(office, Path(folder))
     click.echo(f"loaded {got}")
+
+
+@main.command("dump")
+@click.argument("folder", type=click.Path(file_okay=False))
+@click.pass_obj
+def dump(session: Session, folder: str) -> None:
+    """Write the carriers and the map back out as csv files."""
+    with reporting(session), opened_office(session.path) as office:
+        got = write_all(office, Path(folder))
+    click.echo(f"wrote {got} to {folder}")
 
 
 @main.command("check")

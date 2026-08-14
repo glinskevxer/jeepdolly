@@ -61,7 +61,16 @@ COLUMNS = {
         "max_width",
         "max_height",
     ),
-    "structures": ("segment", "name", "kind", "milepost", "clearance", "rating"),
+    "structures": (
+        "segment",
+        "name",
+        "kind",
+        "milepost",
+        "clearance",
+        "rating",
+        "owner",
+        "notice_days",
+    ),
 }
 
 #: The file each kind of record is read from.
@@ -206,6 +215,8 @@ def load_structures(office: Office, path: Path) -> int:
                     milepost=parse_distance(row["milepost"]),
                     clearance=parse_length(row["clearance"]) if row.get("clearance") else None,
                     rating=parse_weight(row["rating"]) if row.get("rating") else None,
+                    owner=row.get("owner", ""),
+                    notice_days=int(row["notice_days"] or 0) if row.get("notice_days") else 0,
                 )
             )
         except JeepdollyError as exc:
