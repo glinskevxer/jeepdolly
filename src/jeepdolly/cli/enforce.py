@@ -8,6 +8,8 @@ from jeepdolly.cli.ask import day_or_today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.enforce.violation import owed
 from jeepdolly.permit.desk import Desk
+from jeepdolly.report.enforcement import enforcement_sheet
+from jeepdolly.units.clock import DaySpan, parse_day
 from jeepdolly.units.mass import format_weight, parse_weight
 from jeepdolly.units.money import format_money
 
@@ -101,3 +103,23 @@ def ticket(session: Session, number: str) -> None:
         click.echo("charged as a first offence, the permit was amended that day")
     for one in against:
         click.echo(str(one))
+
+
+@enforce.command("return")
+@click.option("--first", required=True, help="First day of the period.")
+@click.option("--last", required=True, help="Last day of the period.")
+@click.pass_obj
+def enforcement_return(session: Session, first: str, last: str) -> None:
+    """Print the enforcement return for a period."""
+    span = DaySpan(parse_day(first), parse_day(last))
+    with office_of(session) as office:
+        found = office.enforcement.since(span.first)
+        stops = sum(
+            1
+            for permit in office.permits.all()
+            for ticket in office.enforcement.for_permit(str(permit.number))
+            if span.covers(ticket.weighed_on)
+        )
+        lines = enforcement_sheet(found, span, stops)
+    for line in lines:
+        click.echo(line)

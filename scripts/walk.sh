@@ -204,6 +204,7 @@ run enforce tickets P-000001
 run enforce ticket WT-00002
 run enforce record VANCE
 run enforce record SUMMIT
+run enforce return --first 2025-06-01 --last 2026-08-31
 
 echo "== reports =="
 run report route --from JCT-A --to JCT-D

@@ -5,6 +5,8 @@ from click.testing import Result
 from tests.cli.test_permit import apply_one
 
 ON = ("--on", "2025-06-19")
+JUNE = ("--first", "2025-06-01", "--last", "2025-06-30")
+JULY = ("--first", "2025-07-01", "--last", "2025-07-31")
 
 
 def issued(stocked: Callable[..., Result]) -> Result:
@@ -108,3 +110,38 @@ def test_the_journal_records_the_weighing(stocked):
     issued(stocked)
     weigh(stocked, "12,000", "17,000", "17,000", "17,000", "17,000")
     assert "weighed" in stocked("history", "show", "--about", "P-000001").output
+
+
+def test_an_enforcement_return_over_a_quiet_period_says_so(stocked):
+    output = stocked("enforce", "return", *JUNE).output
+    assert "nothing weighed" in output
+
+
+def test_a_return_counts_a_clean_stop(stocked):
+    issued(stocked)
+    weigh(stocked, "12,000", "17,000", "17,000", "17,000", "17,000")
+    output = stocked("enforce", "return", *JUNE).output
+    assert "1 stops and nothing over" in output
+
+
+def test_a_return_lists_what_was_found(stocked):
+    issued(stocked)
+    weigh(stocked, "20,000", "25,000", "25,000", "25,000", "25,000")
+    output = stocked("enforce", "return", *JUNE).output
+    assert "VANCE" in output
+    assert "penalties" in output
+
+
+def test_a_return_over_the_wrong_period_finds_nothing(stocked):
+    issued(stocked)
+    weigh(stocked, "20,000", "25,000", "25,000", "25,000", "25,000")
+    output = stocked("enforce", "return", *JULY).output
+    assert "nothing weighed" in output
+
+
+def test_a_return_calls_out_a_repeat_offender(stocked):
+    issued(stocked)
+    weigh(stocked, "20,000", "25,000", "25,000", "25,000", "25,000")
+    weigh(stocked, "20,000", "25,000", "25,000", "25,000", "25,000")
+    output = stocked("enforce", "return", *JUNE).output
+    assert "carriers back more than once" in output

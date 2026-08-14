@@ -261,6 +261,15 @@ Print a carrier's violation record, oldest first.
 | --- | --- | --- |
 | `carrier` | argument |  |
 
+### `jeepdolly enforce return`
+
+Print the enforcement return for a period.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--first` | required option | First day of the period. |
+| `--last` | required option | Last day of the period. |
+
 ### `jeepdolly enforce ticket`
 
 Show one weight ticket, pad by pad.
