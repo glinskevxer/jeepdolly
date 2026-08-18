@@ -27,11 +27,30 @@ __all__ = [
     "format_clock",
     "format_day",
     "minute_of_day",
+    "only_a_day",
     "parse_clock",
     "parse_day",
 ]
 
 Day = dt.date
+
+
+def only_a_day(value: object, name: str = "day") -> Day:
+    """The value as a plain date, refusing anything that is not one.
+
+    ``datetime`` is a subclass of ``date``, which is the whole reason this is a
+    function rather than an ``isinstance`` call written out at each of the twenty
+    places that needs it. Twenty copies of a two clause check is nineteen chances
+    to write the first clause and forget the second, and a permit dated with a
+    timestamp reads back as a different day depending on who is looking at it.
+
+    ``name`` is what the value is called in the error, because "want a date" on
+    its own does not tell a clerk which of the three dates on the form is wrong.
+    """
+    if not isinstance(value, dt.date) or isinstance(value, dt.datetime):
+        raise BadValueError(name, value, "want a date")
+    return value
+
 
 MINUTES_PER_DAY = 24 * 60
 

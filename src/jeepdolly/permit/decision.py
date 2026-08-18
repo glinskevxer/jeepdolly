@@ -19,7 +19,6 @@ with no possible answer.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -30,7 +29,7 @@ from jeepdolly.limits.dimension import LEGAL, SizeRule
 from jeepdolly.limits.finding import Finding, Severity, excess_of
 from jeepdolly.permit.application import Application
 from jeepdolly.travel.escort import ORDINARY, Escort, EscortSchedule, escorts_for
-from jeepdolly.units.clock import Day
+from jeepdolly.units.clock import Day, only_a_day
 from jeepdolly.units.distance import Miles
 from jeepdolly.units.money import Money
 
@@ -65,8 +64,7 @@ class Decision:
         object.__setattr__(self, "outcome", Outcome(self.outcome))
         object.__setattr__(self, "findings", tuple(self.findings))
         object.__setattr__(self, "escorts", tuple(self.escorts))
-        if not isinstance(self.decided_on, dt.date) or isinstance(self.decided_on, dt.datetime):
-            raise BadValueError("decided on", self.decided_on, "want a date")
+        only_a_day(self.decided_on, "decided on")
         if self.decided_on < self.application.filed_on:
             raise BadValueError("decided on", self.decided_on, "before the application")
         if self.outcome is Outcome.ISSUE and self.invoice is None:

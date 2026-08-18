@@ -17,13 +17,12 @@ the pair stays on file.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
 from jeepdolly.errors import BadValueError, NotAllowedError
 from jeepdolly.ids.reference import Serial, serial
-from jeepdolly.units.clock import Day
+from jeepdolly.units.clock import Day, only_a_day
 
 __all__ = ["CLOSED", "MAX_CONDITIONS", "MAX_ENGINEER", "Review", "ReviewState", "open_review"]
 
@@ -73,8 +72,7 @@ class Review:
             raise BadValueError("application", key, "want a whole number")
         if key < 1:
             raise BadValueError("application", key, "keys start at 1")
-        if not isinstance(self.opened_on, dt.date) or isinstance(self.opened_on, dt.datetime):
-            raise BadValueError("opened on", self.opened_on, "want a date")
+        only_a_day(self.opened_on, "opened on")
 
     def _tidy_text(self) -> None:
         """Collapse the free text fields and check what is in them."""
@@ -118,8 +116,7 @@ class Review:
         """A closed review has a decision day, and it is not before it opened."""
         if self.decided_on is None:
             raise BadValueError("decided on", None, "a closed review has a day")
-        if not isinstance(self.decided_on, dt.date) or isinstance(self.decided_on, dt.datetime):
-            raise BadValueError("decided on", self.decided_on, "want a date")
+        only_a_day(self.decided_on, "decided on")
         if self.decided_on < self.opened_on:
             raise BadValueError("decided on", self.decided_on, "before it was opened")
 

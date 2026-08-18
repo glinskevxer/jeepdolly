@@ -13,17 +13,16 @@ of the steer axle. The reader drops it and the writer puts it back.
 
 from __future__ import annotations
 
-import datetime as dt
 import sqlite3
 from dataclasses import dataclass
 
-from jeepdolly.errors import BadValueError, ConflictError, NotFoundError
+from jeepdolly.errors import ConflictError, NotFoundError
 from jeepdolly.ids.reference import RIG, Code, Serial, code, serial
 from jeepdolly.rig.axle import Axle
 from jeepdolly.rig.config import Configuration
 from jeepdolly.store.counter import next_serial
 from jeepdolly.store.sqlite import maybe_one, one, rows, scalar
-from jeepdolly.units.clock import Day, format_day, parse_day
+from jeepdolly.units.clock import Day, format_day, only_a_day, parse_day
 from jeepdolly.units.length import inches
 from jeepdolly.units.mass import pounds
 
@@ -42,10 +41,7 @@ class FiledRig:
     def __post_init__(self) -> None:
         object.__setattr__(self, "reference", serial(str(self.reference)))
         object.__setattr__(self, "carrier", code(str(self.carrier)))
-        if not isinstance(self.recorded_on, dt.date) or isinstance(
-            self.recorded_on, dt.datetime
-        ):
-            raise BadValueError("recorded on", self.recorded_on, "want a date")
+        only_a_day(self.recorded_on, "recorded on")
 
     @property
     def name(self) -> Code:

@@ -3,46 +3,22 @@ import datetime as dt
 import pytest
 
 from jeepdolly.errors import ConflictError, NotFoundError
-from jeepdolly.party.carrier import Carrier
 from jeepdolly.permit.decision import decide
 from jeepdolly.permit.permit import issue
 from jeepdolly.permit.revoke import BLOCK_DAYS, Cause, Revocation
-from jeepdolly.rig.axle import Axle
-from jeepdolly.rig.config import Configuration
-from jeepdolly.roadway.node import Node
-from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.permits import PermitStore
 from jeepdolly.store.revocations import RevocationStore
-from jeepdolly.store.rigs import RigStore
-from jeepdolly.store.roadway import RoadwayStore
 from jeepdolly.units.distance import miles
-from jeepdolly.units.length import feet, inches
-from jeepdolly.units.mass import pounds
 from jeepdolly.units.money import cents
-from tests.store.test_permits import DECIDED, FILED, an_application
+from tests.store.test_permits import DECIDED, an_application
 
 PULLED = dt.date(2025, 6, 17)
 
 
 @pytest.fixture
-def permits(office):
-    """A permit store with a carrier, a rig and two junctions on file."""
-    CarrierStore(office).add(
-        Carrier(code="VANCE", name="Vance Heavy Haul", usdot=1184062, home_state="MT")  # type: ignore[arg-type]
-    )
-    config = Configuration(
-        name="3S2",  # type: ignore[arg-type]
-        axles=(
-            Axle(weight=pounds(12000), tires=2, tire_width=inches(11), steering=True),
-            Axle(weight=pounds(17000), tires=4, tire_width=inches(11)),
-        ),
-        spacings=(feet(15),),
-    )
-    RigStore(office).add("VANCE", config, FILED)
-    road = RoadwayStore(office)
-    road.add_node(Node(code="JCT-A", name="a", county="Missoula"))  # type: ignore[arg-type]
-    road.add_node(Node(code="JCT-D", name="d", county="Missoula"))  # type: ignore[arg-type]
-    store = PermitStore(office)
+def permits(stocked):
+    """A permit store with two issued permits on the stocked office."""
+    store = PermitStore(stocked)
     for _ in range(2):
         filed = store.applications.add(an_application())
         decision = decide(an_application(), (), DECIDED, miles("42.00"))
@@ -51,9 +27,9 @@ def permits(office):
 
 
 @pytest.fixture
-def store(office, permits):
+def store(stocked, permits):
     """A revocation store against two issued permits."""
-    return RevocationStore(office)
+    return RevocationStore(stocked)
 
 
 def a_revocation(**over: object) -> Revocation:

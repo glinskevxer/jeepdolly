@@ -14,16 +14,14 @@ the chase list and are not fine, which is the case this sheet was written for.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 
-from jeepdolly.errors import BadValueError
 from jeepdolly.party.surety import Certificate, lapsing
 from jeepdolly.permit.application import Kind
 from jeepdolly.permit.cover import gaps
 from jeepdolly.report.layout import LEFT, RIGHT
 from jeepdolly.report.sheet import Sheet
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 from jeepdolly.units.money import format_money
 
 __all__ = ["CHASE_WITHIN", "Chase", "chases", "cover_sheet", "lapsed"]
@@ -68,19 +66,18 @@ def _chase(certificate: Certificate, on: Day) -> Chase:
 
 def _day(on: Day) -> Day:
     """Refuse anything that is not a plain date."""
-    if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-        raise BadValueError("day", on, "want a date")
+    only_a_day(on, "day")
     return on
 
 
 def chases(held: list[Certificate], on: Day, within: int = CHASE_WITHIN) -> list[Chase]:
     """Every certificate still good that runs out inside the window."""
-    return sorted(_chase(one, _day(on)) for one in lapsing(held, on, within))
+    return sorted(_chase(one, only_a_day(on)) for one in lapsing(held, on, within))
 
 
 def lapsed(held: list[Certificate], on: Day) -> list[Chase]:
     """Every certificate on file that has already run out, longest gone first."""
-    found = [_chase(one, _day(on)) for one in held]
+    found = [_chase(one, only_a_day(on)) for one in held]
     return sorted(one for one in found if one.gone)
 
 

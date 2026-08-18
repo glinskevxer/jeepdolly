@@ -11,6 +11,7 @@ from jeepdolly.units.clock import (
     format_clock,
     format_day,
     minute_of_day,
+    only_a_day,
     parse_clock,
     parse_day,
 )
@@ -235,3 +236,32 @@ def test_weekend_is_saturday_and_sunday():
     assert dt.date(2025, 3, 1).weekday() in WEEKEND
     assert dt.date(2025, 3, 2).weekday() in WEEKEND
     assert dt.date(2025, 3, 3).weekday() not in WEEKEND
+
+
+def test_a_plain_date_comes_straight_back():
+    assert only_a_day(dt.date(2025, 6, 18)) == dt.date(2025, 6, 18)
+
+
+def test_a_datetime_is_refused_even_though_it_is_a_date():
+    with pytest.raises(BadValueError):
+        only_a_day(dt.datetime(2025, 6, 18, tzinfo=dt.UTC))
+
+
+def test_a_string_that_looks_like_a_date_is_refused():
+    with pytest.raises(BadValueError):
+        only_a_day("2025-06-18")
+
+
+def test_nothing_at_all_is_refused():
+    with pytest.raises(BadValueError):
+        only_a_day(None)
+
+
+def test_the_error_calls_the_value_what_the_caller_calls_it():
+    with pytest.raises(BadValueError, match="filed on"):
+        only_a_day("2025-06-18", "filed on")
+
+
+def test_the_error_says_day_when_nothing_was_named():
+    with pytest.raises(BadValueError, match="day"):
+        only_a_day("2025-06-18")

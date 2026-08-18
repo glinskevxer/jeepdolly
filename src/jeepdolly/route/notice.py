@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from jeepdolly.errors import BadValueError
 from jeepdolly.roadway.structure import Structure
 from jeepdolly.route.plan import Route
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 from jeepdolly.units.length import Inches, format_length, inches
 
 __all__ = ["MARGIN", "Notice", "notices_for", "wants_notice_of"]
@@ -65,8 +65,7 @@ class Notice:
     places: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        if not isinstance(self.tell_by, dt.date) or isinstance(self.tell_by, dt.datetime):
-            raise BadValueError("tell by", self.tell_by, "want a date")
+        only_a_day(self.tell_by, "tell by")
         if not isinstance(self.owner, str) or not self.owner.strip():
             raise BadValueError("owner", self.owner, "want some text")
         object.__setattr__(self, "owner", " ".join(self.owner.split()))
@@ -80,8 +79,7 @@ class Notice:
 
     def late_on(self, day: Day) -> bool:
         """Would giving this notice on a day already be too late."""
-        if not isinstance(day, dt.date) or isinstance(day, dt.datetime):
-            raise BadValueError("day", day, "want a date")
+        only_a_day(day, "day")
         return day > self.tell_by
 
     def __str__(self) -> str:
@@ -105,8 +103,7 @@ def notices_for(
     """
     if not isinstance(route, Route):
         raise BadValueError("route", route, "want a route")
-    if not isinstance(first_day, dt.date) or isinstance(first_day, dt.datetime):
-        raise BadValueError("first day", first_day, "want a date")
+    only_a_day(first_day, "first day")
     wanted: dict[str, tuple[int, list[str]]] = {}
     for leg in route.legs:
         for structure in structures.get(str(leg.segment.code), []):

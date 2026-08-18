@@ -13,32 +13,28 @@ the Friday one and think there is still time.
 
 from __future__ import annotations
 
-import datetime as dt
-
-from jeepdolly.errors import BadValueError
 from jeepdolly.report.layout import LEFT, RIGHT
 from jeepdolly.report.sheet import Sheet
 from jeepdolly.route.notice import Notice
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 
 __all__ = ["late", "notice_sheet", "still_time"]
 
 
 def _day(on: Day) -> Day:
     """Refuse anything that is not a plain date."""
-    if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-        raise BadValueError("day", on, "want a date")
+    only_a_day(on, "day")
     return on
 
 
 def late(notices: list[Notice], on: Day) -> list[Notice]:
     """The calls whose deadline has already gone, longest gone first."""
-    return sorted(one for one in notices if one.late_on(_day(on)))
+    return sorted(one for one in notices if one.late_on(only_a_day(on)))
 
 
 def still_time(notices: list[Notice], on: Day) -> list[Notice]:
     """The calls that can still be made in time, soonest first."""
-    return sorted(one for one in notices if not one.late_on(_day(on)))
+    return sorted(one for one in notices if not one.late_on(only_a_day(on)))
 
 
 def notice_sheet(notices: list[Notice], on: Day, number: str = "") -> list[str]:

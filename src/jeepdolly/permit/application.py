@@ -14,14 +14,13 @@ goes to engineering review before anybody prices it.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import Code, Serial, code, serial
 from jeepdolly.rig.load import Load
-from jeepdolly.units.clock import Day, DaySpan
+from jeepdolly.units.clock import Day, DaySpan, only_a_day
 
 __all__ = ["ANNUAL_DAYS", "MAX_LEAD_DAYS", "MAX_TRIP_DAYS", "Application", "Kind"]
 
@@ -64,8 +63,7 @@ class Application:
             raise BadValueError("load", self.load, "want a load")
         if not isinstance(self.span, DaySpan):
             raise BadValueError("span", self.span, "want a day span")
-        if not isinstance(self.filed_on, dt.date) or isinstance(self.filed_on, dt.datetime):
-            raise BadValueError("filed on", self.filed_on, "want a date")
+        only_a_day(self.filed_on, "filed on")
         if self.span.first < self.filed_on:
             raise BadValueError("span", str(self.span), "starts before it was filed")
         if (self.span.first - self.filed_on).days > MAX_LEAD_DAYS:

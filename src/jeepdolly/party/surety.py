@@ -19,13 +19,12 @@ about a draw months later from the surety and never from the carrier.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import Code, code
-from jeepdolly.units.clock import Day, DaySpan, format_day
+from jeepdolly.units.clock import Day, DaySpan, format_day, only_a_day
 from jeepdolly.units.money import Money, cents, format_money
 
 __all__ = [
@@ -98,8 +97,7 @@ class Certificate:
 
     def in_force(self, on: Day) -> bool:
         """Was this certificate good on a given day."""
-        if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-            raise BadValueError("day", on, "want a date")
+        only_a_day(on, "day")
         return self.span.covers(on)
 
     def days_left(self, on: Day) -> int:
@@ -108,8 +106,7 @@ class Certificate:
         Negative once it has lapsed, which reads better in a report than zero
         does. A clerk chasing a renewal wants to know it went four days ago.
         """
-        if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-            raise BadValueError("day", on, "want a date")
+        only_a_day(on, "day")
         return (self.span.last - on).days + 1
 
     def covers_at_least(self, amount: Money) -> bool:

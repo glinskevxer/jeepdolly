@@ -22,14 +22,13 @@ why it lives here and not in the band table.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 
 from jeepdolly.billing.tariff import Band, band_charge, check_bands
 from jeepdolly.enforce.ticket import Discrepancy, Overage
 from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import Serial, serial
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 from jeepdolly.units.mass import Pounds, format_weight, pounds
 from jeepdolly.units.money import Money, cents, format_money, total
 
@@ -108,8 +107,7 @@ class Violation:
     penalty: Money
 
     def __post_init__(self) -> None:
-        if not isinstance(self.on, dt.date) or isinstance(self.on, dt.datetime):
-            raise BadValueError("day", self.on, "want a date")
+        only_a_day(self.on, "day")
         for name in ("ticket", "permit"):
             object.__setattr__(self, name, serial(str(getattr(self, name))))
         object.__setattr__(self, "kind", Discrepancy(self.kind))
@@ -140,8 +138,7 @@ class Violation:
 
 def repeats_within(history: list[Violation], day: Day, days: int = LOOK_BACK_DAYS) -> int:
     """How many violations a carrier already has inside the look back window."""
-    if not isinstance(day, dt.date) or isinstance(day, dt.datetime):
-        raise BadValueError("day", day, "want a date")
+    only_a_day(day, "day")
     return sum(1 for one in history if one.within(day, days))
 
 

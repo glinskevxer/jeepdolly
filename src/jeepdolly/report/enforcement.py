@@ -19,7 +19,6 @@ on trust.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 
 from jeepdolly.enforce.ticket import Discrepancy
@@ -27,7 +26,7 @@ from jeepdolly.enforce.violation import Violation, owed
 from jeepdolly.errors import BadValueError
 from jeepdolly.report.layout import LEFT, RIGHT
 from jeepdolly.report.sheet import Sheet
-from jeepdolly.units.clock import Day, DaySpan, format_day
+from jeepdolly.units.clock import Day, DaySpan, format_day, only_a_day
 from jeepdolly.units.mass import Pounds, format_weight, pounds
 from jeepdolly.units.money import Money, format_money
 
@@ -87,8 +86,8 @@ def enforcement_sheet(
     violations: list[Violation], span: DaySpan, stops: int = 0, on: Day | None = None
 ) -> list[str]:
     """The whole enforcement return, ready to print."""
-    if on is not None and (not isinstance(on, dt.date) or isinstance(on, dt.datetime)):
-        raise BadValueError("day", on, "want a date")
+    if on is not None:
+        only_a_day(on)
     found = within(violations, span)
     sheet = Sheet().title(f"enforcement return {span}")
     if not found:

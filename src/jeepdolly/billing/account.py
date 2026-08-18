@@ -18,14 +18,13 @@ who opened last week.
 
 from __future__ import annotations
 
-import datetime as dt
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 
 from jeepdolly.errors import BadValueError, NotAllowedError
 from jeepdolly.ids.reference import Code, code
-from jeepdolly.units.clock import Day, DaySpan
+from jeepdolly.units.clock import Day, DaySpan, only_a_day
 from jeepdolly.units.money import ZERO, Money, cents, format_money, total
 
 __all__ = ["DEFAULT_FLOOR", "SIGNS", "Account", "Entry", "EntryKind", "running"]
@@ -73,8 +72,7 @@ class Entry:
         object.__setattr__(self, "carrier", code(str(self.carrier)))
         object.__setattr__(self, "kind", EntryKind(self.kind))
         object.__setattr__(self, "amount", cents(int(self.amount)))
-        if not isinstance(self.day, dt.date) or isinstance(self.day, dt.datetime):
-            raise BadValueError("day", self.day, "want a date")
+        only_a_day(self.day, "day")
         if isinstance(self.sequence, bool) or not isinstance(self.sequence, int):
             raise BadValueError("sequence", self.sequence, "want a whole number")
         if self.sequence < 1:

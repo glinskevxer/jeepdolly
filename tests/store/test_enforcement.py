@@ -5,45 +5,22 @@ import pytest
 from jeepdolly.enforce.ticket import Discrepancy, Ticket
 from jeepdolly.enforce.violation import Violation
 from jeepdolly.errors import ConflictError, NotFoundError
-from jeepdolly.party.carrier import Carrier
 from jeepdolly.permit.decision import decide
 from jeepdolly.permit.permit import issue
-from jeepdolly.rig.axle import Axle
-from jeepdolly.rig.config import Configuration
-from jeepdolly.roadway.node import Node
-from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.enforcement import EnforcementStore
 from jeepdolly.store.permits import PermitStore
-from jeepdolly.store.rigs import RigStore
-from jeepdolly.store.roadway import RoadwayStore
 from jeepdolly.units.distance import miles
-from jeepdolly.units.length import feet, inches
 from jeepdolly.units.mass import pounds
 from jeepdolly.units.money import cents
-from tests.store.test_permits import DECIDED, FILED, an_application
+from tests.store.test_permits import DECIDED, an_application
 
 WEIGHED = dt.date(2025, 6, 19)
 
 
 @pytest.fixture
-def permits(office):
-    """A permit store with one carrier, one rig and one issued permit."""
-    CarrierStore(office).add(
-        Carrier(code="VANCE", name="Vance Heavy Haul", usdot=1184062, home_state="MT")  # type: ignore[arg-type]
-    )
-    config = Configuration(
-        name="3S2",  # type: ignore[arg-type]
-        axles=(
-            Axle(weight=pounds(12000), tires=2, tire_width=inches(11), steering=True),
-            Axle(weight=pounds(17000), tires=4, tire_width=inches(11)),
-        ),
-        spacings=(feet(15),),
-    )
-    RigStore(office).add("VANCE", config, FILED)
-    road = RoadwayStore(office)
-    road.add_node(Node(code="JCT-A", name="a", county="Missoula"))  # type: ignore[arg-type]
-    road.add_node(Node(code="JCT-D", name="d", county="Missoula"))  # type: ignore[arg-type]
-    store = PermitStore(office)
+def permits(stocked):
+    """A permit store with one issued permit on the stocked office."""
+    store = PermitStore(stocked)
     filed = store.applications.add(an_application())
     decision = decide(an_application(), (), DECIDED, miles("42.00"))
     store.add(issue(store.next_number(), decision, DECIDED), filed.key)
@@ -51,9 +28,9 @@ def permits(office):
 
 
 @pytest.fixture
-def store(office, permits):
+def store(stocked, permits):
     """An enforcement store against one issued permit."""
-    return EnforcementStore(office)
+    return EnforcementStore(stocked)
 
 
 def a_ticket(store: EnforcementStore, **over: object) -> Ticket:

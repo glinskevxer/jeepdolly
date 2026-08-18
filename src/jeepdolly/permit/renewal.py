@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from jeepdolly.errors import BadValueError, NotAllowedError
 from jeepdolly.permit.application import ANNUAL_DAYS, Application, Kind
 from jeepdolly.permit.permit import Permit, State
-from jeepdolly.units.clock import Day, DaySpan
+from jeepdolly.units.clock import Day, DaySpan, only_a_day
 
 __all__ = ["RENEW_WINDOW", "Renewal", "renew", "renewable"]
 
@@ -72,8 +72,7 @@ def renew(permit: Permit, on: Day, first: Day | None = None) -> Renewal:
     permits for the same rig on the same day is a thing the enforcement side
     would ask about.
     """
-    if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-        raise BadValueError("day", on, "want a date")
+    only_a_day(on, "day")
     if permit.state is not State.ACTIVE:
         raise NotAllowedError("permit", str(permit.state), "renew")
     if not renewable(permit, on):

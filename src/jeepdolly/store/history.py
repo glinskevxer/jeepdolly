@@ -17,14 +17,13 @@ journal to work out state is a bug waiting for its first gap.
 
 from __future__ import annotations
 
-import datetime as dt
 import sqlite3
 from dataclasses import dataclass
 from enum import StrEnum
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.store.sqlite import rows, scalar
-from jeepdolly.units.clock import Day, DaySpan, format_day, parse_day
+from jeepdolly.units.clock import Day, DaySpan, format_day, only_a_day, parse_day
 
 __all__ = ["MAX_DETAIL", "Event", "EventKind", "HistoryStore"]
 
@@ -66,8 +65,7 @@ class Event:
             raise BadValueError("sequence", self.sequence, "want a whole number")
         if self.sequence < 1:
             raise BadValueError("sequence", self.sequence, "sequences start at 1")
-        if not isinstance(self.day, dt.date) or isinstance(self.day, dt.datetime):
-            raise BadValueError("day", self.day, "want a date")
+        only_a_day(self.day, "day")
         if not isinstance(self.subject, str) or not self.subject.strip():
             raise BadValueError("subject", self.subject, "want some text")
         object.__setattr__(self, "subject", " ".join(self.subject.split()))

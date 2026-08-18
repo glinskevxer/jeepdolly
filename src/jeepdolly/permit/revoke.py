@@ -29,7 +29,7 @@ from jeepdolly.billing.tariff import SCHEDULE, Tariff
 from jeepdolly.errors import BadValueError, NotAllowedError
 from jeepdolly.ids.reference import Serial, serial
 from jeepdolly.permit.permit import Permit, State
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 from jeepdolly.units.money import Money, cents
 
 __all__ = [
@@ -74,8 +74,7 @@ AT_FAULT = frozenset({Cause.FALSE_LOAD, Cause.UNSAFE_MOVE})
 
 def _day(on: Day) -> Day:
     """Refuse anything that is not a plain date."""
-    if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-        raise BadValueError("day", on, "want a date")
+    only_a_day(on, "day")
     return on
 
 
@@ -90,7 +89,7 @@ def refund_due(permit: Permit, cause: Cause, on: Day, tariff: Tariff = SCHEDULE)
     if not isinstance(permit, Permit):
         raise BadValueError("permit", permit, "want a permit")
     wanted = Cause(cause)
-    _day(on)
+    only_a_day(on)
     if wanted in NO_REFUND:
         return cents(0)
     if wanted in FULL_REFUND:
@@ -113,7 +112,7 @@ class Revocation:
     def __post_init__(self) -> None:
         object.__setattr__(self, "number", serial(str(self.number)))
         object.__setattr__(self, "cause", Cause(self.cause))
-        object.__setattr__(self, "on", _day(self.on))
+        object.__setattr__(self, "on", only_a_day(self.on))
         object.__setattr__(self, "refunded", cents(int(self.refunded)))
         if int(self.refunded) < 0:
             raise BadValueError("refunded", int(self.refunded), "negative")
@@ -143,7 +142,7 @@ class Revocation:
     def blocks_on(self, day: Day) -> bool:
         """Would this revocation stop an issue on a given day."""
         until = self.blocks_until
-        return until is not None and self.on <= _day(day) <= until
+        return until is not None and self.on <= only_a_day(day) <= until
 
     def __str__(self) -> str:
         return f"{self.number} pulled {format_day(self.on)}: {self.cause}"

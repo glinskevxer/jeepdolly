@@ -19,7 +19,6 @@ asking for either comes back as a refusal that says to file again.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -27,7 +26,7 @@ from jeepdolly.errors import BadValueError, NotAllowedError
 from jeepdolly.ids.reference import Serial, serial
 from jeepdolly.permit.application import Application
 from jeepdolly.permit.permit import MAX_EXTENSION_DAYS, Permit, State
-from jeepdolly.units.clock import Day
+from jeepdolly.units.clock import Day, only_a_day
 
 __all__ = [
     "CLERICAL",
@@ -95,8 +94,7 @@ class Amendment:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "number", serial(str(self.number)))
-        if not isinstance(self.filed_on, dt.date) or isinstance(self.filed_on, dt.datetime):
-            raise BadValueError("filed on", self.filed_on, "want a date")
+        only_a_day(self.filed_on, "filed on")
         if not isinstance(self.note, str):
             raise BadValueError("note", self.note, "want text")
         tidy = " ".join(self.note.split())
@@ -138,8 +136,7 @@ def amendable(permit: Permit, on: Day) -> bool:
     and the office would rather write a fresh one than have a permit whose dates
     were changed after the load was already down the road.
     """
-    if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-        raise BadValueError("day", on, "want a date")
+    only_a_day(on, "day")
     return permit.state is State.ACTIVE and not permit.expired_on(on)
 
 

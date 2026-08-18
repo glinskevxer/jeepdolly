@@ -16,14 +16,13 @@ own records.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.permit.permit import Permit, State
 from jeepdolly.report.layout import LEFT, RIGHT
 from jeepdolly.report.sheet import Sheet
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 from jeepdolly.units.money import format_money, total
 
 __all__ = ["SOON", "Expiry", "expired", "expiring", "expiry_sheet"]
@@ -82,8 +81,7 @@ def expiring(permits: list[Permit], on: Day, within: int = SOON) -> list[Expiry]
         raise BadValueError("within", within, "want a whole number of days")
     if within < 0:
         raise BadValueError("within", within, "negative")
-    if not isinstance(on, dt.date) or isinstance(on, dt.datetime):
-        raise BadValueError("day", on, "want a date")
+    only_a_day(on, "day")
     found = [_expiry(one, on) for one in _live(permits)]
     return sorted(one for one in found if 0 <= one.days_left <= within)
 

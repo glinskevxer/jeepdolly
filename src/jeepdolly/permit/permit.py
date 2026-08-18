@@ -15,7 +15,6 @@ An unreasoned void is how a permit quietly disappears from the revenue report.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -23,7 +22,7 @@ from jeepdolly.errors import BadValueError, NotAllowedError
 from jeepdolly.ids.reference import Serial, serial
 from jeepdolly.permit.application import Application
 from jeepdolly.permit.decision import Decision, Outcome
-from jeepdolly.units.clock import Day, DaySpan
+from jeepdolly.units.clock import Day, DaySpan, only_a_day
 from jeepdolly.units.money import Money
 
 __all__ = ["MAX_EXTENSION_DAYS", "Permit", "State", "issue"]
@@ -61,8 +60,7 @@ class Permit:
             raise BadValueError("decision", self.decision.outcome, "was not an issue")
         if not isinstance(self.span, DaySpan):
             raise BadValueError("span", self.span, "want a day span")
-        if not isinstance(self.issued_on, dt.date) or isinstance(self.issued_on, dt.datetime):
-            raise BadValueError("issued on", self.issued_on, "want a date")
+        only_a_day(self.issued_on, "issued on")
         if self.span.first < self.decision.application.span.first:
             raise BadValueError("span", str(self.span), "starts before what was applied for")
         self._check_state()

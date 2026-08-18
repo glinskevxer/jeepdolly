@@ -20,14 +20,13 @@ the permit being pulled.
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import dataclass
 from enum import StrEnum
 
 from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import Serial, serial
 from jeepdolly.rig.config import Configuration
-from jeepdolly.units.clock import Day, format_day
+from jeepdolly.units.clock import Day, format_day, only_a_day
 from jeepdolly.units.mass import MAX_POUNDS, Pounds, format_weight, pounds
 
 __all__ = [
@@ -75,8 +74,7 @@ class Ticket:
     def __post_init__(self) -> None:
         for name in ("number", "permit"):
             object.__setattr__(self, name, serial(str(getattr(self, name))))
-        if not isinstance(self.weighed_on, dt.date) or isinstance(self.weighed_on, dt.datetime):
-            raise BadValueError("weighed on", self.weighed_on, "want a date")
+        only_a_day(self.weighed_on, "weighed on")
         for name in ("place", "officer"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():

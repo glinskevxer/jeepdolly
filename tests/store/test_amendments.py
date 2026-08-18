@@ -3,59 +3,34 @@ import datetime as dt
 import pytest
 
 from jeepdolly.errors import NotFoundError
-from jeepdolly.party.carrier import Carrier
 from jeepdolly.permit.amendment import Amendment, Change, amend
 from jeepdolly.permit.decision import decide
 from jeepdolly.permit.permit import Permit, issue
-from jeepdolly.rig.axle import Axle
-from jeepdolly.rig.config import Configuration
-from jeepdolly.roadway.node import Node
 from jeepdolly.store.amendments import AmendmentStore, FiledAmendment
-from jeepdolly.store.carriers import CarrierStore
 from jeepdolly.store.permits import PermitStore
-from jeepdolly.store.rigs import RigStore
-from jeepdolly.store.roadway import RoadwayStore
 from jeepdolly.units.clock import DaySpan
 from jeepdolly.units.distance import miles
-from jeepdolly.units.length import feet, inches
 from jeepdolly.units.mass import pounds
 from jeepdolly.units.money import cents
-from tests.store.test_permits import FILED, TRIP, a_load, an_application
+from tests.store.test_permits import TRIP, a_load, an_application
 
 DECIDED = dt.date(2025, 6, 17)
 LONGER = DaySpan(TRIP.first, TRIP.last + dt.timedelta(days=2))
 
 
 @pytest.fixture
-def permits(office):
-    """A permit store with a carrier, two rigs and three junctions on file."""
-    CarrierStore(office).add(
-        Carrier(code="VANCE", name="Vance Heavy Haul", usdot=1184062, home_state="MT")  # type: ignore[arg-type]
-    )
-    config = Configuration(
-        name="3S2",  # type: ignore[arg-type]
-        axles=(
-            Axle(weight=pounds(12000), tires=2, tire_width=inches(11), steering=True),
-            Axle(weight=pounds(17000), tires=4, tire_width=inches(11)),
-        ),
-        spacings=(feet(15),),
-    )
-    rigs = RigStore(office)
-    rigs.add("VANCE", config, FILED)
-    rigs.add("VANCE", config, FILED)
-    road = RoadwayStore(office)
-    for code in ("JCT-A", "JCT-C", "JCT-D"):
-        road.add_node(Node(code=code, name=code.lower(), county="Missoula"))  # type: ignore[arg-type]
-    return PermitStore(office)
+def permits(stocked):
+    """A permit store against the stocked office."""
+    return PermitStore(stocked)
 
 
 @pytest.fixture
-def store(office, permits):
+def store(stocked, permits):
     """An amendment store against one issued permit."""
     filed = permits.applications.add(an_application())
     decision = decide(an_application(), (), DECIDED, miles("42.00"))
     permits.add(issue(permits.next_number(), decision, DECIDED), filed.key)
-    return AmendmentStore(office)
+    return AmendmentStore(stocked)
 
 
 def _file(store: AmendmentStore, made: Amendment, charged: int = 0) -> FiledAmendment:

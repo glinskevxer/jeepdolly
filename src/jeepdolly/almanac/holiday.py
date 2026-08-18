@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from jeepdolly.almanac.embargo import Embargo
 from jeepdolly.errors import BadValueError
 from jeepdolly.ids.reference import Code, code
-from jeepdolly.units.clock import Day, DaySpan
+from jeepdolly.units.clock import Day, DaySpan, only_a_day
 
 __all__ = [
     "FIXED",
@@ -109,8 +109,7 @@ class Holiday:
     short: str = ""
 
     def __post_init__(self) -> None:
-        if not isinstance(self.day, dt.date) or isinstance(self.day, dt.datetime):
-            raise BadValueError("day", self.day, "want a date")
+        only_a_day(self.day, "day")
         if not isinstance(self.name, str) or not self.name.strip():
             raise BadValueError("name", self.name, "want some text")
         object.__setattr__(self, "name", "-".join(self.name.split()))
