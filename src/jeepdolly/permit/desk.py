@@ -38,6 +38,7 @@ from jeepdolly.limits.finding import Finding, Severity
 from jeepdolly.permit.amendment import Amendment, amend
 from jeepdolly.permit.application import Application
 from jeepdolly.permit.decision import Decision, Outcome, decide
+from jeepdolly.permit.duplicate import Match, duplicates_of
 from jeepdolly.permit.permit import Permit, issue
 from jeepdolly.permit.renewal import renew
 from jeepdolly.permit.review import Review, open_review
@@ -57,7 +58,10 @@ from jeepdolly.units.distance import Miles
 from jeepdolly.units.mass import NO_WEIGHT, Pounds
 from jeepdolly.units.money import cents, format_money
 
-__all__ = ["Assessed", "Desk"]
+__all__ = ["LOOK_BACK", "Assessed", "Desk"]
+
+#: How far back the counter looks when checking for a duplicate application.
+LOOK_BACK = 30
 
 
 @dataclass(frozen=True, slots=True)
@@ -460,6 +464,21 @@ class Desk:
             reference=str(permit.number),
             note="amendment",
         )
+
+    def like(self, application: Application, within: int = LOOK_BACK) -> list[Match]:
+        """Everything already on file that looks like this application.
+
+        Only the recent file is searched. Two years of applications is tens of
+        thousands of rows and the duplicate the clerk is about to make was taken
+        this week, so reading the lot to find it is time spent at the counter
+        while somebody waits.
+        """
+        recent = [
+            (filed.key, filed.application)
+            for filed in self.office.applications.for_carrier(str(application.carrier))
+            if (application.filed_on - filed.application.filed_on).days <= within
+        ]
+        return duplicates_of(application, recent)
 
     def current(self, number: str) -> Application:
         """What an issued permit says now, after every amendment against it."""

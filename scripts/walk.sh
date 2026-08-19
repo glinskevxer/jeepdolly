@@ -179,6 +179,14 @@ run review refuse E-00002 --engineer "R Halloran" --on 2025-09-04 \
 run review list --all
 run account charge SUMMIT --permit P-000004 --on 2025-08-04
 
+echo "== the same move filed twice =="
+run permit alike 1
+run permit apply --carrier VANCE --rig R-00001 \
+  --description "step-up transformer" --weight 148,000 --width "12'6" --height "14'2" \
+  --length 48 --first 2025-06-18 --last 2025-06-20 --origin JCT-A --destination JCT-D \
+  --filed 2025-06-16
+run permit alike 1
+
 echo "== amendments and voids =="
 run permit amendments P-000001
 run permit amend P-000001 --destination JCT-C --note "shipper moved the delivery" \

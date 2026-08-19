@@ -7,6 +7,7 @@ package, plus the ideas listed by hand at the end of that file.
 
 | word | sense | declared in |
 | --- | --- | --- |
+| a different move | How alike two applications are. | `jeepdolly.permit.duplicate.Likeness` |
 | accounts | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | active | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |
 | adjustment | What sort of movement this is. | `jeepdolly.billing.account.EntryKind` |
@@ -51,6 +52,7 @@ package, plus the ideas listed by hand at the end of that file.
 | owner | What the office would ring this person about. | `jeepdolly.party.contact.Role` |
 | permit | How badly the office minds. | `jeepdolly.limits.finding.Severity` |
 | police | Where the escort rides and what it is for. | `jeepdolly.travel.escort.Role` |
+| probably the same move | How alike two applications are. | `jeepdolly.permit.duplicate.Likeness` |
 | public liability | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | put wider rubber on | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | quoted | What sort of thing happened. | `jeepdolly.store.history.EventKind` |
@@ -76,6 +78,7 @@ package, plus the ideas listed by hand at the end of that file.
 | surety bond | What a lodged certificate covers. | `jeepdolly.party.surety.Cover` |
 | take it to engineering | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
 | take the load apart | What sort of thing the carrier has to do. | `jeepdolly.limits.relief.Kind` |
+| the same move | How alike two applications are. | `jeepdolly.permit.duplicate.Likeness` |
 | trip | What sort of permit is being asked for. | `jeepdolly.permit.application.Kind` |
 | tunnel | What sort of thing is in the way. | `jeepdolly.roadway.structure.StructureKind` |
 | void | What the office has recorded about a permit. | `jeepdolly.permit.permit.State` |

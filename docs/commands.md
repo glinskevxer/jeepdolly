@@ -373,6 +373,14 @@ Say what would have to change to get an application through.
 | --- | --- | --- |
 | `key` | argument |  |
 
+### `jeepdolly permit alike`
+
+List anything already on file that looks like the same move.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `key` | argument |  |
+
 ### `jeepdolly permit amend`
 
 Change an issued permit without giving it a new number.

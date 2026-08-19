@@ -90,8 +90,12 @@ def apply(session: Session, /, **given: str) -> None:
             origin=given["origin"] or None,  # type: ignore[arg-type]
             destination=given["destination"] or None,  # type: ignore[arg-type]
         )
-        made = Desk.at(office, clerk=session.clerk).file(application)
+        desk = Desk.at(office, clerk=session.clerk)
+        alike = desk.like(application)
+        made = desk.file(application)
     click.echo(f"application {made.key}: {made.application}")
+    for one in alike:
+        click.echo(f"warning: {one}")
 
 
 @permit.command("quote")
@@ -307,3 +311,22 @@ def amendments(session: Session, number: str) -> None:
         click.echo(f"{line} {format_money(one.charged)}")
         if one.amendment.note:
             click.echo(f"  {one.amendment.note}")
+
+
+@permit.command("alike")
+@click.argument("key", type=int)
+@click.pass_obj
+def alike(session: Session, key: int) -> None:
+    """List anything already on file that looks like the same move."""
+    with office_of(session) as office:
+        filed = office.applications.get(key)
+        found = [
+            one
+            for one in Desk.at(office, clerk=session.clerk).like(filed.application)
+            if one.key != key
+        ]
+    if not found:
+        click.echo(f"application {key} does not look like anything else on file")
+        return
+    for one in found:
+        click.echo(str(one))
