@@ -99,8 +99,10 @@ Kept because the reason is more useful than the rule.
 
 ## The checks
 
-Eighteen of them, run by the build on both interpreters. Each exists because
-something it now catches got past review at least once.
+Nineteen of them, run by the build on both interpreters. Each exists because
+something it now catches got past review at least once. `check_enums` is the
+clearest example: it found a real mismatch on its first run, and the mismatch
+turned out to be correct, which is how it learned about named subsets.
 
 | check | what it refuses |
 | --- | --- |
@@ -122,6 +124,7 @@ something it now catches got past review at least once.
 | `check_version` | the two version numbers drifting apart |
 | `check_help` | a help string that is not a printable sentence |
 | `check_docs` | a generated document that is out of date |
+| `check_enums` | a schema constraint that has drifted from the enum it copies |
 
 Two test files hold them to their own standard. `tests/tools/test_check_failures`
 hands every check a made up finding and asserts it reports and exits non zero.

@@ -47,7 +47,7 @@ jobs:
           echo "ran $ran checks"
           # A glob that matches nothing is a silent pass, and this loop would
           # then report success having done nothing at all.
-          test "$ran" -ge 16
+          test "$ran" -ge 19
           exit $status
 
   tests:

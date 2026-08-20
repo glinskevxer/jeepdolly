@@ -70,7 +70,7 @@ The stack is pinned to early 2025 in `constraints.txt`, transitive dependencies
 included. Installing without it walks forward and the 3.13 leg of the build
 starts reporting warnings that have nothing to do with this code.
 
-Fourteen checks run beside the tests. They enforce the import layering, the
+Nineteen checks run beside the tests. They enforce the import layering, the
 `__all__` lists, the docstrings, the SQL parameterisation, the module boundaries,
 the test naming, the fixture hygiene, the migration fingerprints, the absence of
 unfinished notes, the dataclass shape, the foreign key indexes, the dependency
