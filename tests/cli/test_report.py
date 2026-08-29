@@ -317,3 +317,29 @@ def test_the_workload_reports_the_average_wait(issued):
 
 def test_the_workload_says_when_nothing_came_through(run):
     assert "nothing has come through" in run("report", "workload").output
+
+
+def test_the_queue_is_empty_on_a_bare_office(run):
+    assert "nothing waiting" in run("report", "queue").output
+
+
+def test_an_unanswered_application_is_on_the_queue(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    assert "VANCE" in stocked("report", "queue", "--on", "2025-06-17").output
+
+
+def test_an_issued_application_leaves_the_queue(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    assert "nothing waiting" in stocked("report", "queue", "--on", "2025-06-17").output
+
+
+def test_an_application_left_a_week_shows_as_past_the_promise(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    assert "past the promise" in stocked("report", "queue", "--on", "2025-06-25").output

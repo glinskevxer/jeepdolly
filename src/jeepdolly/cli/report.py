@@ -9,6 +9,7 @@ from jeepdolly.cli.ask import day_or_today
 from jeepdolly.cli.context import Session, office_of
 from jeepdolly.report.audit import audit, audit_sheet
 from jeepdolly.report.carrier import CarrierFile, carrier_sheet
+from jeepdolly.report.counter import queue_sheet
 from jeepdolly.report.daily import counties_of, day_sheet
 from jeepdolly.report.expiring import SOON, expiry_sheet
 from jeepdolly.report.layout import LEFT, RIGHT, banner, pairs, table
@@ -321,5 +322,22 @@ def notice_report(session: Session, number: str, on: str) -> None:
         }
         calls = notices_for(found, held, wanted.load.height, permit.span.first)
         lines = notice_sheet(calls, day_or_today(on), number)
+    for line in lines:
+        click.echo(line)
+
+
+@report.command("queue")
+@click.option("--on", default="", help="Day the queue is being read.")
+@click.pass_obj
+def queue_report(session: Session, on: str) -> None:
+    """Print what is waiting at the counter and what is past the promise."""
+    with office_of(session) as office:
+        answered = {permit.decision.application for permit in office.permits.all()}
+        open_ones = [
+            (filed.key, filed.application)
+            for filed in office.applications.all()
+            if filed.application not in answered
+        ]
+        lines = queue_sheet(open_ones, day_or_today(on))
     for line in lines:
         click.echo(line)

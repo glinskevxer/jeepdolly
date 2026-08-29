@@ -565,6 +565,14 @@ Print one permit as it goes in the cab.
 | --- | --- | --- |
 | `number` | argument |  |
 
+### `jeepdolly report queue`
+
+Print what is waiting at the counter and what is past the promise.
+
+| name | kind | what it is for |
+| --- | --- | --- |
+| `--on` | option | Day the queue is being read. |
+
 ### `jeepdolly report revenue`
 
 Print the revenue return.

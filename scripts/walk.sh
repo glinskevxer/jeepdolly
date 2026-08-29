@@ -230,6 +230,7 @@ run report expiring 2025-06-19
 run report notices P-000001 --on 2025-06-01
 run report audit
 run report workload
+run report queue --on 2026-08-01
 run report revenue
 run report revenue --first 2025-06-01 --last 2025-06-30
 run account statement VANCE
