@@ -1,19 +1,26 @@
+import datetime as dt
 from collections.abc import Sequence
 
 from jeepdolly.invariants import (
     LAWS,
+    a_promise_is_never_the_day_it_was_filed,
     cutting_never_adds_minutes,
     fees_never_fall,
     formula_climbs_with_axles,
     formula_climbs_with_length,
+    penalties_never_fall,
+    repeats_never_cost_less,
     run_all,
     shares_add_back,
     tons_over_is_zero_at_the_limit,
     weighted_shares_add_back,
+    working_days_never_exceed_calendar,
 )
+from jeepdolly.permit.application import Kind
 from jeepdolly.units.clock import Window
 from jeepdolly.units.length import Inches
 from jeepdolly.units.mass import Pounds, pounds
+from jeepdolly.units.money import cents
 
 
 def test_every_law_holds_over_a_wide_spread():
@@ -162,3 +169,50 @@ def test_a_cut_that_adds_minutes_is_reported(monkeypatch):
 
     monkeypatch.setattr(invariants, "subtract", wrong)
     assert cutting_never_adds_minutes([Window(360, 600)], [Window(400, 500)])
+
+
+def test_penalties_never_fall_over_a_long_spread():
+    assert penalties_never_fall(range(0, 120_000, 91)) == []
+
+
+def test_a_falling_penalty_is_reported(monkeypatch):
+    # A progressive band table cannot fall, so the only way to break this law is
+    # to charge on something that is not one. That is the defect worth planting:
+    # every reimplementation of a banded charge that got it wrong got it wrong by
+    # not being progressive.
+    def backwards(tons: int, bands: object) -> int:
+        """The wrong way round on purpose."""
+        return cents(-tons)
+
+    monkeypatch.setattr("jeepdolly.enforce.violation.band_charge", backwards)
+    assert penalties_never_fall((2000, 40000)) != []
+
+
+def test_repeats_never_cost_less_over_a_long_spread():
+    assert repeats_never_cost_less(range(0, 60_000, 977), range(6)) == []
+
+
+def test_a_cheaper_repeat_is_reported(monkeypatch):
+    monkeypatch.setattr("jeepdolly.enforce.violation.REPEAT_MULTIPLES", (3, 1))
+    assert repeats_never_cost_less((4000,), (0, 1)) != []
+
+
+def test_working_days_never_exceed_calendar_days_over_a_long_spread():
+    start = dt.date(2025, 1, 1)
+    pairs = [
+        (start + dt.timedelta(days=n), start + dt.timedelta(days=n + gap))
+        for n in range(0, 400, 7)
+        for gap in (0, 1, 3, 17, 60)
+    ]
+    assert working_days_never_exceed_calendar(pairs) == []
+
+
+def test_a_promise_is_never_the_filing_day_over_a_long_spread():
+    start = dt.date(2025, 1, 1)
+    days = [start + dt.timedelta(days=n) for n in range(400)]
+    assert a_promise_is_never_the_day_it_was_filed(days) == []
+
+
+def test_a_promise_of_no_days_is_reported(monkeypatch):
+    monkeypatch.setattr("jeepdolly.permit.promise.TARGET_DAYS", dict.fromkeys(Kind, 0))
+    assert a_promise_is_never_the_day_it_was_filed([dt.date(2025, 6, 16)]) != []

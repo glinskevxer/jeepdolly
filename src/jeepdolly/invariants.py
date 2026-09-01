@@ -14,27 +14,36 @@ the same law be run over a hundred inputs in a test and over four at the counter
 
 from __future__ import annotations
 
+import datetime as dt
 from collections.abc import Iterable, Sequence
+from itertools import pairwise
 
 from jeepdolly.billing.tariff import SCHEDULE, Tariff
+from jeepdolly.enforce.violation import penalty_for
 from jeepdolly.limits.bridge import formula_weight
+from jeepdolly.permit.application import Kind
+from jeepdolly.permit.promise import promised_by, working_days
 from jeepdolly.travel.window import subtract
-from jeepdolly.units.clock import Window
+from jeepdolly.units.clock import Day, Window
 from jeepdolly.units.length import feet
 from jeepdolly.units.mass import POUNDS_PER_TON, pounds, tons_over
 from jeepdolly.units.share import divide_by_weight, divide_evenly
 
 __all__ = [
     "LAWS",
+    "a_promise_is_never_the_day_it_was_filed",
     "crossover",
     "cutting_never_adds_minutes",
     "fees_never_fall",
     "formula_climbs_with_axles",
     "formula_climbs_with_length",
+    "penalties_never_fall",
+    "repeats_never_cost_less",
     "run_all",
     "shares_add_back",
     "tons_over_is_zero_at_the_limit",
     "weighted_shares_add_back",
+    "working_days_never_exceed_calendar",
 ]
 
 
@@ -151,6 +160,61 @@ def cutting_never_adds_minutes(bases: Iterable[Window], cuts: Sequence[Window]) 
     return broken
 
 
+def penalties_never_fall(overages: Sequence[int], previous: int = 0) -> list[str]:
+    """A heavier overage never costs less than a lighter one.
+
+    The penalty bands are progressive like the fee bands, and progressive band
+    tables are where an off by one at an edge shows up as a carrier three
+    hundred pounds heavier paying less.
+    """
+    broken: list[str] = []
+    ordered = sorted(int(one) for one in overages)
+    for lighter, heavier in pairwise(ordered):
+        if int(penalty_for(pounds(heavier), previous)) < int(
+            penalty_for(pounds(lighter), previous)
+        ):
+            broken.append(f"{heavier} lb costs less than {lighter} lb")
+    return broken
+
+
+def repeats_never_cost_less(overages: Sequence[int], histories: Iterable[int]) -> list[str]:
+    """A carrier with more history never pays less for the same overage."""
+    broken: list[str] = []
+    counts = sorted(int(one) for one in histories)
+    for over in overages:
+        for fewer, more in pairwise(counts):
+            if int(penalty_for(pounds(over), more)) < int(penalty_for(pounds(over), fewer)):
+                broken.append(f"{over} lb costs less after {more} than after {fewer}")
+    return broken
+
+
+def working_days_never_exceed_calendar(pairs: Iterable[tuple[Day, Day]]) -> list[str]:
+    """There are never more working days between two dates than days.
+
+    It looks too obvious to write down. It stopped being obvious the first time
+    the holiday book was asked for a span crossing New Year and answered for one
+    year only, which made a January span count days it should have skipped.
+    """
+    broken: list[str] = []
+    for first, last in pairs:
+        counted = working_days(first, last)
+        calendar = max((last - first).days, 0)
+        if counted > calendar:
+            broken.append(f"{first}..{last} counted {counted} of {calendar}")
+    return broken
+
+
+def a_promise_is_never_the_day_it_was_filed(days: Iterable[Day]) -> list[str]:
+    """Whatever the kind, the answer is promised for a later day than the filing."""
+    broken: list[str] = []
+    for day in days:
+        for kind in Kind:
+            due = promised_by(day, kind)
+            if due <= day:
+                broken.append(f"{kind} filed {day} promised {due}")
+    return broken
+
+
 #: Every law, by the name the office calls it.
 LAWS = (
     "shares add back",
@@ -160,6 +224,10 @@ LAWS = (
     "fees never fall",
     "nothing is over at the limit",
     "cutting never adds minutes",
+    "penalties never fall",
+    "repeats never cost less",
+    "working days never exceed calendar days",
+    "a promise is never the day it was filed",
 )
 
 
@@ -176,6 +244,10 @@ def run_all(wide: bool = False) -> dict[str, list[str]]:
     limits = (20_000, 34_000, 80_000) if not wide else range(1_000, 200_000, 977)
     bases = (Window(0, 1439), Window(360, 1080), Window(1260, 360))
     cuts = (Window(420, 540), Window(0, 60), Window(1200, 30))
+    overages = range(0, 90_000 if wide else 20_000, 137 if wide else 2_500)
+    start = dt.date(2025, 1, 1)
+    filings = [start + dt.timedelta(days=n) for n in range(400 if wide else 14)]
+    pairs = [(one, one + dt.timedelta(days=n)) for one in filings for n in (0, 1, 9, 40)]
     return {
         LAWS[0]: shares_add_back(totals, range(1, 9)),
         LAWS[1]: weighted_shares_add_back(totals, ((5, 3, 2), (1, 1), (0, 1, 1), (7,))),
@@ -184,4 +256,8 @@ def run_all(wide: bool = False) -> dict[str, list[str]]:
         LAWS[4]: fees_never_fall(list(tons)),
         LAWS[5]: tons_over_is_zero_at_the_limit(limits),
         LAWS[6]: cutting_never_adds_minutes(bases, cuts),
+        LAWS[7]: penalties_never_fall(list(overages)),
+        LAWS[8]: repeats_never_cost_less(list(overages), range(5)),
+        LAWS[9]: working_days_never_exceed_calendar(pairs),
+        LAWS[10]: a_promise_is_never_the_day_it_was_filed(filings),
     }
