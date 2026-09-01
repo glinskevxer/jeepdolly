@@ -34,11 +34,11 @@ without a map and without a clock.
 | roadway | the map | above |
 | almanac | frost laws, embargoes, holidays | above |
 | travel | escorts, hours, movement plans | above |
-| route | plans, clearance, searches, detours | above |
-| permit.application, billing | requests and money | above |
+| route | plans, clearance, searches, detours, notices | above |
+| permit.application, permit.cover, permit.duplicate, permit.promise, billing, enforce | requests, cover, money, the scales | above |
 | permit.decision, permit.review | the three answers | above |
 | permit.permit | the issued permit | above |
-| permit.renewal | next year's application | above |
+| permit.renewal, permit.amendment, permit.revoke | what happens to it afterwards | above |
 | store | the sqlite file | above |
 | permit.desk | the counter | above |
 | report, importer, invariants | paperwork | above |
@@ -131,6 +131,29 @@ hands every check a made up finding and asserts it reports and exits non zero.
 `tests/tools/test_check_findings` plants a defect of the exact shape each one is
 for, in a temporary tree, and asserts the check names it. A check that has only
 ever passed has not been seen working.
+
+## What happens after the permit
+
+The counter was the whole package for a long time and it is now about half of it.
+Four things happen to a permit after it is written and each one is its own layer.
+
+**Amendment** changes it in place and keeps the number, because the number is on
+the escort boards and in the bridge owners' notification. What it was issued at
+stays on the permit and the difference goes on the account, so the original
+invoice is still the invoice that was paid.
+
+**Revocation** pulls it, and the reason is a code rather than a sentence. The
+refund falls out of the code and out of whether the load had already gone, and
+two of the codes stop the carrier being issued anything for a quarter.
+
+**Notice** is the calls that have to be made before an overheight load moves. One
+call per owner at the earliest of their deadlines, which is the rule that stops
+the same lineman being rung four times with three different dates.
+
+**Enforcement** weighs the rig against the permit rather than against the statute,
+and prices the overage on how many the carrier already has. A permit amended the
+day of the weighing forgives the repeat multiple, because most of those are an
+amendment that never reached the driver.
 
 ## The suite
 

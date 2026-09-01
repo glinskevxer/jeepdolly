@@ -185,3 +185,67 @@ def test_a_dump_loads_straight_back_into_a_fresh_office(stocked, tmp_path, runne
     result = runner.invoke(main, ["-f", str(fresh), "load", str(out)])
     assert result.exit_code == 0, result.output
     assert "1 carriers" in result.output
+
+
+def test_check_reads_back_the_certificates(stocked):
+    stocked(
+        "carrier",
+        "lodge",
+        "VANCE",
+        "--cover",
+        "surety bond",
+        "--insurer",
+        "Cascade Surety",
+        "--policy",
+        "SB-4471",
+        "--amount",
+        "100000",
+        "--from",
+        "2025-01-01",
+        "--to",
+        "2025-12-31",
+    )
+    output = stocked("check").output
+    assert "1 certificates" in output
+
+
+def test_check_reads_back_the_amendments(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    stocked("permit", "amend", "P-000001", "--width", "13ft", "--on", "2025-06-18")
+    assert "1 amendments" in stocked("check").output
+
+
+def test_check_reads_back_the_weight_tickets(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    stocked(
+        "enforce",
+        "weigh",
+        "P-000001",
+        "--axle",
+        "12,000",
+        "--axle",
+        "17,000",
+        "--axle",
+        "17,000",
+        "--axle",
+        "17,000",
+        "--axle",
+        "17,000",
+        "--place",
+        "Bonner scales",
+        "--officer",
+        "Sgt Ramos",
+        "--on",
+        "2025-06-19",
+    )
+    assert "1 weight tickets" in stocked("check").output
+
+
+def test_a_bare_office_reads_back_none_of_them(run):
+    assert "0 certificates, 0 amendments, 0 weight tickets" in run("check").output

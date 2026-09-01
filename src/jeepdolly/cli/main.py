@@ -21,8 +21,10 @@ from jeepdolly.cli.rig import rig
 from jeepdolly.cli.road import road
 from jeepdolly.importer.csv_in import load_all
 from jeepdolly.importer.csv_out import write_all
+from jeepdolly.party.carrier import Carrier
+from jeepdolly.permit.permit import Permit
 from jeepdolly.store.migrations import LATEST
-from jeepdolly.store.office import create, opened_office
+from jeepdolly.store.office import Office, create, opened_office
 
 __all__ = ["main"]
 
@@ -91,12 +93,14 @@ def check(session: Session) -> None:
     """
     with reporting(session), opened_office(session.path) as office:
         network = office.roadway.network()
+        carriers = office.carriers.all()
+        permits = office.permits.all()
         counts = (
-            len(office.carriers.all()),
+            len(carriers),
             len(office.rigs.all()),
             len(office.loads.all()),
             len(office.applications.all()),
-            len(office.permits.all()),
+            len(permits),
         )
         click.echo(f"schema {office.version} of {LATEST}")
         click.echo(f"map {'joined up' if network.connected else 'not joined up'}")
@@ -105,10 +109,39 @@ def check(session: Session) -> None:
                 *counts
             )
         )
-        for carrier in office.carriers.all():
+        _read_the_rest(office, carriers, permits)
+        for carrier in carriers:
             office.accounts.account(str(carrier.code))
         click.echo("every account balances")
     click.echo("check: clean")
+
+
+def _read_the_rest(office: Office, carriers: list[Carrier], permits: list[Permit]) -> None:
+    """Read back everything hanging off a carrier or a permit.
+
+    These tables came later and the check did not grow with them, which meant a
+    hand edited certificate or a weight ticket with a broken pad row passed the
+    check and failed at the counter. Reading them here is the whole point of the
+    command: every record in this package validates on the way out, so reading it
+    is the only check there is.
+    """
+    lodged = 0
+    for one in carriers:
+        key = str(one.code)
+        lodged += len(office.surety.for_carrier(key))
+        office.revocations.for_carrier(key)
+        office.enforcement.violations_of(key)
+    amended = 0
+    weighed = 0
+    for issued in permits:
+        number = str(issued.number)
+        amended += len(office.amendments.for_permit(number))
+        weighed += len(office.enforcement.for_permit(number))
+        office.amendments.current(number)
+        office.revocations.find(number)
+    click.echo(
+        f"read back {lodged} certificates, {amended} amendments, {weighed} weight tickets"
+    )
 
 
 @main.command("status")
