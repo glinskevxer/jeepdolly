@@ -6,4 +6,4 @@ __all__ = ["__version__"]
 #: moving, so this is 1.0.0 rather than another 0.x. The number is written here
 #: and in ``pyproject.toml``, and ``tools/check_version.py`` keeps the two in
 #: step.
-__version__ = "1.0.0"
+__version__ = "1.1.0"

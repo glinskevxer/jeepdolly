@@ -29,8 +29,9 @@ def test_the_declared_version_is_read():
     assert declared_version() == __version__
 
 
-def test_the_package_has_reached_one_point_zero():
-    assert __version__ == "1.0.0"
+def test_the_package_is_past_one_point_zero():
+    major, minor, patch = (int(part) for part in __version__.split("."))
+    assert (major, minor, patch) >= (1, 1, 0)
 
 
 @pytest.mark.parametrize("version", ["1.0.0", "0.1.0", "12.3.45"])

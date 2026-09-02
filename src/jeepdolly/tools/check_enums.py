@@ -42,6 +42,7 @@ from jeepdolly.tools.walk import module_of, package_root, source_files
 __all__ = [
     "OVERLAP",
     "constraints_in",
+    "drift",
     "enums_in_package",
     "main",
     "problems",
@@ -112,16 +113,21 @@ def enums_in_package() -> dict[str, frozenset[str]]:
     return held
 
 
-def problems() -> list[str]:
-    """Every constraint that has drifted from the enum it copies."""
-    schema = schema_text()
-    enums = enums_in_package()
+def drift(
+    constraints: list[tuple[str, frozenset[str]]], candidates: dict[str, frozenset[str]]
+) -> list[str]:
+    """Every constraint that does not exactly match some named set.
+
+    Split out from ``problems`` so it can be handed a drifted schema directly.
+    The package's own schema is right, which is the point of the check and also
+    the reason the reporting half of it was never once executed by the suite.
+    """
     found: list[str] = []
-    for column, values in constraints_in(schema):
-        if any(members == values for members in enums.values()):
+    for column, values in constraints:
+        if any(members == values for members in candidates.values()):
             continue
         best: tuple[int, str, frozenset[str]] | None = None
-        for name, members in sorted(enums.items()):
+        for name, members in sorted(candidates.items()):
             shared = len(values & members)
             if shared >= OVERLAP and (best is None or shared > best[0]):
                 best = (shared, name, members)
@@ -135,6 +141,11 @@ def problems() -> list[str]:
         if extra:
             found.append(f"{column}: the schema has {sorted(extra)} and {name} does not")
     return sorted(found)
+
+
+def problems() -> list[str]:
+    """Every constraint in the office's own schema that has drifted."""
+    return drift(constraints_in(schema_text()), enums_in_package())
 
 
 def main() -> int:

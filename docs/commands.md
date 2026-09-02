@@ -3,7 +3,7 @@
 Generated from the command tree by `tools/build_docs.py`.
 Run that with `--write` after changing a command, or the build will say so.
 
-Package version 1.0.0.
+Package version 1.1.0.
 
 ## commands
 

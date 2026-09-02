@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jeepdolly"
-version = "1.0.0"
+version = "1.1.0"
 description = "Oversize and overweight highway permit records for a state permit office"
 readme = "README.md"
 requires-python = ">=3.12"

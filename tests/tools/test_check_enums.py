@@ -4,6 +4,7 @@ from jeepdolly.permit.revoke import Cause
 from jeepdolly.tools.check_enums import (
     OVERLAP,
     constraints_in,
+    drift,
     enums_in_package,
     main,
     problems,
@@ -81,3 +82,59 @@ def test_the_violation_column_matches_the_subset_and_not_the_enum():
 
 def test_two_shared_values_are_enough_to_be_a_copy():
     assert OVERLAP == 2
+
+
+CANDIDATES = {"a.Colour": frozenset({"red", "green", "blue"})}
+
+
+def test_a_constraint_matching_a_named_set_exactly_is_fine():
+    assert drift([("colour", frozenset({"red", "green", "blue"}))], CANDIDATES) == []
+
+
+def test_a_constraint_missing_a_member_is_reported():
+    found = drift([("colour", frozenset({"red", "green"}))], CANDIDATES)
+    assert found == ["colour: a.Colour has ['blue'] and the schema does not"]
+
+
+def test_a_constraint_with_a_member_the_enum_lost_is_reported():
+    found = drift([("colour", frozenset({"red", "green", "blue", "puce"}))], CANDIDATES)
+    assert found == ["colour: the schema has ['puce'] and a.Colour does not"]
+
+
+def test_a_constraint_that_drifted_both_ways_is_reported_twice():
+    found = drift([("colour", frozenset({"red", "green", "puce"}))], CANDIDATES)
+    assert len(found) == 2
+
+
+def test_a_constraint_sharing_too_little_is_left_alone():
+    assert drift([("mood", frozenset({"red", "sad"}))], CANDIDATES) == []
+
+
+def test_a_constraint_matching_nothing_at_all_is_left_alone():
+    assert drift([("mood", frozenset({"glad", "sad"}))], CANDIDATES) == []
+
+
+def test_the_closest_candidate_is_the_one_reported():
+    candidates = {
+        "a.Colour": frozenset({"red", "green", "blue"}),
+        "a.Warm": frozenset({"red", "orange"}),
+    }
+    found = drift([("colour", frozenset({"red", "green"}))], candidates)
+    assert "a.Colour" in found[0]
+
+
+def test_the_findings_come_back_sorted():
+    constraints = [
+        ("zebra", frozenset({"red", "green"})),
+        ("apple", frozenset({"red", "green"})),
+    ]
+    found = drift(constraints, CANDIDATES)
+    assert found == sorted(found)
+
+
+def test_an_empty_schema_has_nothing_to_report():
+    assert drift([], CANDIDATES) == []
+
+
+def test_no_candidates_at_all_means_nothing_to_compare_against():
+    assert drift([("colour", frozenset({"red"}))], {}) == []
