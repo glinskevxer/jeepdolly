@@ -16,6 +16,22 @@ def issued(stocked: Callable[..., Result]) -> Result:
     return result
 
 
+def with_a_weak_bridge(stocked) -> None:
+    """Post a bridge on the JCT-C leg that this rig cannot cross."""
+    stocked(
+        "road",
+        "structure",
+        "--segment",
+        "SEG-BC",
+        "--name",
+        "Sixmile Creek",
+        "--milepost",
+        "4.20",
+        "--rating",
+        "40,000",
+    )
+
+
 def test_a_fresh_permit_has_not_been_amended(stocked):
     issued(stocked)
     assert "has not been amended" in stocked("permit", "amendments", "P-000001").output
@@ -48,8 +64,8 @@ def test_an_amendment_says_what_it_cost(stocked):
 
 def test_an_amended_permit_lists_its_amendment(stocked):
     issued(stocked)
-    stocked(*AMEND, "--destination", "JCT-C", *ON)
-    assert "route" in stocked("permit", "amendments", "P-000001").output
+    stocked(*AMEND, "--last", "2025-06-22", *ON)
+    assert "dates" in stocked("permit", "amendments", "P-000001").output
 
 
 def test_the_note_shows_up_in_the_listing(stocked):
@@ -108,3 +124,25 @@ def test_the_amendment_lands_on_the_carriers_account(stocked):
     statement = stocked("account", "statement", "VANCE").output
     assert "P-000001" in statement
     assert "$35.00" in statement
+
+
+def test_an_amendment_that_would_not_be_issuable_is_refused(stocked):
+    issued(stocked)
+    with_a_weak_bridge(stocked)
+    result = stocked(*AMEND, "--destination", "JCT-C", *ON)
+    assert result.exit_code != 0
+    assert "amendment" in result.output
+
+
+def test_the_refusal_says_what_the_move_would_be(stocked):
+    issued(stocked)
+    with_a_weak_bridge(stocked)
+    result = stocked(*AMEND, "--destination", "JCT-C", *ON)
+    assert "a move the office would refuse" in result.output
+
+
+def test_a_refused_amendment_leaves_the_permit_alone(stocked):
+    issued(stocked)
+    with_a_weak_bridge(stocked)
+    stocked(*AMEND, "--destination", "JCT-C", *ON)
+    assert "has not been amended" in stocked("permit", "amendments", "P-000001").output

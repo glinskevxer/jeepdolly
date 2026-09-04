@@ -189,6 +189,20 @@ class AmendmentStore:
             )
         return found
 
+    def application_keys(self) -> frozenset[int]:
+        """Every application an amendment moved a permit onto.
+
+        The counter queue needs these to leave them out. An amendment files a
+        real application so the assessment and the pricing have something to run
+        against, and nothing ever issues a permit for it, so it looked to the
+        queue like an application a clerk had abandoned. Two of them sat at the
+        top of the overdue list for two hundred and sixty two working days.
+        """
+        return frozenset(
+            int(row["application_key"])
+            for row in rows(self.connection, "SELECT application_key FROM amendment")
+        )
+
     def count(self) -> int:
         """How many amendments are on file."""
         return int(scalar(self.connection, "SELECT count(*) FROM amendment") or 0)

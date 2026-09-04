@@ -176,3 +176,26 @@ def test_two_filed_amendments_read_back_equal(store, permits):
     twice = store.for_permit("P-000001")
     assert once == twice
     assert hash(once[0]) == hash(twice[0])
+
+
+def test_a_store_with_no_amendments_points_at_no_applications(store):
+    assert store.application_keys() == frozenset()
+
+
+def test_an_amendment_names_the_application_it_moved_onto(store, permits):
+    made = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
+    filed = _file(store, made)
+    assert store.application_keys() == frozenset({filed.application_key})
+
+
+def test_two_amendments_name_two_applications(store, permits):
+    first = amend(a_permit(permits), an_application(rig="R-00002"), DECIDED)
+    _file(store, first)
+    second = Amendment(
+        number=a_permit(permits).number,
+        was=first.now,
+        now=an_application(rig="R-00002", destination="JCT-C"),
+        filed_on=DECIDED,
+    )
+    _file(store, second)
+    assert len(store.application_keys()) == 2

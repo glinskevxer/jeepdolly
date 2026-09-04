@@ -450,7 +450,13 @@ class Desk:
         _, decision = self.decide(key, on)
         now_invoice = decision.invoice
         if now_invoice is None:
-            raise NotAllowedError("permit", "no longer issuable", "amend onto")
+            # The amended move was assessed and came back unpriceable, which
+            # means it would be refused if it were filed fresh. Say that, rather
+            # than blaming the permit: the permit is fine and the clerk has just
+            # rerouted it over a bridge that will not take it.
+            raise NotAllowedError(
+                "amendment", f"a move the office would {decision.outcome}", "write"
+            )
         return reprice(made.was, made.now, was_invoice, now_invoice, True, self.tariff)
 
     def _post_amendment(self, permit: Permit, settled: Reprice, on: Day) -> None:

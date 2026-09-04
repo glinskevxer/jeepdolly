@@ -189,8 +189,12 @@ run permit alike 1
 
 echo "== amendments and voids =="
 run permit amendments P-000001
-run permit amend P-000001 --destination JCT-C --note "shipper moved the delivery" \
+run permit amend P-000001 --last 2025-06-21 --note "shipper moved the delivery" \
   --on 2025-06-18
+# Rerouting this one runs it over a bridge that will not take it, so the
+# amendment is refused rather than written. That is the answer, not a fault.
+run permit amend P-000001 --destination JCT-C --on 2025-06-18 \
+  || echo "the reroute would not be issuable, as expected"
 run permit amend P-000001 --width 13ft --on 2025-06-18
 run permit amendments P-000001
 run permit extend P-000001 --last 2025-06-22

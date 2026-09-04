@@ -343,3 +343,24 @@ def test_an_application_left_a_week_shows_as_past_the_promise(stocked):
 
     apply_one(stocked)
     assert "past the promise" in stocked("report", "queue", "--on", "2025-06-25").output
+
+
+def test_an_amendments_application_is_not_left_on_the_queue(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    stocked("permit", "amend", "P-000001", "--width", "13ft", "--on", "2025-06-18")
+    assert "nothing waiting" in stocked("report", "queue", "--on", "2025-06-25").output
+
+
+def test_a_real_application_is_still_on_the_queue_beside_an_amendment(stocked):
+    from tests.cli.test_permit import apply_one
+
+    apply_one(stocked)
+    stocked("permit", "issue", "1", "--on", "2025-06-17")
+    stocked("permit", "amend", "P-000001", "--width", "13ft", "--on", "2025-06-18")
+    apply_one(stocked, **{"--first": "2025-07-10", "--last": "2025-07-12"})
+    output = stocked("report", "queue", "--on", "2025-07-20").output
+    assert "waiting" in output
+    assert "VANCE" in output

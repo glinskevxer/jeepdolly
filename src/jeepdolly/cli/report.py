@@ -333,10 +333,11 @@ def queue_report(session: Session, on: str) -> None:
     """Print what is waiting at the counter and what is past the promise."""
     with office_of(session) as office:
         answered = {permit.decision.application for permit in office.permits.all()}
+        amended = office.amendments.application_keys()
         open_ones = [
             (filed.key, filed.application)
             for filed in office.applications.all()
-            if filed.application not in answered
+            if filed.application not in answered and filed.key not in amended
         ]
         lines = queue_sheet(open_ones, day_or_today(on))
     for line in lines:
